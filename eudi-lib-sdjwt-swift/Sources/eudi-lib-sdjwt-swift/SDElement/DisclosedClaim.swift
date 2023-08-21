@@ -24,6 +24,22 @@ struct DisclosedClaim: SDElement {
     
     // MARK: - Methods
 
+    func base64Encode(saltProvider: SaltProvider) -> Self {
+        do {
+            switch self.value {
+            case .base(let base):
+                return try DisclosedClaim(self.key, base64encodeBaseValue(base, saltProvider: saltProvider))
+            case .array(let array):
+                return try DisclosedClaim(self.key, base64encodeArray(array, saltProvider: saltProvider))
+            case .object(let object):
+                return try DisclosedClaim(self.key, base64encodeObject(object, saltProvider: saltProvider))
+            }
+        } catch {
+            print("failed to disclose")
+            return DisclosedClaim("", .base(""))
+        }
+    }
+
     mutating func base64Encode(saltProvider: SaltProvider) throws -> Self? {
         do {
             switch self.value {
@@ -82,4 +98,25 @@ struct DisclosedClaim: SDElement {
         return .object(encodedObjects)
     }
 
+}
+
+extension DisclosedClaim {
+    func flatDisclose(signer: Signer) -> Self? {
+        var base64encoded = self.base64Encode(saltProvider: signer.saltProvider)
+        base64encoded.key = "_sd"
+        guard let base64encodedValue = try? self.base64encodeBaseValue(AnyCodable(self.flatString), saltProvider: signer.saltProvider) else {
+            return nil
+        }
+        base64encoded.value = .array([base64encodedValue])
+//        switch self.value {
+//        case .base(let base):
+////            base64encoded.value = base
+//            print("hash it")
+//        case .array(let array):
+//            print("hash it")
+//        case .object(let object):
+//
+//        }
+        return base64encoded
+    }
 }

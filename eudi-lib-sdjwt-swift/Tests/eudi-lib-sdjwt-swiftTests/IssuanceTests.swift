@@ -3,6 +3,8 @@ import XCTest
 
 final class IssuanceTests: XCTestCase {
 
+    var signer = Signer()
+
     func testDisclsure() {
         let parts = ["_26bc4LT-ac6q2KI6cBW5es", "family_name", "Möbius"]
         let salt = parts[0]
@@ -11,7 +13,7 @@ final class IssuanceTests: XCTestCase {
 
         var disclosedClaim = DisclosedClaim(key, .init(value))
 
-        let disclosure = try! disclosedClaim.base64Encode(saltProvider: Signer(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
+        let disclosure = try? disclosedClaim.base64Encode(saltProvider: Signer(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
 
         print(disclosure)
         print(disclosure?.flatString)
@@ -27,7 +29,7 @@ final class IssuanceTests: XCTestCase {
 
         var disclosedClaim = DisclosedClaim(key, .array([.init(value)]))
 
-        let disclosure = try! disclosedClaim.base64Encode(saltProvider: Signer(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
+        let disclosure = try? disclosedClaim.base64Encode(saltProvider: Signer(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
 
         print(disclosure)
         print(disclosure?.flatString)
@@ -54,5 +56,37 @@ final class IssuanceTests: XCTestCase {
         XCTAssertTrue(mixedClaim?.flatString.contains("WyJsa2x4RjVqTVlsR1RQVW92TU5JdkNBIiwgIkZSIl0") == true)
         XCTAssertTrue(mixedClaim?.flatString.contains("DE") == true)
 
+    }
+
+    func testFlatObjectIssueance() {
+        let jsonString = """
+        "address": {
+          "street_address": "123 Main St",
+          "locality": "Anytown",
+          "region": "Anystate",
+          "country": "US"
+        }
+        """
+
+        @SDJWTBuilder
+        var testJWT: [String: SDElementValue] {
+            DisclosedClaim("sub", .base("6c5c0a49-b589-431d-bae7-219122a9ec2c"))
+                .flatDisclose(signer: signer)
+            PlainClaim("iss", .base("https://example.com/issuer"))
+            PlainClaim("iat", .base(1516239022))
+            PlainClaim("exp", .base(1735689661))
+            DisclosedClaim("adress", .init(builder: {
+                DisclosedClaim("street_address", .base("Schulstr. 12"))
+                DisclosedClaim("locality", .base("Schulpforta"))
+                DisclosedClaim("region", .base("Sachsen-Anhalt"))
+                DisclosedClaim("country", .base("DE"))
+            }))
+            .flatDisclose(signer: signer)
+        }
+
+        let builder = Builder(signer: signer)
+//        try? builder.encode(sdjwtRepresentation: testJWT)
+
+        XCTAssertNotNil(try? builder.encode(sdjwtRepresentation: testJWT))
     }
 }

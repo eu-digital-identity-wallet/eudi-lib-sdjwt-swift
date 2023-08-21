@@ -8,9 +8,9 @@
 import Foundation
 
 extension Encodable {
-    func toJSONString() throws -> String {
+    func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
         let encoder = JSONEncoder()
-        encoder.outputFormatting = .sortedKeys
+        encoder.outputFormatting = outputFormatting
 
         let jsonData = try encoder.encode(self)
 

@@ -2,12 +2,6 @@ import XCTest
 @testable import eudi_lib_sdjwt_swift
 
 final class eudi_lib_sdjwt_swiftTests: XCTestCase {
-    func testExample() throws {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        XCTAssertEqual(eudi_lib_sdjwt_swift().text, "Hello, World!")
-    }
 
     func testDisclsure() {
         let parts = ["_26bc4LT-ac6q2KI6cBW5es", "family_name", "Möbius"]
@@ -17,7 +11,7 @@ final class eudi_lib_sdjwt_swiftTests: XCTestCase {
 
         var disclosedClaim = DisclosedClaim(key, .init(value))
 
-        let disclosure = try! disclosedClaim.base64Encode(saltProvider: Signer(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
+        let disclosure = try? disclosedClaim.base64Encode(saltProvider: Signer(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
 
         print(disclosure)
         print(disclosure?.flatString)

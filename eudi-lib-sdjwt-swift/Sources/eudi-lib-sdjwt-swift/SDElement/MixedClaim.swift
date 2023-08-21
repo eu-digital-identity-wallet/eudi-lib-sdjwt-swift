@@ -15,7 +15,7 @@ struct MixedClaim: SDElement {
     var value: SDElementValue
 
     mutating func base64Encode(saltProvider: SaltProvider) throws -> Self? {
-        return nil
+        return self
     }
 
     init?(plainClaim: PlainClaim, disclosedClaim: DisclosedClaim) {

@@ -22,6 +22,7 @@ protocol SDElement: Encodable {
     ///
     mutating func base64Encode(saltProvider: SaltProvider) throws -> Self?
 
+
     mutating func build(key: String, @SDJWTArrayBuilder arrayBuilder builder: () -> [SDElementValue]) -> Self
     mutating func build(key: String, @SDJWTObjectBuilder objectBuilder builder: () -> SDObject) -> Self
     mutating func build(key: String, base builder: () -> AnyCodable) -> Self
@@ -33,7 +34,7 @@ extension SDElement {
     }
 
     var flatString: String {
-        return (try? self.value.toJSONString()) ?? ""
+        return (try? self.value.toJSONString(outputFormatting: .withoutEscapingSlashes)) ?? ""
     }
 
     mutating func build(key: String, @SDJWTArrayBuilder arrayBuilder builder: () -> [SDElementValue]) -> Self {

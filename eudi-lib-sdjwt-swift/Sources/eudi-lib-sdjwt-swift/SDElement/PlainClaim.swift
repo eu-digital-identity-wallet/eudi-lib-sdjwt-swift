@@ -24,7 +24,6 @@ struct PlainClaim: SDElement {
     // MARK: - Methods
 
     mutating func base64Encode(saltProvider: SaltProvider) throws -> Self? {
-
-        return nil
+        return self
     }
 }

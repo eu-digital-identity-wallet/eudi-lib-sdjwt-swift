@@ -11,6 +11,16 @@ import Codability
 typealias SDObject = [SDElement]
 
 enum SDElementValue: Encodable {
+
+    static func mergeArrays(value: SDElementValue, elementsToAdd: SDElementValue) -> SDElementValue? {
+        switch (value, elementsToAdd) {
+        case (.array(let array), .array(let arrayToAdd)):
+            return .array(array + arrayToAdd)
+        default:
+            return nil
+        }
+    }
+
     case base(AnyCodable)
     case array([SDElementValue])
     case object(SDObject)

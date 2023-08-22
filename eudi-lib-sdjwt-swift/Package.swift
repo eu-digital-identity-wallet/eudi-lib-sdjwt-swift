@@ -30,9 +30,13 @@ let package = Package(
             name: "eudi-lib-sdjwt-swift",
             dependencies: [
                 .product(name: "Codability", package: "Codability"),
-            ]),
+            ],
+            path: "Sources"
+        ),
         .testTarget(
             name: "eudi-lib-sdjwt-swiftTests",
-            dependencies: ["eudi-lib-sdjwt-swift"]),
+            dependencies: ["eudi-lib-sdjwt-swift"],
+            path: "Tests"),
+
     ]
 )

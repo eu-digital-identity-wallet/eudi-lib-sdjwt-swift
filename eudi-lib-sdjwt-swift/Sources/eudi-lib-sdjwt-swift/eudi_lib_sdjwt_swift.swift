@@ -1,12 +1,12 @@
 public struct eudi_lib_sdjwt_swift {
-    public private(set) var text = "Hello, World!"
+  public private(set) var text = "Hello, World!"
 
-    public init() {
-    }
+  public init() {
+  }
 }
 
 
 enum SDJWTError: Error {
-    case encodingError
-    case discloseError
+  case encodingError
+  case discloseError
 }

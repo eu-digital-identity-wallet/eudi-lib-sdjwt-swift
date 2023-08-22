@@ -22,7 +22,7 @@ final class eudi_lib_sdjwt_swiftTests: XCTestCase {
     let parts = ["_26bc4LT-ac6q2KI6cBW5es", "family_name", "Möbius"]
     let salt = parts[0]
     let key = parts[1]
-    let value = parts [2]
+    let value = parts[2]
 
     var disclosedClaim = DisclosedClaim(key, .init(value))
 

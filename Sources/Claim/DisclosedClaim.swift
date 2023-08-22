@@ -16,16 +16,16 @@
 import Foundation
 import Codability
 
-struct DisclosedClaim: SDElement {
+struct DisclosedClaim: Claim {
   
   // MARK: - Properties
   
   var key: String
-  var value: SDElementValue
+  var value: ClaimValue
   
   // MARK: - LifeCycle
   
-  init(_ key: String, _ value: SDElementValue) {
+  init(_ key: String, _ value: ClaimValue) {
     self.key = key
     self.value = value
   }
@@ -65,8 +65,8 @@ struct DisclosedClaim: SDElement {
     return self
   }
   
-  func hashValue(signer: Signer, base64EncodedValue: SDElementValue) throws -> SDElementValue {
-    guard case SDElementValue.base(let base64EncodedValue) = base64EncodedValue,
+  func hashValue(signer: Signer, base64EncodedValue: ClaimValue) throws -> ClaimValue {
+    guard case ClaimValue.base(let base64EncodedValue) = base64EncodedValue,
           let base64EncodedValue = base64EncodedValue.value as? String else {
       throw SDJWTError.encodingError
     }
@@ -78,7 +78,7 @@ struct DisclosedClaim: SDElement {
     return .init(hashedString)
   }
   
-  fileprivate func base64encodeBaseValue(_ baseValue: AnyCodable, saltProvider: SaltProvider) throws -> SDElementValue {
+  fileprivate func base64encodeBaseValue(_ baseValue: AnyCodable, saltProvider: SaltProvider) throws -> ClaimValue {
     let saltString = saltProvider.saltString
     let stringToEncode = "[\"\(saltString)\", \"\(key)\", \"\(baseValue.value)\"]"
     
@@ -90,8 +90,8 @@ struct DisclosedClaim: SDElement {
     return .base(AnyCodable(base64EncodedString))
   }
   
-  fileprivate func base64encodeArray(_ values: [SDElementValue], saltProvider: SaltProvider) throws -> SDElementValue {
-    var encodedArray: [SDElementValue] = []
+  fileprivate func base64encodeArray(_ values: [ClaimValue], saltProvider: SaltProvider) throws -> ClaimValue {
+    var encodedArray: [ClaimValue] = []
     for value in values {
       let string = try value.toJSONString()
       let saltString = saltProvider.saltString
@@ -107,7 +107,7 @@ struct DisclosedClaim: SDElement {
     return .array(encodedArray)
   }
   
-  fileprivate func base64encodeObject(_ object: (SDObject), saltProvider: SaltProvider) throws -> SDElementValue {
+  fileprivate func base64encodeObject(_ object: (SDObject), saltProvider: SaltProvider) throws -> ClaimValue {
     var encodedObjects: SDObject = []
     try object.forEach { element in
       var encodedElement = element

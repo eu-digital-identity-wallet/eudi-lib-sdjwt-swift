@@ -85,12 +85,15 @@ final class IssuanceTests: XCTestCase {
         """
     
     @SDJWTBuilder
-    var testJWT: [String: SDElementValue] {
+    var testJWT: [String: ClaimValue] {
       DisclosedClaim("sub", .base("6c5c0a49-b589-431d-bae7-219122a9ec2c"))
         .flatDisclose(signer: signer)
       PlainClaim("iss", .base("https://example.com/issuer"))
       PlainClaim("iat", .base(1516239022))
       PlainClaim("exp", .base(1735689661))
+      FlatDisclose(name: "parts") {
+
+      }
       DisclosedClaim("family_name", .base("Möbius"))
         .flatDisclose(signer: signer)
       DisclosedClaim("address", .init(builder: {
@@ -100,7 +103,7 @@ final class IssuanceTests: XCTestCase {
         DisclosedClaim("country", .base("DE"))
       }))
       .flatDisclose(signer: signer)
-      
+
     }
     
     let builder = Builder(signer: signer)
@@ -119,4 +122,5 @@ final class IssuanceTests: XCTestCase {
     let output = "uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"
     XCTAssertEqual(out, output)
   }
+
 }

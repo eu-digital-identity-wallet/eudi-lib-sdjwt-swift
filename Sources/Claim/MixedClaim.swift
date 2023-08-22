@@ -15,23 +15,27 @@
 */
 import Foundation
 
-struct PlainClaim: SDElement {
+struct MixedClaim: Claim {
   
   // MARK: - Properties
   
   var key: String
-  var value: SDElementValue
-  
-  // MARK: - LifeCycle
-  
-  init(_ key: String, _ value: SDElementValue) {
-    self.key = key
-    self.value = value
-  }
-  
-  // MARK: - Methods
+  var value: ClaimValue
   
   mutating func base64Encode(saltProvider: SaltProvider) throws -> Self? {
     return self
   }
+  
+  init?(plainClaim: PlainClaim, disclosedClaim: DisclosedClaim) {
+    self.key = plainClaim.key
+    self.value = .base(.init(arrayLiteral: [ClaimValue]()))
+    
+    switch (plainClaim.value, disclosedClaim.value) {
+    case (.array(let array), .array(let disclosedArray)):
+      self.value = .array(array + disclosedArray)
+    default:
+      return nil
+    }
+  }
+  
 }

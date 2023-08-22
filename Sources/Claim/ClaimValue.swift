@@ -16,11 +16,11 @@
 import Foundation
 import Codability
 
-typealias SDObject = [SDElement]
+typealias SDObject = [Claim]
 
-enum SDElementValue: Encodable {
+enum ClaimValue: Encodable {
   
-  static func mergeArrays(value: SDElementValue, elementsToAdd: SDElementValue) -> SDElementValue? {
+  static func mergeArrays(value: ClaimValue, elementsToAdd: ClaimValue) -> ClaimValue? {
     switch (value, elementsToAdd) {
     case (.array(let array), .array(let arrayToAdd)):
       return .array(array + arrayToAdd)
@@ -30,7 +30,7 @@ enum SDElementValue: Encodable {
   }
   
   case base(AnyCodable)
-  case array([SDElementValue])
+  case array([ClaimValue])
   case object(SDObject)
   
   // MARK: - Lifecycle
@@ -39,7 +39,7 @@ enum SDElementValue: Encodable {
     self = .base(AnyCodable(base))
   }
   
-  init(_ array: [SDElementValue]) {
+  init(_ array: [ClaimValue]) {
     self = .array(array)
   }
   

@@ -17,64 +17,48 @@ import Foundation
 
 @resultBuilder
 enum SDJWTBuilder {
-  static func buildBlock() -> [String: SDElementValue] { [:] }
-  
-  static func buildBlock(_ elements: [SDElement]) -> [String: SDElementValue] {
-    elements.reduce(into: [:]) { partialResult, element in
-      
-      if let value = partialResult["_sd"] {
-        if case SDElementValue.array(let array) = element.value {
-          partialResult[element.key] = SDElementValue.mergeArrays(value: value, elementsToAdd: element.value)
-        } else {
-          partialResult[element.key] = element.value
-        }
-      } else {
-        partialResult[element.key] = element.value
-      }
-      
+
+  static func buildBlock(_ elements: ClaimConvertible...) -> [String : ClaimValue] {
+    elements
+      .compactMap({$0})
+      .reduce(into: [:]) { partialResult, claim in
+      let element = claim.asElement()
+      partialResult[element.key] = element.value
     }
   }
-  
-  static func buildBlock(_ elements: SDElement...) -> [String: SDElementValue] {
-    self.buildBlock(elements.compactMap({$0}))
+
+  static func buildBlock(_ elements: ClaimConvertible?...) -> [String : ClaimValue] {
+    Self.buildBlock(elements.compactMap({$0}))
   }
-  
-  static func buildBlock(_ elements: SDElement?...) -> [String: SDElementValue] {
-    self.buildBlock(elements.compactMap{$0})
-  }
-  
-  static func buildOptional(_ elements: SDElement?...) -> [String : SDElementValue] {
-    elements.reduce(into: [:]) { partialResult, element in
-      if let key = element?.key {
-        partialResult[key] = element?.value
-      }
-    }
+
+  static func buildBlock(_ elements: [ClaimConvertible]) -> [String : ClaimValue] {
+    Self.buildBlock(elements.compactMap({$0}))
   }
 }
 
 @resultBuilder
 enum SDJWTObjectBuilder {
-  static func buildBlock(_ elements: SDElement...) -> [SDElement] {
+  static func buildBlock(_ elements: Claim...) -> [Claim] {
     elements
   }
 }
 
 @resultBuilder
 enum SDJWTArrayBuilder {
-  static func buildBlock(_ elements: SDElementValue...) -> [SDElementValue] {
+  static func buildBlock(_ elements: ClaimValue...) -> [ClaimValue] {
     elements
   }
 }
 
-func makeSDJWT(@SDJWTBuilder _ content: () -> [String: SDElementValue]) -> [String: SDElementValue] {
+func makeSDJWT(@SDJWTBuilder _ content: () -> [String: ClaimValue]) -> [String: ClaimValue] {
   content()
 }
 
-func makeDisclosed(@SDJWTBuilder _ content: (SaltProvider) -> [String: SDElementValue], saltProvider: SaltProvider) -> [String: SDElementValue] {
+func makeDisclosed(@SDJWTBuilder _ content: (SaltProvider) -> [String: ClaimValue], saltProvider: SaltProvider) -> [String: ClaimValue] {
   content(saltProvider)
 }
 
-func makeSDJWTObject(key: String, @SDJWTObjectBuilder _ content: () -> [SDElement]) -> (String, [SDElement]) {
+func makeSDJWTObject(key: String, @SDJWTObjectBuilder _ content: () -> [Claim]) -> (String, [Claim]) {
   return (key, content())
 }
 
@@ -90,11 +74,11 @@ class Builder {
     self.signer = signer
   }
   
-  func encode(sdjwtRepresentation: [String: SDElementValue]) throws {
+  func encode(sdjwtRepresentation: [String: ClaimValue]) throws {
     try print(sdjwtRepresentation.toJSONString())
   }
   
-  func encodeDisclosed(sdjwtRepresentation: [String: SDElementValue]) {
+  func encodeDisclosed(sdjwtRepresentation: [String: ClaimValue]) {
     sdjwtRepresentation.forEach { key, value in
       
     }

@@ -16,40 +16,31 @@
 import Foundation
 import CryptoKit
 
-class Signer {
+
+class DigestCreator {
   
   // MARK: - Properties
   
   var saltProvider: SaltProvider
-  
+  var hashingAlgorithm: HashingAlgorithm
   // MARK: - LifeCycle
   
-  init(saltProvider: SaltProvider = DefaultSaltProvider()) {
+  init(saltProvider: SaltProvider = DefaultSaltProvider(),
+       hashingAlgorithm: HashingAlgorithm = SHA256Hasher()) {
     self.saltProvider = saltProvider
+    self.hashingAlgorithm = hashingAlgorithm
   }
   
   // MARK: - Methods
   
-  func hashAndBase64Encode(input: String) -> String? {
-    // Convert input string to Data
-    guard let inputData = input.data(using: .utf8) else {
+  func hashAndBase64Encode(input: Disclosure) -> DisclosureDigest? {
+    guard let disclosureDigest = self.hashingAlgorithm.hash(disclosure: input) else {
       return nil
     }
-    
-    // Calculate SHA-256 hash
-    let hashedData = SHA256.hash(data: inputData)
-    
-    // Convert hash to Data
-    let hashData = Data(hashedData)
-    
     // Encode hash data in base64
-    let base64Hash = hashData.base64URLEncode()
+    let base64Hash = disclosureDigest.base64URLEncode()
     
     return base64Hash
   }
   
-}
-
-enum DiscloseObjectStrategy {
-  case flat
 }

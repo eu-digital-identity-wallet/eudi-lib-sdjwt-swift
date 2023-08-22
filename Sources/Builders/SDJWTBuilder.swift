@@ -17,23 +17,22 @@ import Foundation
 
 @resultBuilder
 enum SDJWTBuilder {
-
-  static func buildBlock(_ elements: ClaimConvertible...) -> [String : ClaimValue] {
-    elements
-      .compactMap({$0})
-      .reduce(into: [:]) { partialResult, claim in
-      let element = claim.asElement()
+  
+  static func buildBlock(elements: [ClaimConvertible]) -> [String: ClaimValue] {
+    elements.reduce(into: [:]) { partialResult, claimConvertible in
+      let element = claimConvertible.asElement()
       partialResult[element.key] = element.value
     }
   }
 
-  static func buildBlock(_ elements: ClaimConvertible?...) -> [String : ClaimValue] {
-    Self.buildBlock(elements.compactMap({$0}))
+  static func buildBlock(_ elements: ClaimConvertible?...) -> [String: ClaimValue] {
+    buildBlock(elements: elements.compactMap({$0}))
   }
 
-  static func buildBlock(_ elements: [ClaimConvertible]) -> [String : ClaimValue] {
-    Self.buildBlock(elements.compactMap({$0}))
+  static func buildBlock(_ elements: ClaimConvertible...) -> [String : ClaimValue] {
+    buildBlock(elements: elements.map({$0}))
   }
+
 }
 
 @resultBuilder
@@ -66,12 +65,12 @@ class Builder {
   
   // MARK: - Properties
   
-  let signer: Signer
+  let digestCreator: DigestCreator
   
   // MARK: - LifeCycle
   
-  init(signer: Signer = Signer()) {
-    self.signer = signer
+  init(digestCreator: DigestCreator = DigestCreator()) {
+    self.digestCreator = digestCreator
   }
   
   func encode(sdjwtRepresentation: [String: ClaimValue]) throws {

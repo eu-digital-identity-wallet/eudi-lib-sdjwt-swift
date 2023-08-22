@@ -17,7 +17,7 @@ protocol Claim: Encodable, ClaimConvertible {
   
   /// Disclose applied when needed in order to create the
   /// Element that we want to selectively disclose
-  /// - Parameter signer: The signer used in order to hash the values
+  /// - Parameter saltProvider: The SaltProvider used in order to hash the values
   /// - Returns: The modified element
   ///
   mutating func base64Encode(saltProvider: SaltProvider) throws -> Self?

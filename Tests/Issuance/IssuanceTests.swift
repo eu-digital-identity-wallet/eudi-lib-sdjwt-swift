@@ -19,7 +19,7 @@ import CryptoKit
 
 final class IssuanceTests: XCTestCase {
   
-  var signer = Signer()
+  var digestCreator = DigestCreator()
   
   func testDisclsure() {
     let parts = ["_26bc4LT-ac6q2KI6cBW5es", "family_name", "Möbius"]
@@ -29,7 +29,7 @@ final class IssuanceTests: XCTestCase {
     
     var disclosedClaim = DisclosedClaim(key, .init(value))
     
-    let disclosure = try? disclosedClaim.base64Encode(saltProvider: Signer(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
+    let disclosure = try? disclosedClaim.base64Encode(saltProvider: DigestCreator(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
     
     print(disclosure)
     print(disclosure?.flatString)
@@ -45,7 +45,7 @@ final class IssuanceTests: XCTestCase {
     
     var disclosedClaim = DisclosedClaim(key, .array([.init(value)]))
     
-    let disclosure = try? disclosedClaim.base64Encode(saltProvider: Signer(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
+    let disclosure = try? disclosedClaim.base64Encode(saltProvider: DigestCreator(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
     
     print(disclosure)
     print(disclosure?.flatString)
@@ -87,40 +87,83 @@ final class IssuanceTests: XCTestCase {
     @SDJWTBuilder
     var testJWT: [String: ClaimValue] {
       DisclosedClaim("sub", .base("6c5c0a49-b589-431d-bae7-219122a9ec2c"))
-        .flatDisclose(signer: signer)
+        .flatDisclose(digestCreator: digestCreator)
       PlainClaim("iss", .base("https://example.com/issuer"))
       PlainClaim("iat", .base(1516239022))
       PlainClaim("exp", .base(1735689661))
       FlatDisclose(name: "parts") {
-
+        return PlainClaim("test", .base("123"))
       }
       DisclosedClaim("family_name", .base("Möbius"))
-        .flatDisclose(signer: signer)
+        .flatDisclose(digestCreator: digestCreator)
       DisclosedClaim("address", .init(builder: {
         DisclosedClaim("street_address", .base("Schulstr. 12"))
         DisclosedClaim("locality", .base("Schulpforta"))
         DisclosedClaim("region", .base("Sachsen-Anhalt"))
         DisclosedClaim("country", .base("DE"))
       }))
-      .flatDisclose(signer: signer)
+      .flatDisclose(digestCreator: digestCreator)
 
     }
     
-    let builder = Builder(signer: signer)
+    let builder = Builder(digestCreator: digestCreator)
     //        try? builder.encode(sdjwtRepresentation: testJWT)
     
     XCTAssertNotNil(try? builder.encode(sdjwtRepresentation: testJWT))
   }
-  
-  func testBase64Hashing() {
-    //        
+
+  func testHashing() {
     let base64String = "WyI2cU1RdlJMNWhhaiIsICJmYW1pbHlfbmFtZSIsICJNw7ZiaXVzIl0"
-    let signer = Signer()
+    let signer = DigestCreator()
     let out = signer.hashAndBase64Encode(input: base64String)
     print(out)
+    let output = "uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"
+
+    XCTAssertEqual(out, output)
+  }
+  
+  func testBase64Hashing() {
+    let claim = DisclosedClaim("family_name", .base("Möbius"))
+//    claim.base64Encode(saltProvider: signer.saltProvider)
+    let hashedClaim = claim.flatDisclose(digestCreator:
+                                          DigestCreator(saltProvider: MockSaltProvider(saltString: "6qMQvRL5haj")))
+    let hashed = try! claim.hashValue(digestCreator: digestCreator, base64EncodedValue: claim.value)
+//    let out = signer.hashAndBase64Encode(input: base64String!)
+//    print(out)
     //
     let output = "uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"
-    XCTAssertEqual(out, output)
+
+    switch hashedClaim?.value {
+    case .array(let hashedArray):
+      print(hashedArray)
+      let firstValue = hashedArray.first!
+      let base = firstValue.value as! String
+      XCTAssertEqual(base, output)
+    default:
+      XCTFail("wrong inputs")
+    }
+
+  }
+
+  func testNests() {
+    @SDJWTBuilder
+    var testJWT: [String: ClaimValue] {
+      DisclosedClaim("address", .init(builder: {
+        DisclosedClaim("street_address", .base("Schulstr. 12"))
+        DisclosedClaim("locality", .base("Schulpforta"))
+        DisclosedClaim("region", .base("Sachsen-Anhalt"))
+        DisclosedClaim("country",
+          .object([PlainClaim("test", .base("123"))]))
+      }))
+      FlatDisclose(name: "test flat") {
+        return DisclosedClaim("family_name", .base("Möbius"))
+      }
+    }
+
+    let builder = Builder(digestCreator: digestCreator)
+    //        try? builder.encode(sdjwtRepresentation: testJWT)
+
+    XCTAssertNotNil(try? builder.encode(sdjwtRepresentation: testJWT))
   }
 
 }

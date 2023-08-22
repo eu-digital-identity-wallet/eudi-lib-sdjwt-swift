@@ -25,7 +25,7 @@ protocol SaltProvider {
 class DefaultSaltProvider: SaltProvider {
   
   var saltString: Salt {
-    return String(data: self.salt, encoding: .utf8) ?? ""
+    return salt.base64EncodedString()
   }
   
   var salt: Data {

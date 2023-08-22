@@ -15,34 +15,11 @@
  */
 import Foundation
 
-protocol DiscloseStrategyProtocol: ClaimConvertible {
-  var key: String { get }
-  var claimSet: [String : ClaimValue] { get }
+typealias Disclosure = String
+typealias DisclosureDigest = String
 
-  func asElement() -> Claim
+protocol HashingAlgorithm {
+  func hash(disclosure: Disclosure) -> Data?
 }
 
-struct FlatDisclose: DiscloseStrategyProtocol {
-  var key: String
-  var claimSet: [String : ClaimValue]
-
-  init(name: String,
-       @SDJWTBuilder builder: () -> [String : ClaimValue]) {
-    self.key = name
-    self.claimSet = builder()
-
-  }
-
-  func asElement() -> Claim {
-    let value = claimSet.reduce(into: "") { partialResult, element in
-
-    }
-
-
-    return DisclosedClaim(self.key, .base(""))
-  }
-}
-
-protocol ClaimConvertible {
-  func asElement() -> Claim
-}
+// TODO: Add An enum that will map hashing algorithm header to Hashing algorithm implementation

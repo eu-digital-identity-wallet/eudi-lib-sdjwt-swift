@@ -32,7 +32,7 @@ enum ClaimValue: Encodable {
   case base(AnyCodable)
   case array([ClaimValue])
   case object(SDObject)
-  
+
   // MARK: - Lifecycle
   
   init<T>(_ base: T) {
@@ -64,5 +64,17 @@ enum ClaimValue: Encodable {
       object.forEach({try? $0.encode(to: encoder)})
     }
   }
-  
+}
+
+extension ClaimValue {
+  var value: Any {
+    switch self {
+    case .array(let array):
+      return array.map({$0.value})
+    case .base(let anyCodable):
+      return anyCodable.value
+    case .object(let object):
+      return object.toSDElementValue()
+    }
+  }
 }

@@ -74,7 +74,7 @@ class Builder {
   }
   
   func encode(sdjwtRepresentation: [String: ClaimValue]) throws {
-    try print(sdjwtRepresentation.toJSONString())
+    try print(sdjwtRepresentation.toJSONString(outputFormatting: .prettyPrinted))
   }
   
   func encodeDisclosed(sdjwtRepresentation: [String: ClaimValue]) {

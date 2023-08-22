@@ -87,7 +87,6 @@ final class IssuanceTests: XCTestCase {
     @SDJWTBuilder
     var testJWT: [String: ClaimValue] {
       DisclosedClaim("sub", .base("6c5c0a49-b589-431d-bae7-219122a9ec2c"))
-        .flatDisclose(digestCreator: digestCreator)
       PlainClaim("iss", .base("https://example.com/issuer"))
       PlainClaim("iat", .base(1516239022))
       PlainClaim("exp", .base(1735689661))
@@ -95,14 +94,13 @@ final class IssuanceTests: XCTestCase {
         return PlainClaim("test", .base("123"))
       }
       DisclosedClaim("family_name", .base("Möbius"))
-        .flatDisclose(digestCreator: digestCreator)
+
       DisclosedClaim("address", .init(builder: {
         DisclosedClaim("street_address", .base("Schulstr. 12"))
         DisclosedClaim("locality", .base("Schulpforta"))
         DisclosedClaim("region", .base("Sachsen-Anhalt"))
         DisclosedClaim("country", .base("DE"))
       }))
-      .flatDisclose(digestCreator: digestCreator)
 
     }
     
@@ -124,16 +122,14 @@ final class IssuanceTests: XCTestCase {
   
   func testBase64Hashing() {
     let claim = DisclosedClaim("family_name", .base("Möbius"))
-//    claim.base64Encode(saltProvider: signer.saltProvider)
-    let hashedClaim = claim.flatDisclose(digestCreator:
-                                          DigestCreator(saltProvider: MockSaltProvider(saltString: "6qMQvRL5haj")))
-    let hashed = try! claim.hashValue(digestCreator: digestCreator, base64EncodedValue: claim.value)
-//    let out = signer.hashAndBase64Encode(input: base64String!)
-//    print(out)
-    //
+    //    claim.base64Encode(saltProvider: signer.saltProvider)
+    let hashedClaim = FlatDisclose(name: "family_name", digestCreator: DigestCreator(saltProvider: MockSaltProvider(saltString: "6qMQvRL5haj"))) {
+      return claim
+    }
+      .asElement()
     let output = "uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"
 
-    switch hashedClaim?.value {
+    switch hashedClaim.value {
     case .array(let hashedArray):
       print(hashedArray)
       let firstValue = hashedArray.first!
@@ -153,7 +149,7 @@ final class IssuanceTests: XCTestCase {
         DisclosedClaim("locality", .base("Schulpforta"))
         DisclosedClaim("region", .base("Sachsen-Anhalt"))
         DisclosedClaim("country",
-          .object([PlainClaim("test", .base("123"))]))
+                       .object([PlainClaim("test", .base("123"))]))
       }))
       FlatDisclose(name: "test flat") {
         return DisclosedClaim("family_name", .base("Möbius"))

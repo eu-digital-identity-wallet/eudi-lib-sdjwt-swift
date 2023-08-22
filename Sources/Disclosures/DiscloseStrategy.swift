@@ -33,12 +33,20 @@ struct FlatDisclose: DiscloseStrategyProtocol {
   var key: String
   var claim: Claim
 
+  var digestCreator: DigestCreator
   // MARK: - LifeCycle
 
   init(name: String,
+       digestCreator: DigestCreator? = nil,
        builder: () -> Claim) {
     self.key = name
     self.claim = builder()
+
+    if let digestCreator = digestCreator {
+      self.digestCreator = digestCreator
+    } else {
+      self.digestCreator = DigestCreator()
+    }
 
   }
 
@@ -46,43 +54,53 @@ struct FlatDisclose: DiscloseStrategyProtocol {
 
   func asElement() -> Claim {
     let disclosed = DisclosedClaim(self.key, self.claim.value)
-    guard let disclosed = disclosed.flatDisclose(digestCreator: DigestCreator()) else {
+    guard let disclosed = self.flatDisclose(claim: disclosed, signer: digestCreator) else {
       return disclosed
     }
     return disclosed
   }
 
-  func flatDisclose(claim: Claim, signer: DigestCreator) -> Self? {
-    return nil
+  func flatDisclose(claim: Claim, signer: DigestCreator) -> Claim? {
     var claim = claim
-    var hashedElement = try? claim.base64Encode(saltProvider: signer.saltProvider)
-    hashedElement?.key = "_sd"
-//
-//    guard let hashedValue = try? self.hashValue(signer: signer, base64EncodedValue: hashedElement.value) else {
-//      return nil
-//    }
-////
-//    hashedElement.value = .array([hashedValue])
-//
-//    return hashedElement
-  }
-}
-
-// TODO: Add the correct functionality in the DSL
-
-extension DisclosedClaim {
-
-  func flatDisclose(digestCreator: DigestCreator) -> Self? {
-
-    var hashedElement = self.base64Encode(saltProvider: digestCreator.saltProvider)
-    hashedElement.key = "_sd"
-
-    guard let hashedValue = try? self.hashValue(digestCreator: digestCreator, base64EncodedValue: hashedElement.value) else {
+    guard let encoded = try? claim.base64Encode(saltProvider: signer.saltProvider) else {
       return nil
     }
 
-    hashedElement.value = .array([hashedValue])
+    guard let hashedValue = try? claim.hashValue(digestCreator: signer, base64EncodedValue: encoded.value) else {
+      return nil
+    }
 
-    return hashedElement
+    switch claim.value {
+    case .array(let array):
+  
+      claim.value = .array(array + [hashedValue])
+    case .base:
+      claim.key = "_sd"
+      claim.value  = .array([hashedValue])
+    case .object:
+      claim.key = "_sd"
+      claim.value  = .array([hashedValue])
+    }
+
+    return claim
   }
 }
+
+//// TODO: Add the correct functionality in the DSL
+//
+//extension DisclosedClaim {
+//
+//  func flatDisclose(digestCreator: DigestCreator) -> Self? {
+//
+//    var hashedElement = self.base64Encode(saltProvider: digestCreator.saltProvider)
+//    hashedElement.key = "_sd"
+//
+//    guard let hashedValue = try? self.hashValue(digestCreator: digestCreator, base64EncodedValue: hashedElement.value) else {
+//      return nil
+//    }
+//
+//    hashedElement.value = .array([hashedValue])
+//
+//    return hashedElement
+//  }
+//}

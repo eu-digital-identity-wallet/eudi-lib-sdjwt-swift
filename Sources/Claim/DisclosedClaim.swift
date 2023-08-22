@@ -93,7 +93,7 @@ struct DisclosedClaim: Claim {
   fileprivate func base64encodeArray(_ values: [ClaimValue], saltProvider: SaltProvider) throws -> ClaimValue {
     var encodedArray: [ClaimValue] = []
     for value in values {
-      let string = try value.toJSONString()
+      let string = try value.toJSONString(outputFormatting: .withoutEscapingSlashes)
       let saltString = saltProvider.saltString
       let stringToEncode = "[\"\(saltString)\", \(string)]"
       

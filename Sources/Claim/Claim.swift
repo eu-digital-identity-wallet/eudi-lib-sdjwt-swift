@@ -29,7 +29,7 @@ protocol Claim: Encodable, ClaimConvertible {
   /// - Returns: The modified element
   ///
   mutating func base64Encode(saltProvider: SaltProvider) throws -> Self?
-  
+  func hashValue(digestCreator: DigestCreator, base64EncodedValue: ClaimValue) throws -> ClaimValue
   
   mutating func build(key: String, @SDJWTArrayBuilder arrayBuilder builder: () -> [ClaimValue]) -> Self
   mutating func build(key: String, @SDJWTObjectBuilder objectBuilder builder: () -> SDObject) -> Self
@@ -65,6 +65,10 @@ extension Claim {
     self.key = key
     self.value = .base(builder())
     return self
+  }
+
+  func hashValue(digestCreator: DigestCreator, base64EncodedValue: ClaimValue) throws -> ClaimValue {
+    return self.value
   }
 }
 

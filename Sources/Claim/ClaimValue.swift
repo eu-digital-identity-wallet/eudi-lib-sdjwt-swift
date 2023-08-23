@@ -54,7 +54,6 @@ enum ClaimValue: Encodable {
   // MARK: - Methods - Encodable
   
   func encode(to encoder: Encoder) {
-    print(encoder.codingPath)
     switch self {
     case .base(let base):
       try? base.encode(to: encoder)

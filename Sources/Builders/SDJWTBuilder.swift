@@ -18,18 +18,20 @@ import Foundation
 @resultBuilder
 enum SDJWTBuilder {
   
-  static func buildBlock(elements: [ClaimConvertible]) -> [String: ClaimValue] {
+  static func buildBlock(elements: [ClaimConvertible]) -> [String: SDJWTElement] {
     elements.reduce(into: [:]) { partialResult, claimConvertible in
-      let element = claimConvertible.asElement()
-      partialResult[element.key] = element.value
+      let element = claimConvertible.asJWTElement()
+      let (claim, digest) = element
+      partialResult[claim.key] = (claim, digest)
+//      partialResult[element.claim] = (element.claim, element.disclosure)
     }
   }
 
-  static func buildBlock(_ elements: ClaimConvertible?...) -> [String: ClaimValue] {
+  static func buildBlock(_ elements: ClaimConvertible?...) -> [String: SDJWTElement] {
     buildBlock(elements: elements.compactMap({$0}))
   }
 
-  static func buildBlock(_ elements: ClaimConvertible...) -> [String : ClaimValue] {
+  static func buildBlock(_ elements: ClaimConvertible...) -> [String: SDJWTElement] {
     buildBlock(elements: elements.map({$0}))
   }
 
@@ -73,8 +75,11 @@ class Builder {
     self.digestCreator = digestCreator
   }
   
-  func encode(sdjwtRepresentation: [String: ClaimValue]) throws {
-    try print(sdjwtRepresentation.toJSONString(outputFormatting: .prettyPrinted))
+  func encode(sdjwtRepresentation: [String: SDJWTElement]) throws {
+    let convertedDictionary = Dictionary(uniqueKeysWithValues: sdjwtRepresentation.map { key, value in
+      return (key, value.claim.value)
+    })
+    try print(convertedDictionary.toJSONString(outputFormatting: .prettyPrinted))
   }
   
   func encodeDisclosed(sdjwtRepresentation: [String: ClaimValue]) {

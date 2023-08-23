@@ -85,23 +85,23 @@ final class IssuanceTests: XCTestCase {
         """
     
     @SDJWTBuilder
-    var testJWT: [String: ClaimValue] {
-      DisclosedClaim("sub", .base("6c5c0a49-b589-431d-bae7-219122a9ec2c"))
+    var testJWT: [String: SDJWTElement] {
+//      DisclosedClaim("sub", .base("6c5c0a49-b589-431d-bae7-219122a9ec2c"))
       PlainClaim("iss", .base("https://example.com/issuer"))
       PlainClaim("iat", .base(1516239022))
       PlainClaim("exp", .base(1735689661))
-      FlatDisclose(name: "parts") {
-        return PlainClaim("test", .base("123"))
-      }
+//      FlatDisclose(name: "parts") {
+//        return PlainClaim("test", .base("123"))
+//      }
       DisclosedClaim("family_name", .base("Möbius"))
-
-      DisclosedClaim("address", .init(builder: {
-        DisclosedClaim("street_address", .base("Schulstr. 12"))
-        DisclosedClaim("locality", .base("Schulpforta"))
-        DisclosedClaim("region", .base("Sachsen-Anhalt"))
-        DisclosedClaim("country", .base("DE"))
-      }))
-
+      FlatDisclose(name: "adress") {
+        DisclosedClaim("address", .init(builder: {
+          DisclosedClaim("street_address", .base("Schulstr. 12"))
+          DisclosedClaim("locality", .base("Schulpforta"))
+          DisclosedClaim("region", .base("Sachsen-Anhalt"))
+          DisclosedClaim("country", .base("DE"))
+        }))
+      }
     }
     
     let builder = Builder(digestCreator: digestCreator)
@@ -126,10 +126,10 @@ final class IssuanceTests: XCTestCase {
     let hashedClaim = FlatDisclose(name: "family_name", digestCreator: DigestCreator(saltProvider: MockSaltProvider(saltString: "6qMQvRL5haj"))) {
       return claim
     }
-      .asElement()
+      .asJWTElement()
     let output = "uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"
 
-    switch hashedClaim.value {
+    switch hashedClaim.claim.value {
     case .array(let hashedArray):
       print(hashedArray)
       let firstValue = hashedArray.first!
@@ -143,7 +143,7 @@ final class IssuanceTests: XCTestCase {
 
   func testNests() {
     @SDJWTBuilder
-    var testJWT: [String: ClaimValue] {
+    var testJWT: [String: SDJWTElement] {
       DisclosedClaim("address", .init(builder: {
         DisclosedClaim("street_address", .base("Schulstr. 12"))
         DisclosedClaim("locality", .base("Schulpforta"))

@@ -36,4 +36,16 @@ extension String {
     
     return data
   }
+
+  func dropFirstAndLast() -> String {
+    if self.count >= 2 {
+        let startIndex = self.index(after: self.startIndex)
+        let endIndex = self.index(before: self.endIndex)
+
+        let result = self[startIndex..<endIndex]
+        return String(result)
+    } else {
+      return self
+    }
+  }
 }

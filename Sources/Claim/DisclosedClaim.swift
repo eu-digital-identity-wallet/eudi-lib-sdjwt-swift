@@ -80,7 +80,7 @@ struct DisclosedClaim: Claim {
   
   fileprivate func base64encodeBaseValue(_ baseValue: AnyCodable, saltProvider: SaltProvider) throws -> ClaimValue {
     let saltString = saltProvider.saltString
-    let stringToEncode = "[\"\(saltString)\", \"\(key)\", \"\(baseValue.value)\"]"
+    let stringToEncode = "[\"\(saltString)\", \"\(key)\", \(self.flatString)]"
     
     let base64data = stringToEncode.data(using: .utf8)
     guard let base64EncodedString = base64data?.base64URLEncode() else {

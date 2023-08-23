@@ -28,6 +28,7 @@ protocol Claim: Encodable, ClaimConvertible {
   /// - Parameter saltProvider: The SaltProvider used in order to hash the values
   /// - Returns: The modified element
   ///
+  func base64Encode(saltProvider: SaltProvider) -> Self
   mutating func base64Encode(saltProvider: SaltProvider) throws -> Self?
   func hashValue(digestCreator: DigestCreator, base64EncodedValue: ClaimValue) throws -> ClaimValue
   
@@ -42,11 +43,12 @@ extension Claim {
   }
   
   var flatString: String {
-    return (try? self.value.toJSONString(outputFormatting: .withoutEscapingSlashes)) ?? ""
+    let string = try? self.value.toJSONString(outputFormatting: .sortedKeys)
+    return string ?? ""
   }
 
-  func asElement() -> Claim {
-    return self
+  func asJWTElement() -> SDJWTElement {
+    return (self, self.base64Encode(saltProvider: DigestCreator().saltProvider).flatString)
   }
   
   mutating func build(key: String, @SDJWTArrayBuilder arrayBuilder builder: () -> [ClaimValue]) -> Self {

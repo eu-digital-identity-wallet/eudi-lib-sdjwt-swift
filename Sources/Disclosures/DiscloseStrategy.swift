@@ -15,15 +15,17 @@
  */
 import Foundation
 
+typealias SDJWTElement = (claim: Claim, disclosure: Disclosure?)
+
 protocol DiscloseStrategyProtocol: ClaimConvertible {
   var key: String { get }
   var claim: Claim { get }
 
-  func asElement() -> Claim
+  func asJWTElement() -> SDJWTElement
 }
 
 protocol ClaimConvertible {
-  func asElement() -> Claim
+  func asJWTElement() -> SDJWTElement
 }
 
 struct FlatDisclose: DiscloseStrategyProtocol {
@@ -52,12 +54,13 @@ struct FlatDisclose: DiscloseStrategyProtocol {
 
   // MARK: - Methods
 
-  func asElement() -> Claim {
-    let disclosed = DisclosedClaim(self.key, self.claim.value)
+  func asJWTElement() -> SDJWTElement {
+    let disclosed = DisclosedClaim(self.key, .init(self.claim.flatString))
+    let digest = disclosed.base64Encode(saltProvider: digestCreator.saltProvider).flatString
     guard let disclosed = self.flatDisclose(claim: disclosed, signer: digestCreator) else {
-      return disclosed
+      return (disclosed, digest)
     }
-    return disclosed
+    return (disclosed, digest)
   }
 
   func flatDisclose(claim: Claim, signer: DigestCreator) -> Claim? {

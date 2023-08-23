@@ -31,6 +31,10 @@ struct PlainClaim: Claim {
 
   // MARK: - Methods
 
+  func base64Encode(saltProvider: SaltProvider) -> Self {
+    return self
+  }
+  
   mutating func base64Encode(saltProvider: SaltProvider) throws -> Self? {
     return self
   }

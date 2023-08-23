@@ -14,3 +14,5 @@
  * limitations under the License.
  */
 import Foundation
+
+// TODO: Build Array with DSL in order to avoid return in closures

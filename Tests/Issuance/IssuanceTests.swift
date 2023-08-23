@@ -26,15 +26,16 @@ final class IssuanceTests: XCTestCase {
     let salt = parts[0]
     let key = parts[1]
     let value = parts [2]
-    
-    var disclosedClaim = DisclosedClaim(key, .init(value))
-    
-    let disclosure = try? disclosedClaim.base64Encode(saltProvider: DigestCreator(saltProvider: MockSaltProvider(saltString: salt)).saltProvider)
-    
-    print(disclosure)
-    print(disclosure?.flatString)
-    
-    XCTAssertTrue(disclosure?.flatString.contains("WyJfMjZiYzRMVC1hYzZxMktJNmNCVzVlcyIsICJmYW1pbHlfbmFtZSIsICJNw7ZiaXVzIl0") == true)
+
+    let digestCreator = DigestCreator(saltProvider: MockSaltProvider(saltString: salt))
+
+    let flat =
+    FlatDisclose(name: key, digestCreator: digestCreator) {
+      DisclosedClaim(key, .init(value))
+    }
+    .asJWTElement()
+    print(flat.disclosure)
+    XCTAssertTrue(flat.disclosure == "WyJfMjZiYzRMVC1hYzZxMktJNmNCVzVlcyIsICJmYW1pbHlfbmFtZSIsICJNw7ZiaXVzIl0")
   }
   
   func testArray() {
@@ -127,6 +128,7 @@ final class IssuanceTests: XCTestCase {
       return claim
     }
       .asJWTElement()
+    print(hashedClaim.disclosure)
     let output = "uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"
 
     switch hashedClaim.claim.value {

@@ -43,12 +43,14 @@ extension Claim {
   }
   
   var flatString: String {
-    let string = try? self.value.toJSONString(outputFormatting: .sortedKeys)
-    return string ?? ""
+    guard let string = try? self.value.toJSONString(outputFormatting: .withoutEscapingSlashes) else {
+      return ""
+    }
+    return string
   }
 
   func asJWTElement() -> SDJWTElement {
-    return (self, self.base64Encode(saltProvider: DigestCreator().saltProvider).flatString)
+    return (self, self.flatString)
   }
   
   mutating func build(key: String, @SDJWTArrayBuilder arrayBuilder builder: () -> [ClaimValue]) -> Self {

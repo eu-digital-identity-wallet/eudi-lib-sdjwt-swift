@@ -20,7 +20,7 @@ import CryptoKit
 class DigestCreator {
   
   // MARK: - Properties
-  
+
   var saltProvider: SaltProvider
   var hashingAlgorithm: HashingAlgorithm
   // MARK: - LifeCycle

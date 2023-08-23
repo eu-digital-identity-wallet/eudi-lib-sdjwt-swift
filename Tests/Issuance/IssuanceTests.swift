@@ -30,7 +30,7 @@ final class IssuanceTests: XCTestCase {
     let digestCreator = DigestCreator(saltProvider: MockSaltProvider(saltString: salt))
 
     let flat =
-    FlatDisclose(name: key, digestCreator: digestCreator) {
+    FlatDisclose(digestCreator: digestCreator) {
       DisclosedClaim(key, .init(value))
     }
     .asJWTElement()
@@ -86,17 +86,17 @@ final class IssuanceTests: XCTestCase {
         """
     
     @SDJWTBuilder
-    var testJWT: [String: SDJWTElement] {
-//      DisclosedClaim("sub", .base("6c5c0a49-b589-431d-bae7-219122a9ec2c"))
+    var testJWT: [SDJWTElement] {
+      //      DisclosedClaim("sub", .base("6c5c0a49-b589-431d-bae7-219122a9ec2c"))
       PlainClaim("iss", .base("https://example.com/issuer"))
       PlainClaim("iat", .base(1516239022))
       PlainClaim("exp", .base(1735689661))
-//      FlatDisclose(name: "parts") {
-//        return PlainClaim("test", .base("123"))
-//      }
+      //      FlatDisclose(name: "parts") {
+      //        return PlainClaim("test", .base("123"))
+      //      }
       DisclosedClaim("family_name", .base("Möbius"))
-      FlatDisclose(name: "adress") {
-        DisclosedClaim("address", .init(builder: {
+      FlatDisclose {
+        DisclosedClaim("address", .init({
           DisclosedClaim("street_address", .base("Schulstr. 12"))
           DisclosedClaim("locality", .base("Schulpforta"))
           DisclosedClaim("region", .base("Sachsen-Anhalt"))
@@ -124,7 +124,7 @@ final class IssuanceTests: XCTestCase {
   func testBase64Hashing() {
     let claim = DisclosedClaim("family_name", .base("Möbius"))
     //    claim.base64Encode(saltProvider: signer.saltProvider)
-    let hashedClaim = FlatDisclose(name: "family_name", digestCreator: DigestCreator(saltProvider: MockSaltProvider(saltString: "6qMQvRL5haj"))) {
+    let hashedClaim = FlatDisclose(digestCreator: DigestCreator(saltProvider: MockSaltProvider(saltString: "6qMQvRL5haj"))) {
       return claim
     }
       .asJWTElement()
@@ -145,15 +145,15 @@ final class IssuanceTests: XCTestCase {
 
   func testNests() {
     @SDJWTBuilder
-    var testJWT: [String: SDJWTElement] {
-      DisclosedClaim("address", .init(builder: {
+    var testJWT: [SDJWTElement] {
+      DisclosedClaim("address", .init({
         DisclosedClaim("street_address", .base("Schulstr. 12"))
         DisclosedClaim("locality", .base("Schulpforta"))
         DisclosedClaim("region", .base("Sachsen-Anhalt"))
         DisclosedClaim("country",
                        .object([PlainClaim("test", .base("123"))]))
       }))
-      FlatDisclose(name: "test flat") {
+      FlatDisclose {
         return DisclosedClaim("family_name", .base("Möbius"))
       }
     }
@@ -164,4 +164,51 @@ final class IssuanceTests: XCTestCase {
     XCTAssertNotNil(try? builder.encode(sdjwtRepresentation: testJWT))
   }
 
+
+  func testFlatDisclosure() {
+    //    {
+    //      "sub": "user_42",
+    //      "given_name": "John",
+    //      "family_name": "Doe",
+    //      "email": "johndoe@example.com",
+    //      "phone_number": "+1-202-555-0101",
+    //      "phone_number_verified": true,
+    //      "birthdate": "1940-01-01",
+    //      "updated_at": 1570000000,
+    //    }
+    //
+    //    The Issuer in this case made the following decisions:
+    //
+    //    The nationalities array is always visible, but its contents are selectively disclosable.
+    //    The sub element and essential verification data (iss, iat, cnf, etc.) are always visible.
+    //    All other End-User claims are selectively disclosable.
+    //    For address, the Issuer is using a flat structure, i.e., all of the claims in the address claim can only be disclosed in full. Other options are discussed in Section 5.7.
+
+    @SDJWTBuilder
+    var flatDisclosed: [SDJWTElement] {
+      FlatDisclose {
+        DisclosedClaim("adress", ClaimValue({
+          DisclosedClaim("street_address", "123 Main St")
+          DisclosedClaim("locality", "Anytown")
+          DisclosedClaim("region", "Anystate")
+          DisclosedClaim("country", "US")
+        }))
+      }
+      DisclosedClaim("sub", "user_42")
+      DisclosedClaim("given_name", "John")
+      DisclosedClaim("family_name", "Doe")
+      DisclosedClaim("email",  "johndoe@example.com")
+      DisclosedClaim("phone_number", "+1-202-555-0101")
+      DisclosedClaim("phone_number_verified", .base(true))
+      DisclosedClaim("birthdate", "1940-01-01")
+      DisclosedClaim("updated_at", .base(1570000000))
+      FlatDisclose {
+        DisclosedClaim("nationalities", .array([.base("DE"), .base("US")]))
+      }
+    }
+
+    print(flatDisclosed)
+
+    try? Builder().encode(sdjwtRepresentation: flatDisclosed)
+  }
 }

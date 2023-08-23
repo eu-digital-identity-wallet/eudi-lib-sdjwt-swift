@@ -18,7 +18,7 @@ import Foundation
 typealias SDJWTElement = (claim: Claim, disclosure: Disclosure?)
 
 protocol DiscloseStrategyProtocol: ClaimConvertible {
-  var key: String { get }
+
   var claim: Claim { get }
 
   func asJWTElement() -> SDJWTElement
@@ -32,16 +32,12 @@ struct FlatDisclose: DiscloseStrategyProtocol {
 
   // MARK: - Properties
 
-  var key: String
   var claim: Claim
-
   var digestCreator: DigestCreator
   // MARK: - LifeCycle
 
-  init(name: String,
-       digestCreator: DigestCreator? = nil,
+  init(digestCreator: DigestCreator? = nil,
        builder: () -> Claim) {
-    self.key = name
     self.claim = builder()
 
     if let digestCreator = digestCreator {
@@ -55,32 +51,28 @@ struct FlatDisclose: DiscloseStrategyProtocol {
   // MARK: - Methods
 
   func asJWTElement() -> SDJWTElement {
-    let disclosed = DisclosedClaim(self.key, .init(self.claim.flatString))
+    let disclosed = DisclosedClaim(claim.key, .init(claim.flatString))
     let digest = disclosed.base64Encode(saltProvider: digestCreator.saltProvider).flatString
-    guard let disclosed = self.flatDisclose(claim: disclosed, signer: digestCreator) else {
+    guard let disclosed = self.flatDisclose(claim: disclosed, digestCreator: digestCreator) else {
       return (disclosed, digest)
     }
     return (disclosed, digest)
   }
 
-  func flatDisclose(claim: Claim, signer: DigestCreator) -> Claim? {
+  func flatDisclose(claim: Claim, digestCreator: DigestCreator) -> Claim? {
     var claim = claim
-    guard let encoded = try? claim.base64Encode(saltProvider: signer.saltProvider) else {
+    guard let encoded = try? claim.base64Encode(saltProvider: digestCreator.saltProvider) else {
       return nil
     }
 
-    guard let hashedValue = try? claim.hashValue(digestCreator: signer, base64EncodedValue: encoded.value) else {
+    guard let hashedValue = try? claim.hashValue(digestCreator: digestCreator, base64EncodedValue: encoded.value) else {
       return nil
     }
 
     switch claim.value {
     case .array(let array):
-  
       claim.value = .array(array + [hashedValue])
-    case .base:
-      claim.key = "_sd"
-      claim.value  = .array([hashedValue])
-    case .object:
+    case .object, . base:
       claim.key = "_sd"
       claim.value  = .array([hashedValue])
     }
@@ -88,22 +80,3 @@ struct FlatDisclose: DiscloseStrategyProtocol {
     return claim
   }
 }
-
-//// TODO: Add the correct functionality in the DSL
-//
-//extension DisclosedClaim {
-//
-//  func flatDisclose(digestCreator: DigestCreator) -> Self? {
-//
-//    var hashedElement = self.base64Encode(saltProvider: digestCreator.saltProvider)
-//    hashedElement.key = "_sd"
-//
-//    guard let hashedValue = try? self.hashValue(digestCreator: digestCreator, base64EncodedValue: hashedElement.value) else {
-//      return nil
-//    }
-//
-//    hashedElement.value = .array([hashedValue])
-//
-//    return hashedElement
-//  }
-//}

@@ -48,10 +48,6 @@ extension Claim {
     }
     return string
   }
-
-  func asJWTElement() -> SDJWTElement {
-    return (self, self.flatString)
-  }
   
   mutating func build(key: String, @SDJWTArrayBuilder arrayBuilder builder: () -> [ClaimValue]) -> Self {
     self.key = key

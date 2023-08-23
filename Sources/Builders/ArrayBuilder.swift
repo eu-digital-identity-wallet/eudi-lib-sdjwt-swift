@@ -15,4 +15,9 @@
  */
 import Foundation
 
-// TODO: Build Array with DSL in order to avoid return in closures
+@resultBuilder
+enum SDJWTArrayBuilder {
+  static func buildBlock(_ elements: ClaimValue...) -> [ClaimValue] {
+    elements
+  }
+}

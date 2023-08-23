@@ -15,4 +15,9 @@
  */
 import Foundation
 
-// TODO: Build object with DSL in order to avoid return in closures
+@resultBuilder
+enum SDJWTObjectBuilder {
+  static func buildBlock(_ elements: Claim...) -> [Claim] {
+    elements
+  }
+}

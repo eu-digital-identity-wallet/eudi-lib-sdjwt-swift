@@ -41,5 +41,8 @@ struct MixedClaim: Claim {
       return nil
     }
   }
-  
+
+  func asJWTElement() -> SDJWTElement {
+    return (self, nil)
+  }
 }

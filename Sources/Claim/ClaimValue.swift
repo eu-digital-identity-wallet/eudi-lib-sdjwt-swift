@@ -24,6 +24,10 @@ enum ClaimValue: Encodable {
     switch (value, elementsToAdd) {
     case (.array(let array), .array(let arrayToAdd)):
       return .array(array + arrayToAdd)
+    case (.array(let array), .base):
+      return .array(array + [elementsToAdd])
+    case (.base, .base):
+      return .array([value, elementsToAdd])
     default:
       return nil
     }
@@ -39,7 +43,7 @@ enum ClaimValue: Encodable {
     self = .base(AnyCodable(base))
   }
   
-  init(_ array: [ClaimValue]) {
+  init(_  array: [ClaimValue]) {
     self = .array(array)
   }
   
@@ -47,8 +51,12 @@ enum ClaimValue: Encodable {
     self = .object(object)
   }
   
-  init(@SDJWTObjectBuilder builder: () -> SDObject) {
+  init(@SDJWTObjectBuilder _ builder: () -> SDObject) {
     self = .object(builder())
+  }
+
+  init(@SDJWTArrayBuilder _ builder: () -> [ClaimValue]) {
+    self = .array(builder())
   }
   
   // MARK: - Methods - Encodable

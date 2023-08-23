@@ -18,49 +18,18 @@ import Foundation
 @resultBuilder
 enum SDJWTBuilder {
   
-  static func buildBlock(elements: [ClaimConvertible]) -> [String: SDJWTElement] {
-    elements.reduce(into: [:]) { partialResult, claimConvertible in
-      let element = claimConvertible.asJWTElement()
-      let (claim, digest) = element
-      partialResult[claim.key] = (claim, digest)
-//      partialResult[element.claim] = (element.claim, element.disclosure)
-    }
+  static func buildBlock(elements: [ClaimConvertible]) -> [SDJWTElement] {
+    elements.map({$0.asJWTElement()})
   }
 
-  static func buildBlock(_ elements: ClaimConvertible?...) -> [String: SDJWTElement] {
+  static func buildBlock(_ elements: ClaimConvertible?...) -> [SDJWTElement] {
     buildBlock(elements: elements.compactMap({$0}))
   }
 
-  static func buildBlock(_ elements: ClaimConvertible...) -> [String: SDJWTElement] {
+  static func buildBlock(_ elements: ClaimConvertible...) -> [SDJWTElement] {
     buildBlock(elements: elements.map({$0}))
   }
 
-}
-
-@resultBuilder
-enum SDJWTObjectBuilder {
-  static func buildBlock(_ elements: Claim...) -> [Claim] {
-    elements
-  }
-}
-
-@resultBuilder
-enum SDJWTArrayBuilder {
-  static func buildBlock(_ elements: ClaimValue...) -> [ClaimValue] {
-    elements
-  }
-}
-
-func makeSDJWT(@SDJWTBuilder _ content: () -> [String: ClaimValue]) -> [String: ClaimValue] {
-  content()
-}
-
-func makeDisclosed(@SDJWTBuilder _ content: (SaltProvider) -> [String: ClaimValue], saltProvider: SaltProvider) -> [String: ClaimValue] {
-  content(saltProvider)
-}
-
-func makeSDJWTObject(key: String, @SDJWTObjectBuilder _ content: () -> [Claim]) -> (String, [Claim]) {
-  return (key, content())
 }
 
 class Builder {
@@ -75,10 +44,16 @@ class Builder {
     self.digestCreator = digestCreator
   }
   
-  func encode(sdjwtRepresentation: [String: SDJWTElement]) throws {
-    let convertedDictionary = Dictionary(uniqueKeysWithValues: sdjwtRepresentation.map { key, value in
-      return (key, value.claim.value)
-    })
+  func encode(sdjwtRepresentation: [SDJWTElement]) throws {
+    let convertedDictionary: [String: ClaimValue] = sdjwtRepresentation.reduce(into: [:]) { partialResult, element in
+      let (claim, _) = element
+      if let value = partialResult[Keys._sd.rawValue] {
+        partialResult[claim.key] = ClaimValue.mergeArrays(value: value, elementsToAdd: claim.value)
+      } else {
+        partialResult[claim.key] = claim.value
+      }
+
+    }
     try print(convertedDictionary.toJSONString(outputFormatting: .prettyPrinted))
   }
   

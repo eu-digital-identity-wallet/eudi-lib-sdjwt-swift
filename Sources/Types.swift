@@ -19,3 +19,18 @@ enum SDJWTError: Error {
   case encodingError
   case discloseError
 }
+
+enum Keys: String {
+  case _sd
+  case iss
+  case iat
+  case sub
+  case exp
+  case jti
+  case nbe
+  case aud
+  case cnf
+  case jwk
+}
+
+

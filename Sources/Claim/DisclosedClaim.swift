@@ -29,6 +29,11 @@ struct DisclosedClaim: Claim {
     self.key = key
     self.value = value
   }
+
+  init(_ key: String, _ value: String) {
+    self.key = key
+    self.value = .init(value)
+  }
   
   // MARK: - Methods
   
@@ -43,7 +48,6 @@ struct DisclosedClaim: Claim {
         return try DisclosedClaim(self.key, base64encodeObject(object, saltProvider: saltProvider))
       }
     } catch {
-      print("failed to disclose")
       return DisclosedClaim("", .base(""))
     }
   }
@@ -59,19 +63,18 @@ struct DisclosedClaim: Claim {
         self.value = try base64encodeObject(object, saltProvider: saltProvider)
       }
     } catch {
-      print("failed to disclose")
+      return nil
     }
     
     return self
   }
   
   func hashValue(digestCreator: DigestCreator, base64EncodedValue: ClaimValue) throws -> ClaimValue {
-    guard case ClaimValue.base(let base64EncodedValue) = base64EncodedValue,
-          let base64EncodedValue = base64EncodedValue.value as? String else {
+    guard case ClaimValue.base(let base64EncodedValue) = base64EncodedValue else {
       throw SDJWTError.encodingError
     }
-    
-    guard let hashedString = digestCreator.hashAndBase64Encode(input: base64EncodedValue) else {
+
+    guard let hashedString = digestCreator.hashAndBase64Encode(input: base64EncodedValue.description) else {
       throw SDJWTError.encodingError
     }
     
@@ -118,4 +121,11 @@ struct DisclosedClaim: Claim {
     return .object(encodedObjects)
   }
   
+  func asJWTElement() -> SDJWTElement {
+    guard let disclosed = try? DisclosedClaim("_sd", self.hashValue(digestCreator: DigestCreator(), base64EncodedValue: self.value)) else {
+      return (self, self.flatString)
+    }
+
+    return (disclosed, disclosed.flatString)
+  }
 }

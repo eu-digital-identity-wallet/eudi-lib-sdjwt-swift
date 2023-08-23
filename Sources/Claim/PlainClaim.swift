@@ -29,6 +29,11 @@ struct PlainClaim: Claim {
     self.value = value
   }
 
+  init(_ key: String, _ value: String) {
+    self.key = key
+    self.value = .init(value)
+  }
+
   // MARK: - Methods
 
   func base64Encode(saltProvider: SaltProvider) -> Self {
@@ -37,5 +42,9 @@ struct PlainClaim: Claim {
   
   mutating func base64Encode(saltProvider: SaltProvider) throws -> Self? {
     return self
+  }
+
+  func asJWTElement() -> SDJWTElement {
+    return (self, nil)
   }
 }

@@ -22,7 +22,12 @@ extension String {
     }
     return String(data: data, encoding: .utf8)
   }
-  
+
+  func toBase64URLEncoded() -> String? {
+    let data = self.data(using: .utf8)
+    return data?.base64URLEncode()
+  }
+
   func convertURLEncodedBase64ToData() -> Data? {
     // Decode URL-encoded string
     guard let decodedURLString = self.removingPercentEncoding else {
@@ -35,17 +40,5 @@ extension String {
     }
     
     return data
-  }
-
-  func dropFirstAndLast() -> String {
-    if self.count >= 2 {
-        let startIndex = self.index(after: self.startIndex)
-        let endIndex = self.index(before: self.endIndex)
-
-        let result = self[startIndex..<endIndex]
-        return String(result)
-    } else {
-      return self
-    }
   }
 }

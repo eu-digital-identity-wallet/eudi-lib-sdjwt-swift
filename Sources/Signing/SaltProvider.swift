@@ -23,7 +23,9 @@ protocol SaltProvider {
 }
 
 class DefaultSaltProvider: SaltProvider {
-  
+
+  // MARK: - Properties
+
   var saltString: Salt {
     return salt.base64EncodedString()
   }
@@ -39,16 +41,20 @@ class DefaultSaltProvider: SaltProvider {
   }
 }
 
+
 class MockSaltProvider: SaltProvider {
-  
+
   var saltString: Salt {
     return salt.base64EncodedString().base64ToUTF8() ?? ""
   }
-  
-  var salt: Data
-  
+
+  var salt: Data = Data()
+
   init(saltString: String) {
     self.salt = Data(saltString.utf8)
   }
-  
+
+  func updateSalt(string: Salt) {
+    self.salt = Data(saltString.utf8)
+  }
 }

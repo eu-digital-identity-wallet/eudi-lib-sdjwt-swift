@@ -13,12 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import Foundation
 
-@resultBuilder
-enum SDJWTArrayBuilder {
-  
-  static func buildBlock(_ elements: SdElement...) -> [SdElement] {
-    elements.map({$0})
+struct FlatDisclosedClaim: ClaimRepresentable {
+  var key: String
+  var value: SdElement
+
+  init(_ key: String, _ flat: Encodable) {
+    self.key = key
+    self.value = SdElement.flat(value: flat)
+
+  }
+
+  init(_ key: String, _ flat: [Encodable]) {
+    self.key = key
+    self.value = SdElement.flat(value: flat)
+  }
+
+  init(_ key: String, _ flat: [String: Encodable]) {
+    self.key = key
+    self.value = SdElement.flat(value: flat)
   }
 }

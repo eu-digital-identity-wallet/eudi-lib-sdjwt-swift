@@ -21,13 +21,11 @@ class DigestCreator {
   
   // MARK: - Properties
 
-  var saltProvider: SaltProvider
   var hashingAlgorithm: HashingAlgorithm
+  
   // MARK: - LifeCycle
   
-  init(saltProvider: SaltProvider = DefaultSaltProvider(),
-       hashingAlgorithm: HashingAlgorithm = SHA256Hasher()) {
-    self.saltProvider = saltProvider
+  init(hashingAlgorithm: HashingAlgorithm = SHA256Hasher()) {
     self.hashingAlgorithm = hashingAlgorithm
   }
   

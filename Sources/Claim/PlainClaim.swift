@@ -1,50 +1,37 @@
-/*
- * Copyright (c) 2023 European Commission
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-import Foundation
+///*
+// * Copyright (c) 2023 European Commission
+// *
+// * Licensed under the Apache License, Version 2.0 (the "License");
+// * you may not use this file except in compliance with the License.
+// * You may obtain a copy of the License at
+// *
+// *     http://www.apache.org/licenses/LICENSE-2.0
+// *
+// * Unless required by applicable law or agreed to in writing, software
+// * distributed under the License is distributed on an "AS IS" BASIS,
+// * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// * See the License for the specific language governing permissions and
+// * limitations under the License.
+// */
 
-struct PlainClaim: Claim {
-
-  // MARK: - Properties
+struct PlainClaim: ClaimRepresentable {
 
   var key: String
-  var value: ClaimValue
+  var value: SdElement
 
-  // MARK: - LifeCycle
-
-  init(_ key: String, _ value: ClaimValue) {
+  init(_ key: String, _ plain: Encodable) {
     self.key = key
-    self.value = value
+    self.value = SdElement.plain(value: plain)
+
   }
 
-  init(_ key: String, _ value: String) {
+  init(_ key: String, _ plain: [Encodable]) {
     self.key = key
-    self.value = .init(value)
+    self.value = SdElement.plain(value: plain)
   }
 
-  // MARK: - Methods
-
-  func base64Encode(saltProvider: SaltProvider) -> Self {
-    return self
-  }
-  
-  mutating func base64Encode(saltProvider: SaltProvider) throws -> Self? {
-    return self
-  }
-
-  func asJWTElement() -> SDJWTElement {
-    return (self, nil)
+  init(_ key: String, _ plain: [String: Encodable]) {
+    self.key = key
+    self.value = SdElement.plain(value: plain)
   }
 }

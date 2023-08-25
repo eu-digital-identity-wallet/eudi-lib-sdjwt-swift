@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import Foundation
 
-@resultBuilder
-enum SDJWTObjectBuilder {
-  static func buildBlock(_ elements: Claim...) -> [Claim] {
-    elements
+extension Array {
+  mutating func appendOptional(_ newElement: Element? ) {
+    guard let newElement else {
+      return
+    }
+    self.append(newElement)
   }
 }

@@ -13,16 +13,18 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-import Foundation
 
-@resultBuilder
-enum SDJWTBuilder {
-  
-  static func buildBlock(_ elements: ClaimRepresentable...) -> SdElement {
-    return .object(
-      elements.reduce(into: [:]) { partialResult, claim in
-        partialResult[claim.key] = claim.value
-      }
-    )
+struct ObjectClaim: ClaimRepresentable {
+
+  var key: String
+  var value: SdElement
+
+  init(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
+    self.key = key
+    guard case SdElement.object(let object) = builder() else {
+      fatalError()
+    }
+    self.value = .object(object)
   }
 }
+

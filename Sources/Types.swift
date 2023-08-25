@@ -15,9 +15,13 @@
  */
 import Foundation
 
+
+let saltProviderString = "lklxF5jMYlGTPUovMNIvCA"
+
 enum SDJWTError: Error {
   case encodingError
   case discloseError
+  case NonObjectFormat(ofElement: Any)
 }
 
 enum Keys: String {
@@ -32,5 +36,3 @@ enum Keys: String {
   case cnf
   case jwk
 }
-
-

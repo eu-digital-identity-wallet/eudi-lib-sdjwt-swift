@@ -45,53 +45,54 @@ class SDJWTFactory {
       throw SDJWTError.NonObjectFormat(ofElement: sdjwtObject)
     }
 
-    var disclosures: [Disclosure] = []
-    var outputJson = JSON()
+    var outputDisclosures: [Disclosure] = []
+    var outputJson = JSON([:])
 
     try sdjwtObject.forEach { key, claimValue in
-      let (json, disclosure) = try self.encodeClaim(key: key, value: claimValue)
-      disclosures.appendOptional(disclosure)
+      var (json, disclosures) = try self.encodeClaim(key: key, value: claimValue)
+      outputDisclosures.append(contentsOf: disclosures)
 
-      let previousSdElement = outputJson[Keys._sd.rawValue]
-      let currentObjectSdArray = json[Keys._sd.rawValue]
       
-      if previousSdElement.exists(), currentObjectSdArray.exists() {
-        outputJson[Keys._sd.rawValue] = try previousSdElement.merged(with: currentObjectSdArray)
-      }
-      else if currentObjectSdArray.exists() {
-        outputJson[Keys._sd.rawValue] = currentObjectSdArray
-      } else {
+      if json["_sd"].arrayValue.isEmpty {
         outputJson[key] = json
+      } else {
+        json.dictionaryObject?.removeValue(forKey: key)
+        outputJson[key] = json
+        let prevArray = outputJson["_sd"].arrayValue
+        let claims = prevArray + json["_sd"].arrayValue
+        outputJson["_sd"].arrayObject = claims
       }
+      
+
     }
 
-    return (outputJson, disclosures)
+    return (outputJson, outputDisclosures)
   }
 
-  private func encodeClaim(key: String, value: SdElement) throws -> (JSON, Disclosure?) {
+  private func encodeClaim(key: String, value: SdElement) throws -> (JSON, [Disclosure]) {
     switch value {
     case .plain(let plain):
-      return (plain, nil)
+      return (plain, [])
       //...........
     case .flat(let json):
       let (disclosure, digest) = try self.flatDisclose(key: key, value: json)
       let output: JSON = [Keys._sd.rawValue: [digest]]
-      return(output, disclosure)
+      return(output, [disclosure])
       //...........
-    case .object(_):
-      return (JSON(), nil)
+    case .object(let object):
+      return try self.encodeObject(sdjwtObject: object)
       //...........
     case .array(_):
-      return (JSON(), nil)
+      return (JSON(), [])
       //...........
     case .structuredObject:
-      return (JSON(), nil)
+      return (JSON(), [])
       //...........
     case .recursiveObject:
-      return (JSON(), nil)
+      return (JSON(), [])
       //...........
     case .recursiveArray:
-      return (JSON(), nil)
+      return (JSON(), [])
       //...........
     }
   }

@@ -34,29 +34,29 @@ final class BuilderTest: XCTestCase {
     XCTAssert(sd.jsonString?.isEmpty == false)
   }
 
-  func testJWTCreation() {
+  func testSalt() {
 
-    let parts = ["_26bc4LT-ac6q2KI6cBW5es", "family_name", "Möbius"]
-    let salt = parts[0]
-    let key = parts[1]
-    let value = parts [2]
-
+    let salt = "_26bc4LT-ac6q2KI6cBW5es"
     let factory = SDJWTFactory(saltProvider: MockSaltProvider(saltString: salt))
-
-    let array: [Encodable] = ["", 123]
 
     @SDJWTBuilder
     var jwt: SdElement {
-      FlatDisclosedClaim(key, value)
-      FlatDisclosedClaim("object", 123)
-//      PlainClaim("nick", "sal")
+      ObjectClaim("BaseObject") {
+        PlainClaim("name", "Sal")
+        PlainClaim("adress", "Athens")
+        FlatDisclosedClaim("flat_element", "disclosed")
+        ObjectClaim("Deep Object") {
+          FlatDisclosedClaim("Deep Disclose", "C Level")
+          PlainClaim("Deep Plain", "Deep Plain Value")
+        }
+      }
     }
 
     let unsignedJwt = factory.createJWT(sdjwtObject: jwt.asObject)
 
     switch unsignedJwt {
     case .success((let json, let disclosures)):
-      print(try? json.toJSONString(outputFormatting: .prettyPrinted))
+      print(try! json.toJSONString(outputFormatting: .prettyPrinted))
       print(disclosures)
     case .failure(let err):
       XCTFail("Failed to Create SDJWT")
@@ -65,4 +65,25 @@ final class BuilderTest: XCTestCase {
   }
 
 
+  func testSalt2() {
+
+    let salt = "_26bc4LT-ac6q2KI6cBW5es"
+    let factory = SDJWTFactory(saltProvider: MockSaltProvider(saltString: salt))
+
+    @SDJWTBuilder
+    var jwt: SdElement {
+      FlatDisclosedClaim("name", "nikos")
+    }
+
+    let unsignedJwt = factory.createJWT(sdjwtObject: jwt.asObject)
+
+    switch unsignedJwt {
+    case .success((let json, let disclosures)):
+      print(try! json.toJSONString(outputFormatting: .prettyPrinted))
+      print(disclosures)
+    case .failure(let err):
+      XCTFail("Failed to Create SDJWT")
+    }
+
+  }
 }

@@ -22,13 +22,7 @@ protocol ClaimRepresentable: Encodable {
   
   var key: String { get set }
   var value: SdElement { get set }
-
-
-  /// Disclose applied when needed in order to create the
-  /// Element that we want to selectively disclose
-  /// - Parameter saltProvider: The SaltProvider used in order to hash the values
-  /// - Returns: The modified element
-  ///
+  
 }
 
 struct ConstantClaims: ClaimRepresentable {

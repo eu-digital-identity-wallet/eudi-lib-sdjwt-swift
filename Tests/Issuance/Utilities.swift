@@ -18,10 +18,6 @@ import XCTest
 
 @testable import eudi_lib_sdjwt_swift
 
-func digestCounter(decoys: Int, sdElement: SdElement) -> Int {
-  return 0
-}
-
 extension SdElement {
   var expectedDigests: Int {
     var output = 0

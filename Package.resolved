@@ -1,15 +1,6 @@
 {
   "pins" : [
     {
-      "identity" : "codability",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/yonaskolb/Codability",
-      "state" : {
-        "revision" : "eb5bac78e0679f521c3f058c1eb9be0dd657dadd",
-        "version" : "0.2.1"
-      }
-    },
-    {
       "identity" : "collectionconcurrencykit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/JohnSundell/CollectionConcurrencyKit.git",

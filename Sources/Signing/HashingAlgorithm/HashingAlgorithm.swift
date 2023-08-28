@@ -19,6 +19,8 @@ typealias Disclosure = String
 typealias DisclosureDigest = String
 
 protocol HashingAlgorithm {
+  var identifier: String { get }
+  
   func hash(disclosure: Disclosure) -> Data?
 }
 

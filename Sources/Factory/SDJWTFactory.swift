@@ -35,15 +35,17 @@ class SDJWTFactory {
     self.decoysLimit = decoysLimit
   }
 
+  // MARK: - Methods - Public
+
   func createJWT(sdjwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
     do {
-      return .success(try self.encodeObject(sdjwtObject: sdjwtObject))
+      return .success(try self.encodeObject(sdjwtObject: addSdAlgClaim(object: sdjwtObject)))
     } catch {
       return .failure(error)
     }
   }
 
-  // MARK: - Methods
+  // MARK: - Methods - Private
 
   private func encodeObject(sdjwtObject: [String: SdElement]?) throws -> ClaimSet {
     guard let sdjwtObject else {
@@ -76,7 +78,7 @@ class SDJWTFactory {
     case .flat(let json):
       let (disclosure, digest) = try self.flatDisclose(key: key, value: json)
       var decoys = self.addDecoy()
-      let output: JSON = [Keys.sd.rawValue: [digest] + decoys]
+      let output: JSON = [Keys.sd.rawValue: ([digest] + decoys).sorted()]
       return(output, [disclosure])
       // ...........
     case .object(let object):
@@ -90,8 +92,10 @@ class SDJWTFactory {
           partialResult.arrayObject?.append(json)
         default:
           var (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
-          var decoys = self.addDecoy().map {JSON([Keys.dots.rawValue: $0])}
-          let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
+          var decoys = self.addDecoy()
+            .sorted()
+            .map {JSON([Keys.dots.rawValue: $0])}
+          let dottedKeyJson: JSON = [Keys.dots.rawValue: digest.sorted()]
           partialResult.arrayObject?.append(dottedKeyJson)
           partialResult.arrayObject?.append(contentsOf: decoys)
           disclosures.append(disclosure)
@@ -119,7 +123,7 @@ class SDJWTFactory {
     let stringToEncode = try jsonArray
       .toJSONString(outputFormatting: .withoutEscapingSlashes)
     // TODO: Remove before flight
-//      .replacingOccurrences(of: ",", with: ", ")
+    //      .replacingOccurrences(of: ",", with: ", ")
     guard let urlEncoded = stringToEncode.toBase64URLEncoded(),
           let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
       throw SDJWTError.encodingError
@@ -134,7 +138,7 @@ class SDJWTFactory {
     let stringToEncode = try jsonArray
       .toJSONString(outputFormatting: .withoutEscapingSlashes)
     // TODO: Remove before flight
-//      .replacingOccurrences(of: ",", with: ", ")
+    //      .replacingOccurrences(of: ",", with: ", ")
     guard let urlEncoded = stringToEncode.toBase64URLEncoded(),
           let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
       throw SDJWTError.encodingError
@@ -142,6 +146,8 @@ class SDJWTFactory {
 
     return (urlEncoded, digest)
   }
+
+  // MARK: - Methods - Helpers
 
   private func addDecoy() -> [DisclosureDigest] {
     if decoyCounter < decoysLimit {
@@ -152,5 +158,11 @@ class SDJWTFactory {
       return rand
     }
     return []
+  }
+
+  private func addSdAlgClaim(object: [String: SdElement]?) -> [String: SdElement]? {
+    var object = object
+    object?[Keys.sdAlg.rawValue] = SdElement.plain(value: digestCreator.hashingAlgorithm.identifier)
+    return object
   }
 }

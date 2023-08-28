@@ -17,6 +17,8 @@ import Foundation
 import CryptoKit
 
 class SHA256Hasher: HashingAlgorithm {
+  var identifier: String = "sha-256"
+
   func hash(disclosure: Disclosure) -> Data? {
     // Convert input string to Data
     guard let inputData = disclosure.data(using: .utf8) else {

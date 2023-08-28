@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import Foundation
-import Codability
 import SwiftyJSON
 
 typealias SDJWTObject = [String: SdElement]

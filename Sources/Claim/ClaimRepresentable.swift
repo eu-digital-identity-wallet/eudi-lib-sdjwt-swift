@@ -15,7 +15,6 @@
 */
 import Foundation
 import SwiftyJSON
-import Codability
 
 /// Building block for the SD-JWT
 protocol ClaimRepresentable: Encodable {
@@ -39,8 +38,20 @@ struct ConstantClaims: ClaimRepresentable {
     let currentDate = Date()
     let timestamp = currentDate.timeIntervalSince1970
 
-    return ConstantClaims("iat", value: .flat(value: AnyCodable(timestamp)))
+    return ConstantClaims(Keys.iat.rawValue, value: .plain(value: timestamp))
   }
+
+  static func exp(time: Date) -> ConstantClaims {
+    let currentDate = Date()
+    let timestamp = currentDate.timeIntervalSince1970
+
+    return ConstantClaims(Keys.exp.rawValue, value: .plain(value: timestamp))
+  }
+
+  static func iss(domain: String) -> ConstantClaims {
+    return ConstantClaims(Keys.iss.rawValue, value: .plain(value: domain))
+  }
+
 }
 
 extension ClaimRepresentable {

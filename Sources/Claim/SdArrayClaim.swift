@@ -22,4 +22,25 @@ struct SdArrayClaim: ClaimRepresentable {
     self.key = key
     self.value = .array(array)
   }
+
+  init(_ key: String, @SDJWTArrayBuilder builder: () -> [SdElement]) {
+    self.key = key
+    self.value = .array(builder())
+  }
 }
+
+struct RecursiveSdArrayClaim: ClaimRepresentable {
+  var key: String
+  var value: SdElement
+
+  init(_ key: String, array: [SdElement]) {
+    self.key = key
+    self.value = .recursiveArray(array)
+  }
+
+  init(_ key: String, @SDJWTArrayBuilder builder: () -> [SdElement]) {
+    self.key = key
+    self.value = .recursiveArray(builder())
+  }
+}
+

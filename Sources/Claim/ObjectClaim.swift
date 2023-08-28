@@ -19,12 +19,30 @@ struct ObjectClaim: ClaimRepresentable {
   var key: String
   var value: SdElement
 
-  init(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
+  init?(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
     self.key = key
-    guard case SdElement.object(let object) = builder() else {
-      fatalError()
+    guard let object = builder().asObject else {
+      return nil
     }
     self.value = .object(object)
   }
+
+  init?(_ key: String, value: SdElement) {
+    self.key = key
+    self.value = value
+  }
 }
 
+struct RecursiveObject: ClaimRepresentable {
+
+  var key: String
+  var value: SdElement
+
+  init?(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
+    self.key = key
+    guard let object = builder().asObject else {
+      return nil
+    }
+    self.value = .recursiveObject(object)
+  }
+}

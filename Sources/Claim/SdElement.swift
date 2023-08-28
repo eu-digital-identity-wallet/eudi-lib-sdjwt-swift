@@ -27,9 +27,9 @@ enum SdElement: Encodable {
   case array([SdElement])
 
   // Advanced UseCases
-  case structuredObject
-  case recursiveObject
-  case recursiveArray
+//  case structuredObject([String: SdElement])
+  case recursiveObject([String: SdElement])
+  case recursiveArray([SdElement])
 
   private init(sdElement: SdElement) {
     self = sdElement
@@ -58,8 +58,6 @@ enum SdElement: Encodable {
       try? flat.encode(to: encoder)
     case .array(let array):
       try? array.encode(to: encoder)
-    case .structuredObject:
-      print("not yet supported")
     case .recursiveObject:
       print("not yet supported")
     case .recursiveArray:
@@ -79,6 +77,17 @@ extension SdElement {
       return object
     default:
       return nil
+    }
+  }
+
+  var asJSON: JSON {
+    switch self {
+    case .object(let object), .recursiveObject(let object):
+      return JSON(object.mapValues({$0.asJSON}))
+    case .plain(let primitive), .flat(let primitive):
+      return primitive
+    case .array(let array), .recursiveArray(let array):
+      return JSON(array.map({$0.asJSON}))
     }
   }
 }

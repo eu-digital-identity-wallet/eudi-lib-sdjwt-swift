@@ -26,6 +26,7 @@ enum SDJWTError: Error {
 
 enum Keys: String {
   case _sd
+  case dots = "..."
   case iss
   case iat
   case sub

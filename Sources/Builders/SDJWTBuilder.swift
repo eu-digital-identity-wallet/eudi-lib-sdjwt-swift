@@ -25,4 +25,18 @@ enum SDJWTBuilder {
       }
     )
   }
+
+  static func buildBlock(_ elements: ClaimRepresentable?...) -> SdElement {
+    return .object(
+      elements
+        .compactMap({$0})
+        .reduce(into: [:]) { partialResult, claim in
+        partialResult[claim.key] = claim.value
+      }
+    )
+  }
+
+  static func build(@SDJWTBuilder builder: () -> SdElement) -> SdElement {
+    return builder()
+  }
 }

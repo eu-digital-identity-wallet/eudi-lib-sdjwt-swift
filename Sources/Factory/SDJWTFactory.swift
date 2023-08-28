@@ -16,6 +16,8 @@
 import Foundation
 import SwiftyJSON
 
+typealias ClaimSet = (value: JSON, disclosures: [Disclosure])
+
 class SDJWTFactory {
 
   // MARK: - Properties
@@ -30,7 +32,7 @@ class SDJWTFactory {
     self.saltProvider = saltProvider
   }
 
-  func createJWT(sdjwtObject: [String: SdElement]?) -> Result<(JSON, [Disclosure]), Error> {
+  func createJWT(sdjwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
     do {
       return .success(try self.encodeObject(sdjwtObject: sdjwtObject))
     } catch {
@@ -40,65 +42,69 @@ class SDJWTFactory {
 
   // MARK: - Methods
 
-  private func encodeObject(sdjwtObject: [String: SdElement]?) throws -> (JSON, [Disclosure]) {
+  private func encodeObject(sdjwtObject: [String: SdElement]?) throws -> ClaimSet {
     guard let sdjwtObject else {
       throw SDJWTError.NonObjectFormat(ofElement: sdjwtObject)
     }
 
     var outputDisclosures: [Disclosure] = []
-    var outputJson = JSON([:])
+    var outputJson = JSON()
 
-    try sdjwtObject.forEach { key, claimValue in
-      var (json, disclosures) = try self.encodeClaim(key: key, value: claimValue)
+    try sdjwtObject.forEach { claimKey, claimValue in
+      var (json, disclosures) = try self.encodeClaim(key: claimKey, value: claimValue)
       outputDisclosures.append(contentsOf: disclosures)
-
-      
-      if json["_sd"].arrayValue.isEmpty {
-        outputJson[key] = json
-      } else {
-        json.dictionaryObject?.removeValue(forKey: key)
-        outputJson[key] = json
-        let prevArray = outputJson["_sd"].arrayValue
-        let claims = prevArray + json["_sd"].arrayValue
-        outputJson["_sd"].arrayObject = claims
+      //      let (key, output) = mergeDictionaries(claimKey: claimKey, jsonToMerge: json, outputJson: outputJson)
+      switch claimValue {
+      case .flat, .recursiveArray, .recursiveObject:
+        outputJson["_sd"] = JSON(outputJson["_sd"].arrayValue + json["_sd"].arrayValue)
+      default:
+        outputJson[claimKey] = json
       }
-      
-
     }
 
     return (outputJson, outputDisclosures)
   }
 
-  private func encodeClaim(key: String, value: SdElement) throws -> (JSON, [Disclosure]) {
+  private func encodeClaim(key: String, value: SdElement) throws -> ClaimSet {
     switch value {
     case .plain(let plain):
       return (plain, [])
       //...........
     case .flat(let json):
       let (disclosure, digest) = try self.flatDisclose(key: key, value: json)
-      let output: JSON = [Keys._sd.rawValue: [digest]]
+      var output: JSON = [Keys._sd.rawValue: [digest]]
       return(output, [disclosure])
       //...........
     case .object(let object):
       return try self.encodeObject(sdjwtObject: object)
       //...........
-    case .array(_):
-      return (JSON(), [])
+    case .array(let array):
+      var disclosures: [Disclosure] = []
+      let output = try array.reduce(into: JSON([Disclosure]())) { partialResult, element in
+        switch element {
+        case .plain(let json):
+          partialResult.arrayObject?.append(json)
+        default:
+          let (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
+          let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
+          partialResult.arrayObject?.append(dottedKeyJson)
+          disclosures.append(disclosure)
+        }
+      }
+
+      return (output, disclosures)
       //...........
-    case .structuredObject:
-      return (JSON(), [])
+    case .recursiveObject(let object):
+      let encodedObject = try self.encodeObject(sdjwtObject: object)
+      let sdElement = try self.encodeClaim(key: key, value: .flat(encodedObject.value))
+      return (sdElement.value, encodedObject.disclosures + sdElement.disclosures)
       //...........
-    case .recursiveObject:
-      return (JSON(), [])
-      //...........
-    case .recursiveArray:
-      return (JSON(), [])
+    case .recursiveArray(let array):
+      let encodedArray = try self.encodeClaim(key: key, value: .array(array))
+      let sdElement = try self.encodeClaim(key: key, value: .flat(encodedArray.value))
+      return (sdElement.value, encodedArray.disclosures + sdElement.disclosures)
       //...........
     }
-  }
-
-  private func mergeSdArrays(merge: (String) -> ()) {
-
   }
 
   private func flatDisclose(key: String, value: JSON) throws -> (Disclosure, DisclosureDigest) {
@@ -106,7 +112,8 @@ class SDJWTFactory {
     let jsonArray = JSON(arrayLiteral: saltString, key, value)
     let stringToEncode = try jsonArray
       .toJSONString(outputFormatting: .withoutEscapingSlashes)
-      .replacingOccurrences(of: ",", with: ", ")
+    // TODO: Remove before flight
+//      .replacingOccurrences(of: ",", with: ", ")
     guard let urlEncoded = stringToEncode.toBase64URLEncoded(),
           let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
       throw SDJWTError.encodingError
@@ -115,5 +122,20 @@ class SDJWTFactory {
     return (urlEncoded, digest)
   }
 
+
+  private func discloseArrayElement(value: JSON) throws -> (Disclosure, DisclosureDigest) {
+    let saltString = saltProvider.saltString
+    let jsonArray = JSON(arrayLiteral: saltString, value)
+    let stringToEncode = try jsonArray
+      .toJSONString(outputFormatting: .withoutEscapingSlashes)
+    // TODO: Remove before flight
+//      .replacingOccurrences(of: ",", with: ", ")
+    guard let urlEncoded = stringToEncode.toBase64URLEncoded(),
+          let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
+      throw SDJWTError.encodingError
+    }
+
+    return (urlEncoded, digest)
+  }
 }
 

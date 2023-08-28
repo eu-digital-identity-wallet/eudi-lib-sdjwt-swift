@@ -56,7 +56,7 @@ class SDJWTFactory {
     var outputJson = JSON()
 
     try sdjwtObject.forEach { claimKey, claimValue in
-      var (json, disclosures) = try self.encodeClaim(key: claimKey, value: claimValue)
+      let (json, disclosures) = try self.encodeClaim(key: claimKey, value: claimValue)
       outputDisclosures.append(contentsOf: disclosures)
       //      let (key, output) = mergeDictionaries(claimKey: claimKey, jsonToMerge: json, outputJson: outputJson)
       switch claimValue {
@@ -77,7 +77,7 @@ class SDJWTFactory {
       // ...........
     case .flat(let json):
       let (disclosure, digest) = try self.flatDisclose(key: key, value: json)
-      var decoys = self.addDecoy()
+      let decoys = self.addDecoy()
       let output: JSON = [Keys.sd.rawValue: ([digest] + decoys).sorted()]
       return(output, [disclosure])
       // ...........
@@ -91,8 +91,8 @@ class SDJWTFactory {
         case .plain(let json):
           partialResult.arrayObject?.append(json)
         default:
-          var (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
-          var decoys = self.addDecoy()
+          let (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
+          let decoys = self.addDecoy()
             .sorted()
             .map {JSON([Keys.dots.rawValue: $0])}
           let dottedKeyJson: JSON = [Keys.dots.rawValue: digest.sorted()]

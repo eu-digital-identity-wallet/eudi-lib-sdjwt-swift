@@ -21,7 +21,8 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "5.0.1"),
-        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.52.4")
+        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.52.4"),
+        .package(url: "https://github.com/airsidemobile/JOSESwift.git", from: "2.3.0")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -29,7 +30,8 @@ let package = Package(
         .target(
             name: "eudi-lib-sdjwt-swift",
             dependencies: [
-                .product(name: "SwiftyJSON", package: "swiftyjson")
+                .product(name: "SwiftyJSON", package: "swiftyjson"),
+                .product(name: "JOSESwift", package: "JOSESwift")
             ],
             path: "Sources",
             plugins: [

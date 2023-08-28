@@ -15,28 +15,3 @@
  */
 import Foundation
 
-let saltProviderString = "lklxF5jMYlGTPUovMNIvCA"
-
-enum SDJWTError: Error {
-  case sdAsKey
-  case nullJSONValue
-  case encodingError
-  case discloseError
-  case serializationError
-  case nonObjectFormat(ofElement: Any)
-}
-
-enum Keys: String {
-  case sd = "_sd"
-  case dots = "..."
-  case sdAlg = "_sd_alg"
-  case iss
-  case iat
-  case sub
-  case exp
-  case jti
-  case nbe
-  case aud
-  case cnf
-  case jwk
-}

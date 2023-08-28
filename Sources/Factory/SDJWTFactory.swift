@@ -44,7 +44,7 @@ class SDJWTFactory {
 
   private func encodeObject(sdjwtObject: [String: SdElement]?) throws -> ClaimSet {
     guard let sdjwtObject else {
-      throw SDJWTError.NonObjectFormat(ofElement: sdjwtObject)
+      throw SDJWTError.nonObjectFormat(ofElement: sdjwtObject)
     }
 
     var outputDisclosures: [Disclosure] = []
@@ -69,15 +69,15 @@ class SDJWTFactory {
     switch value {
     case .plain(let plain):
       return (plain, [])
-      //...........
+      // ...........
     case .flat(let json):
       let (disclosure, digest) = try self.flatDisclose(key: key, value: json)
-      var output: JSON = [Keys._sd.rawValue: [digest]]
+      let output: JSON = [Keys._sd.rawValue: [digest]]
       return(output, [disclosure])
-      //...........
+      // ...........
     case .object(let object):
       return try self.encodeObject(sdjwtObject: object)
-      //...........
+      // ...........
     case .array(let array):
       var disclosures: [Disclosure] = []
       let output = try array.reduce(into: JSON([Disclosure]())) { partialResult, element in
@@ -93,17 +93,17 @@ class SDJWTFactory {
       }
 
       return (output, disclosures)
-      //...........
+      // ...........
     case .recursiveObject(let object):
       let encodedObject = try self.encodeObject(sdjwtObject: object)
       let sdElement = try self.encodeClaim(key: key, value: .flat(encodedObject.value))
       return (sdElement.value, encodedObject.disclosures + sdElement.disclosures)
-      //...........
+      // ...........
     case .recursiveArray(let array):
       let encodedArray = try self.encodeClaim(key: key, value: .array(array))
       let sdElement = try self.encodeClaim(key: key, value: .flat(encodedArray.value))
       return (sdElement.value, encodedArray.disclosures + sdElement.disclosures)
-      //...........
+      // ...........
     }
   }
 
@@ -122,7 +122,6 @@ class SDJWTFactory {
     return (urlEncoded, digest)
   }
 
-
   private func discloseArrayElement(value: JSON) throws -> (Disclosure, DisclosureDigest) {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, value)
@@ -138,4 +137,3 @@ class SDJWTFactory {
     return (urlEncoded, digest)
   }
 }
-

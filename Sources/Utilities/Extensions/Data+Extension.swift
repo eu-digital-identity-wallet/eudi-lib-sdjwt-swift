@@ -23,6 +23,5 @@ extension Data {
     base64 = base64.replacingOccurrences(of: "=", with: "")
     return base64
   }
-  
-  
+
 }

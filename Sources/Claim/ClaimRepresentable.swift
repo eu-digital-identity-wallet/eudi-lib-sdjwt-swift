@@ -19,17 +19,17 @@ import Codability
 
 /// Building block for the SD-JWT
 protocol ClaimRepresentable: Encodable {
-  
+
   var key: String { get set }
   var value: SdElement { get set }
-  
+
 }
 
 struct ConstantClaims: ClaimRepresentable {
 
   var key: String
   var value: SdElement
-  
+
   private init(_ key: String, value: SdElement) {
     self.key = key
     self.value = value

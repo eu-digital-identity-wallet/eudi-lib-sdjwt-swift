@@ -35,10 +35,10 @@ final class BuilderTest: XCTestCase {
   }
 
   func testSalt() {
-    
+
     let salt = "2GLC42sKQveCfGfryNRN9w"
     let factory = SDJWTFactory(saltProvider: MockSaltProvider(saltString: salt))
-    
+
     @SDJWTBuilder
     var jwt: SdElement {
       ObjectClaim("address") {
@@ -49,7 +49,7 @@ final class BuilderTest: XCTestCase {
       }
     }
     @SDJWTBuilder
-    var jwt2:  SdElement {
+    var jwt2: SdElement {
       ObjectClaim("Adress") {
         ObjectClaim("Locality") {
           FlatDisclosedClaim("street_addres2s", "C Level")
@@ -71,7 +71,6 @@ final class BuilderTest: XCTestCase {
     }
 
   }
-
 
   func testStructuredObject() {
 
@@ -161,8 +160,6 @@ final class BuilderTest: XCTestCase {
 
     self.validateObjectResults(factoryResult: recursiveObject)
   }
-
-
 
   func testArray() {
     @SDJWTBuilder

@@ -17,7 +17,7 @@ import Foundation
 
 @resultBuilder
 enum SDJWTBuilder {
-  
+
   static func buildBlock(_ elements: ClaimRepresentable...) -> SdElement {
     return .object(
       elements.reduce(into: [:]) { partialResult, claim in

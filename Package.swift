@@ -15,7 +15,7 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "eudi-lib-sdjwt-swift",
-            targets: ["eudi-lib-sdjwt-swift"]),
+            targets: ["eudi-lib-sdjwt-swift"])
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -23,6 +23,7 @@ let package = Package(
 
         .package(url: "https://github.com/yonaskolb/Codability", .upToNextMajor(from: "0.2.1")),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "5.0.1"),
+        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.52.4")
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
@@ -31,14 +32,17 @@ let package = Package(
             name: "eudi-lib-sdjwt-swift",
             dependencies: [
                 .product(name: "Codability", package: "Codability"),
-                .product(name: "SwiftyJSON", package: "swiftyjson"),
+                .product(name: "SwiftyJSON", package: "swiftyjson")
             ],
-            path: "Sources"
+            path: "Sources",
+            plugins: [
+                .plugin(name: "SwiftLintPlugin", package: "SwiftLint")
+            ]
         ),
         .testTarget(
             name: "eudi-lib-sdjwt-swiftTests",
             dependencies: ["eudi-lib-sdjwt-swift"],
-            path: "Tests"),
+            path: "Tests")
 
     ]
 )

@@ -33,12 +33,12 @@ extension String {
     guard let decodedURLString = self.removingPercentEncoding else {
       return nil
     }
-    
+
     // Convert base64 string to Data
     guard let data = Data(base64Encoded: decodedURLString) else {
       return nil
     }
-    
+
     return data
   }
 }

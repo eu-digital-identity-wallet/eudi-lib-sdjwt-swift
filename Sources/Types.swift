@@ -15,13 +15,12 @@
  */
 import Foundation
 
-
 let saltProviderString = "lklxF5jMYlGTPUovMNIvCA"
 
 enum SDJWTError: Error {
   case encodingError
   case discloseError
-  case NonObjectFormat(ofElement: Any)
+  case nonObjectFormat(ofElement: Any)
 }
 
 enum Keys: String {

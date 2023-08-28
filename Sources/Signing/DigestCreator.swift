@@ -16,29 +16,28 @@
 import Foundation
 import CryptoKit
 
-
 class DigestCreator {
-  
+
   // MARK: - Properties
 
   var hashingAlgorithm: HashingAlgorithm
-  
+
   // MARK: - LifeCycle
-  
+
   init(hashingAlgorithm: HashingAlgorithm = SHA256Hasher()) {
     self.hashingAlgorithm = hashingAlgorithm
   }
-  
+
   // MARK: - Methods
-  
+
   func hashAndBase64Encode(input: Disclosure) -> DisclosureDigest? {
     guard let disclosureDigest = self.hashingAlgorithm.hash(disclosure: input) else {
       return nil
     }
     // Encode hash data in base64
     let base64Hash = disclosureDigest.base64URLEncode()
-    
+
     return base64Hash
   }
-  
+
 }

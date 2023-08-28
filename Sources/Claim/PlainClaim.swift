@@ -1,4 +1,4 @@
-///*
+// *
 // * Copyright (c) 2023 European Commission
 // *
 // * Licensed under the Apache License, Version 2.0 (the "License");

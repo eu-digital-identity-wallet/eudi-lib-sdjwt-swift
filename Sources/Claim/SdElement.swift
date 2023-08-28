@@ -37,7 +37,7 @@ enum SdElement: Encodable {
 
   // MARK: - Builder Methods
   // so we don't expose external dependencies to separate classes
-  
+
   static func plain(value: Any) -> SdElement {
     return SdElement.plain(JSON(value))
   }

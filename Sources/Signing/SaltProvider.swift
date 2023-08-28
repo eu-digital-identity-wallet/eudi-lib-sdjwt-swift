@@ -29,18 +29,17 @@ class DefaultSaltProvider: SaltProvider {
   var saltString: Salt {
     return salt.base64EncodedString()
   }
-  
+
   var salt: Data {
     self.generateRandomSalt()
   }
-  
+
   func generateRandomSalt(length: Int = 16) -> Data {
     var randomBytes = [UInt8](repeating: 0, count: length)
     _ = SecRandomCopyBytes(kSecRandomDefault, length, &randomBytes)
     return Data(randomBytes)
   }
 }
-
 
 class MockSaltProvider: SaltProvider {
 

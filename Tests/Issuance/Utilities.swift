@@ -50,11 +50,21 @@ extension SdElement {
   }
 }
 
-func validateObjectResults(factoryResult result: Result<ClaimSet, Error>) {
+func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expectedDigests: Int, numberOfDecoys: Int = 0, decoysLimit: Int = 0) {
   switch result {
   case .success((let json, let disclosures)):
+    print("JSON Value of sdjwt")
+    print("==============================")
     print(try! json.toJSONString(outputFormatting: .prettyPrinted))
-    disclosures.forEach({print($0)})
+    print("==============================")
+    print("With Disclosures")
+    print("==============================")
+    disclosures
+      .compactMap{ $0.base64URLDecode()}
+      .forEach {print($0)}
+    print("==============================")
+    XCTAssert(expectedDigests + numberOfDecoys <= expectedDigests + decoysLimit)
+
   case .failure(let err):
     XCTFail("Failed to Create SDJWT")
   }

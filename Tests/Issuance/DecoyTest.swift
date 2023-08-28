@@ -36,11 +36,7 @@ final class DecoyTest: XCTestCase {
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: decoysLimit)
     let unsignedJwt = jwtFactory.createJWT(sdjwtObject: sdObject.asObject)
 
-    let expectedDigests = sdObject.expectedDigests
-    let factoryDecoys = jwtFactory.decoyCounter
-    XCTAssert(expectedDigests == 3)
-    XCTAssert(expectedDigests + factoryDecoys <= expectedDigests + decoysLimit)
 
-    validateObjectResults(factoryResult: unsignedJwt)
+    validateObjectResults(factoryResult: unsignedJwt, expectedDigests: sdObject.expectedDigests, numberOfDecoys: jwtFactory.decoyCounter, decoysLimit: decoysLimit)
   }
 }

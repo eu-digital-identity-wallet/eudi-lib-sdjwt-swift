@@ -42,3 +42,23 @@ extension String {
     return data
   }
 }
+
+extension String {
+    func base64URLDecode() -> String? {
+        var base64 = self
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+
+        // Padding the string with '=' characters to make its length a multiple of 4
+        let paddingLength = 4 - base64.count % 4
+        if paddingLength < 4 {
+            base64.append(contentsOf: String(repeating: "=", count: paddingLength))
+        }
+
+        if let data = Data(base64Encoded: base64) {
+            return String(data: data, encoding: .utf8)
+        }
+
+        return nil
+    }
+}

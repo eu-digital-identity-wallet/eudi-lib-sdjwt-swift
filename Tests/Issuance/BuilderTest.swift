@@ -83,7 +83,7 @@ final class BuilderTest: XCTestCase {
     }
 
     let unsignedJwt = factory.createJWT(sdjwtObject: jwt.asObject)
-    validateObjectResults(factoryResult: unsignedJwt)
+    validateObjectResults(factoryResult: unsignedJwt, expectedDigests: jwt.expectedDigests)
   }
 
   func testPlain() {
@@ -109,8 +109,8 @@ final class BuilderTest: XCTestCase {
 
     let objectPlain = jwtFactory.createJWT(sdjwtObject: objects.asObject)
 
-    validateObjectResults(factoryResult: unsignedPlain)
-    validateObjectResults(factoryResult: objectPlain)
+    validateObjectResults(factoryResult: unsignedPlain, expectedDigests: plainJWT.expectedDigests)
+    validateObjectResults(factoryResult: objectPlain, expectedDigests: objects.expectedDigests)
   }
 
   func testFlat() {
@@ -135,8 +135,8 @@ final class BuilderTest: XCTestCase {
 
     let objectPlain = jwtFactory.createJWT(sdjwtObject: objects.asObject)
 
-    validateObjectResults(factoryResult: unsignedPlain)
-    validateObjectResults(factoryResult: objectPlain)
+    validateObjectResults(factoryResult: unsignedPlain, expectedDigests: plainJWT.expectedDigests)
+    validateObjectResults(factoryResult: objectPlain, expectedDigests: objects.expectedDigests)
   }
 
   func testRecursive() {
@@ -158,7 +158,7 @@ final class BuilderTest: XCTestCase {
 
     let recursiveObject = jwtFactory.createJWT(sdjwtObject: objects.asObject)
 
-    validateObjectResults(factoryResult: recursiveObject)
+    validateObjectResults(factoryResult: recursiveObject, expectedDigests: objects.expectedDigests)
   }
 
   func testArray() {
@@ -189,7 +189,7 @@ final class BuilderTest: XCTestCase {
 
     let recursiveObject = jwtFactory.createJWT(sdjwtObject: array.asObject)
 
-    validateObjectResults(factoryResult: recursiveObject)
+    validateObjectResults(factoryResult: recursiveObject, expectedDigests: array.expectedDigests)
   }
 
   func testRecursiveArray() {
@@ -205,7 +205,7 @@ final class BuilderTest: XCTestCase {
 
     let recursiveObject = jwtFactory.createJWT(sdjwtObject: array.asObject)
 
-    validateObjectResults(factoryResult: recursiveObject)
+    validateObjectResults(factoryResult: recursiveObject, expectedDigests: array.expectedDigests)
   }
 
 

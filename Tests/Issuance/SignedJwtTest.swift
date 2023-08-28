@@ -36,6 +36,6 @@ final class SignedJwtTest: XCTestCase {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
     
-    validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: plainJWT.asObject))
+    validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: plainJWT.asObject), expectedDigests: plainJWT.expectedDigests)
   }
 }

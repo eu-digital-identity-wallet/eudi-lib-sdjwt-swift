@@ -95,7 +95,7 @@ class SDJWTFactory {
           let decoys = self.addDecoy()
             .sorted()
             .map {JSON([Keys.dots.rawValue: $0])}
-          let dottedKeyJson: JSON = [Keys.dots.rawValue: digest.sorted()]
+          let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
           partialResult.arrayObject?.append(dottedKeyJson)
           partialResult.arrayObject?.append(contentsOf: decoys)
           disclosures.append(disclosure)

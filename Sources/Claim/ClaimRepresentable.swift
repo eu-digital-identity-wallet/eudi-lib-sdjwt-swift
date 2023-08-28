@@ -42,8 +42,7 @@ struct ConstantClaims: ClaimRepresentable {
   }
 
   static func exp(time: Date) -> ConstantClaims {
-    let currentDate = Date()
-    let timestamp = currentDate.timeIntervalSince1970
+    let timestamp = time.timeIntervalSince1970
 
     return ConstantClaims(Keys.exp.rawValue, value: .plain(value: timestamp))
   }

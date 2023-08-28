@@ -33,7 +33,7 @@ final class DigestTest: XCTestCase {
     switch disclose {
     case .success((let json, let disclosures)):
       XCTAssertEqual(disclosures.first, "WyI2cU1RdlJMNWhhaiIsImZhbWlseV9uYW1lIiwiTcO2Yml1cyJd")
-      //      XCTAssertEqual(json[Keys._sd.rawValue].arrayValue.contains("uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"), true)
+      //      XCTAssertEqual(json[Keys.sd.rawValue].arrayValue.contains("uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"), true)
     case .failure(let err):
       XCTFail("Failed to Create SDJWT")
     }

@@ -22,6 +22,7 @@ class DigestCreator {
 
   var hashingAlgorithm: HashingAlgorithm
 
+  let saltProvider = DefaultSaltProvider()
   // MARK: - LifeCycle
 
   init(hashingAlgorithm: HashingAlgorithm = SHA256Hasher()) {
@@ -38,6 +39,10 @@ class DigestCreator {
     let base64Hash = disclosureDigest.base64URLEncode()
 
     return base64Hash
+  }
+
+  func decoy() -> DisclosureDigest? {
+    return self.hashAndBase64Encode(input: saltProvider.saltString)
   }
 
 }

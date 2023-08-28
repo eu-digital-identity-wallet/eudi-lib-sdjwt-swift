@@ -24,12 +24,15 @@ class SDJWTFactory {
 
   let digestCreator: DigestCreator
   let saltProvider: SaltProvider
+  let decoysLimit: Int
 
+  var decoyCounter = 0
   // MARK: - LifeCycle
 
-  init(digestCreator: DigestCreator = DigestCreator(), saltProvider: SaltProvider) {
+  init(digestCreator: DigestCreator = DigestCreator(), saltProvider: SaltProvider, decoysLimit: Int = 0) {
     self.digestCreator = digestCreator
     self.saltProvider = saltProvider
+    self.decoysLimit = decoysLimit
   }
 
   func createJWT(sdjwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
@@ -56,7 +59,7 @@ class SDJWTFactory {
       //      let (key, output) = mergeDictionaries(claimKey: claimKey, jsonToMerge: json, outputJson: outputJson)
       switch claimValue {
       case .flat, .recursiveArray, .recursiveObject:
-        outputJson["_sd"] = JSON(outputJson["_sd"].arrayValue + json["_sd"].arrayValue)
+        outputJson[Keys.sd.rawValue] = JSON(outputJson[Keys.sd].arrayValue + json[Keys.sd].arrayValue)
       default:
         outputJson[claimKey] = json
       }
@@ -72,7 +75,8 @@ class SDJWTFactory {
       // ...........
     case .flat(let json):
       let (disclosure, digest) = try self.flatDisclose(key: key, value: json)
-      let output: JSON = [Keys._sd.rawValue: [digest]]
+      var decoys = self.addDecoy()
+      let output: JSON = [Keys.sd.rawValue: [digest] + decoys]
       return(output, [disclosure])
       // ...........
     case .object(let object):
@@ -85,9 +89,11 @@ class SDJWTFactory {
         case .plain(let json):
           partialResult.arrayObject?.append(json)
         default:
-          let (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
+          var (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
+          var decoys = self.addDecoy().map {JSON([Keys.dots.rawValue: $0])}
           let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
           partialResult.arrayObject?.append(dottedKeyJson)
+          partialResult.arrayObject?.append(contentsOf: decoys)
           disclosures.append(disclosure)
         }
       }
@@ -135,5 +141,16 @@ class SDJWTFactory {
     }
 
     return (urlEncoded, digest)
+  }
+
+  private func addDecoy() -> [DisclosureDigest] {
+    if decoyCounter < decoysLimit {
+      let rand = Array(repeating: "", count: .random(in: 0...decoysLimit-decoyCounter))
+        .compactMap {_ in digestCreator.decoy()}
+
+      decoyCounter += rand.count
+      return rand
+    }
+    return []
   }
 }

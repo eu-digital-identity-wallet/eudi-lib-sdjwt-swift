@@ -83,7 +83,7 @@ final class BuilderTest: XCTestCase {
     }
 
     let unsignedJwt = factory.createJWT(sdjwtObject: jwt.asObject)
-    self.validateObjectResults(factoryResult: unsignedJwt)
+    validateObjectResults(factoryResult: unsignedJwt)
   }
 
   func testPlain() {
@@ -109,8 +109,8 @@ final class BuilderTest: XCTestCase {
 
     let objectPlain = jwtFactory.createJWT(sdjwtObject: objects.asObject)
 
-    self.validateObjectResults(factoryResult: unsignedPlain)
-    self.validateObjectResults(factoryResult: objectPlain)
+    validateObjectResults(factoryResult: unsignedPlain)
+    validateObjectResults(factoryResult: objectPlain)
   }
 
   func testFlat() {
@@ -135,8 +135,8 @@ final class BuilderTest: XCTestCase {
 
     let objectPlain = jwtFactory.createJWT(sdjwtObject: objects.asObject)
 
-    self.validateObjectResults(factoryResult: unsignedPlain)
-    self.validateObjectResults(factoryResult: objectPlain)
+    validateObjectResults(factoryResult: unsignedPlain)
+    validateObjectResults(factoryResult: objectPlain)
   }
 
   func testRecursive() {
@@ -158,7 +158,7 @@ final class BuilderTest: XCTestCase {
 
     let recursiveObject = jwtFactory.createJWT(sdjwtObject: objects.asObject)
 
-    self.validateObjectResults(factoryResult: recursiveObject)
+    validateObjectResults(factoryResult: recursiveObject)
   }
 
   func testArray() {
@@ -189,7 +189,7 @@ final class BuilderTest: XCTestCase {
 
     let recursiveObject = jwtFactory.createJWT(sdjwtObject: array.asObject)
 
-    self.validateObjectResults(factoryResult: recursiveObject)
+    validateObjectResults(factoryResult: recursiveObject)
   }
 
   func testRecursiveArray() {
@@ -205,16 +205,8 @@ final class BuilderTest: XCTestCase {
 
     let recursiveObject = jwtFactory.createJWT(sdjwtObject: array.asObject)
 
-    self.validateObjectResults(factoryResult: recursiveObject)
+    validateObjectResults(factoryResult: recursiveObject)
   }
 
-  func validateObjectResults(factoryResult result: Result<ClaimSet, Error>) {
-    switch result {
-    case .success((let json, let disclosures)):
-      print(try! json.toJSONString(outputFormatting: .prettyPrinted))
-      disclosures.forEach({print($0)})
-    case .failure(let err):
-      XCTFail("Failed to Create SDJWT")
-    }
-  }
+
 }

@@ -13,26 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import Foundation
+import SwiftyJSON
 
-let saltProviderString = "lklxF5jMYlGTPUovMNIvCA"
-
-enum SDJWTError: Error {
-  case encodingError
-  case discloseError
-  case nonObjectFormat(ofElement: Any)
+extension JSON {
+  subscript(key: Keys) -> JSON {
+    return self[[key]]
+  }
 }
 
-enum Keys: String {
-  case sd
-  case dots = "..."
-  case iss
-  case iat
-  case sub
-  case exp
-  case jti
-  case nbe
-  case aud
-  case cnf
-  case jwk
+extension Keys: JSONSubscriptType {
+  var jsonKey: SwiftyJSON.JSONKey {
+    return .key(self.rawValue)
+  }
 }

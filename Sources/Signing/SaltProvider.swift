@@ -27,7 +27,7 @@ class DefaultSaltProvider: SaltProvider {
   // MARK: - Properties
 
   var saltString: Salt {
-    return salt.base64EncodedString()
+    return salt.base64URLEncode()
   }
 
   var salt: Data {

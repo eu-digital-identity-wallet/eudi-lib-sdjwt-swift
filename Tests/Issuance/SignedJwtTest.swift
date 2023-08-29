@@ -21,22 +21,22 @@ import XCTest
 @testable import eudi_lib_sdjwt_swift
 
 final class SignedJwtTest: XCTestCase {
+  @SDJWTBuilder
+  var plainJWT: SdElement {
+    // Constant claims
+    ConstantClaims.iat(time: Date())
+    ConstantClaims.exp(time: Date().addingTimeInterval(3600))
+    ConstantClaims.iss(domain: "https://example.com/issuer")
+    // Payload
+    FlatDisclosedClaim("string", "name")
+    FlatDisclosedClaim("number", 36524)
+    FlatDisclosedClaim("bool", true)
+    FlatDisclosedClaim("array", ["GR", "DE"])
+  }
+
+  let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+
   func testSignedJwt() {
-    @SDJWTBuilder
-    var plainJWT: SdElement {
-      // Constant claims
-      ConstantClaims.iat(time: Date())
-      ConstantClaims.exp(time: Date().addingTimeInterval(3600))
-      ConstantClaims.iss(domain: "https://example.com/issuer")
-      // Payload
-      FlatDisclosedClaim("string", "name")
-      FlatDisclosedClaim("number", 36524)
-      FlatDisclosedClaim("bool", true)
-      FlatDisclosedClaim("array", ["GR", "DE"])
-    }
-
-    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
-
     let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: plainJWT.asObject), expectedDigests: plainJWT.expectedDigests)
 
     let keyPair = generateES256KeyPair()
@@ -56,5 +56,19 @@ final class SignedJwtTest: XCTestCase {
     } catch {
       XCTFail("Failed To Verfiy JWS")
     }
+  }
+
+  func testSDJWTserialization() {
+    let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: plainJWT.asObject), expectedDigests: plainJWT.expectedDigests)
+
+    let keyPair = generateES256KeyPair()
+    print(keyPair.private, keyPair.public)
+
+    let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private)!)
+
+    let jws = try! issuer.createSignedJWT()
+    let data = issuer.serialize(jws: jws)!
+
+    let serializedString = String(data: data, encoding: .utf8)
   }
 }

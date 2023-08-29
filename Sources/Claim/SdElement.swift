@@ -26,7 +26,7 @@ enum SdElement: Encodable {
   case array([SdElement])
 
   // Advanced UseCases
-//  case structuredObject([String: SdElement])
+  //  case structuredObject([String: SdElement])
   case recursiveObject([String: SdElement])
   case recursiveArray([SdElement])
 

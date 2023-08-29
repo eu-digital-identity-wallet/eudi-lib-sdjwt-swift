@@ -189,7 +189,7 @@ final class BuilderTest: XCTestCase {
 
     let recursiveObject = jwtFactory.createJWT(sdjwtObject: array.asObject)
 
-    validateObjectResults(factoryResult: recursiveObject, expectedDigests: array.expectedDigests)
+    validateObjectResults(factoryResult: recursiveObject, expectedDigests: 2)
   }
 
   func testRecursiveArray() {

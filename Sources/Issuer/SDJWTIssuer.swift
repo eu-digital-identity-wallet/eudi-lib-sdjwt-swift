@@ -17,22 +17,23 @@ import Foundation
 import JOSESwift
 import SwiftyJSON
 
-class SDJWTIssuer {
+class SDJWTIssuer<SecKey> {
+
+  // MARK: - Properties
 
   var claimSet: ClaimSet
   var kbJwt: KBJWT?
 
-  let jwsController: JWSController
+  let jwsController: JWSController<SecKey>
 
   enum Purpose {
     case issuance(ClaimSet)
     case presentation(ClaimSet, KBJWT?)
   }
 
-//  let key = SecKey.representing(rsaPublicKeyComponents: RSAPublicKeyComponents)
-//  let signer = Signer(signingAlgorithm: .ES256, key: .init(base64URLEncoded: ""))
+  // MARK: - Lifecycle
 
-  init(purpose: Purpose, jwsController: JWSController) {
+  init(purpose: Purpose, jwsController: JWSController<SecKey>) {
     switch purpose {
     case .issuance(let claimSet):
       self.claimSet = claimSet
@@ -46,6 +47,8 @@ class SDJWTIssuer {
 
     self.jwsController = jwsController
   }
+
+  // MARK: - Methods
 
   func createSignedJWT() throws -> JWS {
     let header = JWSHeader(algorithm: jwsController.signatureAlgorithm)
@@ -67,7 +70,8 @@ class SDJWTIssuer {
 
     let kbJwtString = (try? self.kbJwt?.toJSONString() ?? "") ?? ""
 
-    return (jwsString + disclosures + kbJwtString).data(using: .utf8)
+    let output = jwsString + disclosures + kbJwtString
+    return output.data(using: .utf8)
   }
 }
 

@@ -42,26 +42,3 @@ class DefaultSaltProvider: SaltProvider {
     return Data(randomBytes)
   }
 }
-
-class MockSaltProvider: SaltProvider {
-
-  // MARK: - Properties
-
-  var saltString: Salt {
-    return salt.base64EncodedString().base64ToUTF8() ?? ""
-  }
-
-  var salt: Data = Data()
-
-  // MARK: - LifeCycle
-
-  init(saltString: String) {
-    self.salt = Data(saltString.utf8)
-  }
-
-  // MARK: - Methods
-
-  func updateSalt(string: Salt) {
-    self.salt = Data(saltString.utf8)
-  }
-}

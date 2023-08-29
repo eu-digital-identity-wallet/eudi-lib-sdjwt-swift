@@ -33,7 +33,7 @@ class DefaultSaltProvider: SaltProvider {
   var salt: Data {
     self.generateRandomSalt()
   }
-  
+
   // MARK: - Methods
 
   func generateRandomSalt(length: Int = 16) -> Data {

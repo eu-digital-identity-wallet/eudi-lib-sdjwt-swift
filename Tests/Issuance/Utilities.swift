@@ -15,6 +15,7 @@
  */
 
 import XCTest
+import Security
 
 @testable import eudi_lib_sdjwt_swift
 
@@ -50,7 +51,8 @@ extension SdElement {
   }
 }
 
-func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expectedDigests: Int, numberOfDecoys: Int = 0, decoysLimit: Int = 0) {
+@discardableResult
+func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expectedDigests: Int, numberOfDecoys: Int = 0, decoysLimit: Int = 0) -> ClaimSet {
   switch result {
   case .success((let json, let disclosures)):
     print("JSON Value of sdjwt")
@@ -60,15 +62,43 @@ func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expect
     print("With Disclosures")
     print("==============================")
     disclosures
-      .compactMap{ $0.base64URLDecode()}
+      .compactMap { $0.base64URLDecode()}
       .forEach {print($0)}
     print("==============================")
     if numberOfDecoys == 0 && decoysLimit == 0 {
       XCTAssert(disclosures.count == expectedDigests)
     }
     XCTAssert(expectedDigests + numberOfDecoys <= expectedDigests + decoysLimit)
-
+    return (json, disclosures)
   case .failure(let err):
     XCTFail("Failed to Create SDJWT")
+    return(.empty, [])
   }
+}
+
+func generateES256KeyPair() -> KeyPair {
+  func generateECDHPrivateKey() throws -> SecKey {
+    let attributes: [String: Any] = [
+      kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
+      kSecAttrKeySizeInBits as String: 256
+    ]
+
+    var error: Unmanaged<CFError>?
+    guard let privateKey = SecKeyCreateRandomKey(attributes as CFDictionary, &error) else {
+      throw error!.takeRetainedValue() as Error
+    }
+    return privateKey
+  }
+
+  func generateECDHPublicKey(from privateKey: SecKey) throws -> SecKey {
+    guard let publicKey = SecKeyCopyPublicKey(privateKey) else {
+      throw SDJWTError.keyCreation
+    }
+    return publicKey
+  }
+
+  let privateKey = try! generateECDHPrivateKey()
+  let publicKey = try! generateECDHPublicKey(from: privateKey)
+
+  return KeyPair(publicKey, privateKey)
 }

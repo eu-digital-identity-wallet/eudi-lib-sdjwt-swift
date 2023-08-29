@@ -72,18 +72,18 @@ final class SpecExamples: XCTestCase {
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
     @SDJWTBuilder
     var complex: SdElement {
-      
+
       ConstantClaims.iat(time: Date())
       ConstantClaims.exp(time: Date() + 3600)
       ConstantClaims.iss(domain: "https://example.com/issuer")
-      
+
       ObjectClaim("verified_claims") {
         ObjectClaim("verification") {
           PlainClaim("trust_framework", "de_aml")
           FlatDisclosedClaim("time", "2012-04-23T18:25Z")
           FlatDisclosedClaim("verification_process", "f24c6f-6d3f-4ec5-973e-b0d8506f3bc7")
           SdArrayClaim("evidence") {
-            //TODO: Improve array builder functionality
+            // TODO: Improve array builder functionality
             evidenceObject
           }
         }
@@ -92,20 +92,20 @@ final class SpecExamples: XCTestCase {
           FlatDisclosedClaim("family_name", "Müller")
           FlatDisclosedClaim("nationalities", ["DE"])
           FlatDisclosedClaim("birthdate", "1956-01-28")
-          FlatDisclosedClaim("place_of_birth", ["country":"IS",
-                                                "locality":"Þykkvabæjarklaustur"])
+          FlatDisclosedClaim("place_of_birth", ["country": "IS",
+                                                "locality": "Þykkvabæjarklaustur"])
           FlatDisclosedClaim("address", ["locality": "Maxstadt",
                                          "postal_code": "12344",
                                          "country": "DE",
                                          "street_address": "Weidenstraße 22"])
         }
       }
-      
+
       FlatDisclosedClaim("birth_middle_name", "Timotheus")
       FlatDisclosedClaim("salutation", "Dr.")
       FlatDisclosedClaim("msisdn", "49123456789")
     }
-    //.......
+    // .......
     @SDJWTBuilder
     var evidenceObject: SdElement {
       PlainClaim("type", "document")
@@ -118,7 +118,7 @@ final class SpecExamples: XCTestCase {
           PlainClaim("country", "DE")
         }
       }
-      
+
       PlainClaim("number", "53554554")
       PlainClaim("date_of_issuance", "2010-03-23")
       PlainClaim("date_of_expiry", "2020-03-22")
@@ -126,13 +126,13 @@ final class SpecExamples: XCTestCase {
 
     let exampleOutputJSON = JSON(stringLiteral: exampleOutputJSONString)
 
-    let disclosuresCount = exampleOutputJSON.reduce(into: 0) { partialResult, element in
-      
+    let disclosuresCount = exampleOutputJSON.reduce(into: 0) { _, _ in
+
     }
 
     let output = factory.createJWT(sdjwtObject: complex.asObject)
     validateObjectResults(factoryResult: output, expectedDigests: 12)
-    
+
     //    {
     //      "exp" : 1693239709.7396131,
     //      "iss" : "https:\/\/example.com\/issuer",
@@ -223,4 +223,3 @@ final class SpecExamples: XCTestCase {
   }
   """
 }
-

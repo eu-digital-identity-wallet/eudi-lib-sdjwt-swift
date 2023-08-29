@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import Foundation
-
+import JOSESwift
+import SwiftyJSON
 import XCTest
 
 @testable import eudi_lib_sdjwt_swift
@@ -35,7 +36,25 @@ final class SignedJwtTest: XCTestCase {
     }
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
-    
-    validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: plainJWT.asObject), expectedDigests: plainJWT.expectedDigests)
+
+    let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: plainJWT.asObject), expectedDigests: plainJWT.expectedDigests)
+
+    let keyPair = generateES256KeyPair()
+    print(keyPair.private, keyPair.public)
+
+    let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private)!)
+
+    let jws = try! issuer.createSignedJWT()
+
+    do {
+      let verifier = Verifier(verifyingAlgorithm: .ES256, key: keyPair.public)!
+
+      let payload = try jws.validate(using: verifier).payload
+      let message = try JSON.init(data: payload.data())
+
+      XCTAssertEqual(message, claimSet.value)
+    } catch {
+      XCTFail("Failed To Verfiy JWS")
+    }
   }
 }

@@ -26,3 +26,7 @@ extension Keys: JSONSubscriptType {
     return .key(self.rawValue)
   }
 }
+
+extension JSON {
+  static let empty = JSON()
+}

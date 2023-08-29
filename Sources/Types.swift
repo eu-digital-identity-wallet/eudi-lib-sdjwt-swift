@@ -15,6 +15,8 @@
  */
 import Foundation
 
+public typealias KeyPair = (public: SecKey, private: SecKey)
+
 enum SDJWTError: Error {
   case sdAsKey
   case nullJSONValue
@@ -22,6 +24,7 @@ enum SDJWTError: Error {
   case discloseError
   case serializationError
   case nonObjectFormat(ofElement: Any)
+  case keyCreation
 }
 
 /// Static Keys Used by the JWT

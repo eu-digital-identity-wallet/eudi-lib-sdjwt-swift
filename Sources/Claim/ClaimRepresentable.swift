@@ -41,13 +41,13 @@ struct ConstantClaims: ClaimRepresentable {
 
   static func iat(time: Date) -> ConstantClaims {
     let currentDate = Date()
-    let timestamp = currentDate.timeIntervalSince1970
+    let timestamp = Int(currentDate.timeIntervalSince1970.rounded())
 
     return ConstantClaims(Keys.iat.rawValue, value: .plain(value: timestamp))
   }
 
   static func exp(time: Date) -> ConstantClaims {
-    let timestamp = time.timeIntervalSince1970
+    let timestamp = Int(time.timeIntervalSince1970.rounded())
 
     return ConstantClaims(Keys.exp.rawValue, value: .plain(value: timestamp))
   }
@@ -68,7 +68,7 @@ extension ClaimRepresentable {
     }
     return string
   }
-  
+
   // MARK: - Encodable
 
   func encode(to encoder: Encoder) throws {

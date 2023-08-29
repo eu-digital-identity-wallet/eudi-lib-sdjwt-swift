@@ -66,7 +66,7 @@ enum SdElement: Encodable {
 }
 
 extension SdElement {
-  
+
   // MARK: - Helpers
 
   var jsonString: String? {

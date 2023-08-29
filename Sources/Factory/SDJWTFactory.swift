@@ -31,7 +31,7 @@ class SDJWTFactory {
   var decoyCounter = 0
   // MARK: - LifeCycle
 
-  /// Initializes an instance of `SDJWTFactory`.
+  /// Initialises an instance of `SDJWTFactory`.
   ///
   /// - Parameters:
   ///   - saltProvider: An instance of `SaltProvider` for obtaining salt strings.
@@ -47,6 +47,7 @@ class SDJWTFactory {
 
   func createJWT(sdjwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
     do {
+      self.decoyCounter = 0
       return .success(try self.encodeObject(sdjwtObject: addSdAlgClaim(object: sdjwtObject)))
     } catch {
       return .failure(error)
@@ -79,7 +80,7 @@ class SDJWTFactory {
       // Update output JSON based on claim value type
       switch claimValue {
       case .flat, .recursiveArray, .recursiveObject:
-        outputJson[Keys.sd.rawValue] = JSON(outputJson[Keys.sd].arrayValue + json[Keys.sd].arrayValue)
+        outputJson[Keys.sd] = JSON(outputJson[Keys.sd].arrayValue + json[Keys.sd].arrayValue)
       default:
         outputJson[claimKey] = json
       }
@@ -126,7 +127,7 @@ class SDJWTFactory {
           let (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
           let decoys = self.addDecoy()
             .sorted()
-            .map {JSON([Keys.dots.rawValue: $0])}
+            .map {JSON([Keys.dots: $0])}
           let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
           partialResult.arrayObject?.append(dottedKeyJson)
           partialResult.arrayObject?.append(contentsOf: decoys)
@@ -191,8 +192,10 @@ class SDJWTFactory {
     let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
     // TODO: Remove before flight
     //      .replacingOccurrences(of: ",", with: ", ")
-    guard let urlEncoded = stringToEncode?.toBase64URLEncoded(),
-          let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
+    guard
+      let urlEncoded = stringToEncode?.toBase64URLEncoded(),
+      let digest = digestCreator.hashAndBase64Encode(input: urlEncoded)
+    else {
       throw SDJWTError.encodingError
     }
 

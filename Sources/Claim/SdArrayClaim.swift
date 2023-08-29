@@ -37,7 +37,7 @@ struct SdArrayClaim: ClaimRepresentable {
 struct RecursiveSdArrayClaim: ClaimRepresentable {
 
   // MARK: - Properties
-  
+
   var key: String
   var value: SdElement
 

@@ -208,5 +208,4 @@ final class BuilderTest: XCTestCase {
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: array.expectedDigests)
   }
 
-
 }

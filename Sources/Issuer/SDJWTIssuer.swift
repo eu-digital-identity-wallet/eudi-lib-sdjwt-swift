@@ -22,26 +22,52 @@ class SDJWTIssuer {
   var claimSet: ClaimSet
   var kbJwt: KBJWT?
 
+  let jwsController: JWSController
+
+  enum Purpose {
+    case issuance(ClaimSet)
+    case presentation(ClaimSet, KBJWT?)
+  }
+
 //  let key = SecKey.representing(rsaPublicKeyComponents: RSAPublicKeyComponents)
 //  let signer = Signer(signingAlgorithm: .ES256, key: .init(base64URLEncoded: ""))
 
-  init(claimSet: ClaimSet, kbJwt: KBJWT?) {
-    self.claimSet = claimSet
-    self.kbJwt = kbJwt
+  init(purpose: Purpose, jwsController: JWSController) {
+    switch purpose {
+    case .issuance(let claimSet):
+      self.claimSet = claimSet
+      self.kbJwt = nil
+      // ..........
+    case .presentation(let claimSet, let kbJwt):
+      self.claimSet = claimSet
+      self.kbJwt = kbJwt
+      // ..........
+    }
+
+    self.jwsController = jwsController
   }
 
-  func createSignedJWT() throws {
-    let header = JWSHeader(algorithm: .ES256)
+  func createSignedJWT() throws -> JWS {
+    let header = JWSHeader(algorithm: jwsController.signatureAlgorithm)
     let payload = try Payload(claimSet.value.rawData())
+    let signer = jwsController.signer
+
+    guard let jws = try? JWS(header: header, payload: payload, signer: signer) else {
+      throw SDJWTError.serializationError
+    }
+
+    return jws
   }
 
-  func serialize(kbJwt: JSON?) -> Data? {
-    let output =
-    claimSet.value.stringValue + "~" +
-    claimSet.disclosures.reduce(into: "", { partialResult, disclosure in
-      partialResult += disclosure + "~"
-    })
-    return output.data(using: .utf8)
+  func serialize(jws: JWS) -> Data? {
+    let jwsString = jws.compactSerializedString
+    let disclosures = claimSet.disclosures.reduce(into: "") { partialResult, disclosure in
+      partialResult += "~\(disclosure)"
+    }
+
+    let kbJwtString = (try? self.kbJwt?.toJSONString() ?? "") ?? ""
+
+    return (jwsString + disclosures + kbJwtString).data(using: .utf8)
   }
 }
 

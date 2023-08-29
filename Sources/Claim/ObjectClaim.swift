@@ -16,8 +16,12 @@
 
 struct ObjectClaim: ClaimRepresentable {
 
+  // MARK: - Properties
+
   var key: String
   var value: SdElement
+
+  // MARK: - Lifecycle
 
   init?(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
     self.key = key
@@ -35,8 +39,12 @@ struct ObjectClaim: ClaimRepresentable {
 
 struct RecursiveObject: ClaimRepresentable {
 
+  // MARK: - Properties
+
   var key: String
   var value: SdElement
+
+  // MARK: - Lifecycle
 
   init?(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
     self.key = key

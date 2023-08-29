@@ -15,8 +15,12 @@
  */
 
 struct FlatDisclosedClaim: ClaimRepresentable {
+  // MARK: - Properties
+
   var key: String
   var value: SdElement
+
+  // MARK: - Lifecycle
 
   init(_ key: String, _ flat: Encodable) {
     self.key = key

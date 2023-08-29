@@ -15,8 +15,13 @@
 // */
 
 struct SdArrayClaim: ClaimRepresentable {
+
+  // MARK: - Properties
+
   var key: String
   var value: SdElement
+
+  // MARK: - Lifecycle
 
   init(_ key: String, array: [SdElement]) {
     self.key = key
@@ -30,8 +35,13 @@ struct SdArrayClaim: ClaimRepresentable {
 }
 
 struct RecursiveSdArrayClaim: ClaimRepresentable {
+
+  // MARK: - Properties
+  
   var key: String
   var value: SdElement
+
+  // MARK: - Lifecycle
 
   init(_ key: String, array: [SdElement]) {
     self.key = key

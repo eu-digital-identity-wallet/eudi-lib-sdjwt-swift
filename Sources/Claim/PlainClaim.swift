@@ -16,8 +16,12 @@
 
 struct PlainClaim: ClaimRepresentable {
 
+  // MARK: - Properties
+
   var key: String
   var value: SdElement
+
+  // MARK: - Lifecycle
 
   init(_ key: String, _ plain: Encodable) {
     self.key = key

@@ -66,8 +66,11 @@ enum SdElement: Encodable {
 }
 
 extension SdElement {
+  
+  // MARK: - Helpers
+
   var jsonString: String? {
-    try? self.toJSONString(outputFormatting: .withoutEscapingSlashes)
+    try? self.toJSONString()
   }
 
   var asObject: SDJWTObject? {

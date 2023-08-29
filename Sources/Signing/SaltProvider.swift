@@ -33,6 +33,8 @@ class DefaultSaltProvider: SaltProvider {
   var salt: Data {
     self.generateRandomSalt()
   }
+  
+  // MARK: - Methods
 
   func generateRandomSalt(length: Int = 16) -> Data {
     var randomBytes = [UInt8](repeating: 0, count: length)
@@ -43,15 +45,21 @@ class DefaultSaltProvider: SaltProvider {
 
 class MockSaltProvider: SaltProvider {
 
+  // MARK: - Properties
+
   var saltString: Salt {
     return salt.base64EncodedString().base64ToUTF8() ?? ""
   }
 
   var salt: Data = Data()
 
+  // MARK: - LifeCycle
+
   init(saltString: String) {
     self.salt = Data(saltString.utf8)
   }
+
+  // MARK: - Methods
 
   func updateSalt(string: Salt) {
     self.salt = Data(saltString.utf8)

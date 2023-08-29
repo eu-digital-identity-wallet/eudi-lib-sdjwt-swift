@@ -25,14 +25,19 @@ protocol ClaimRepresentable: Encodable {
 }
 
 struct ConstantClaims: ClaimRepresentable {
+  // MARK: - Properties
 
   var key: String
   var value: SdElement
+
+  // MARK: - Lifecycle
 
   private init(_ key: String, value: SdElement) {
     self.key = key
     self.value = value
   }
+
+  // MARK: - Methods
 
   static func iat(time: Date) -> ConstantClaims {
     let currentDate = Date()
@@ -55,12 +60,16 @@ struct ConstantClaims: ClaimRepresentable {
 
 extension ClaimRepresentable {
 
+  // MARK: - helpers
+
   var flatString: String {
-    guard let string = try? self.value.toJSONString(outputFormatting: .withoutEscapingSlashes) else {
+    guard let string = self.value.jsonString else {
       return ""
     }
     return string
   }
+  
+  // MARK: - Encodable
 
   func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: RawCodingKey.self)

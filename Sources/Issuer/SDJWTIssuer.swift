@@ -20,22 +20,19 @@ import SwiftyJSON
 class SDJWTIssuer {
 
   var claimSet: ClaimSet
-  var kbJwt: JSON?
+  var kbJwt: KBJWT?
 
 //  let key = SecKey.representing(rsaPublicKeyComponents: RSAPublicKeyComponents)
 //  let signer = Signer(signingAlgorithm: .ES256, key: .init(base64URLEncoded: ""))
 
-  init(claimSet: ClaimSet) {
+  init(claimSet: ClaimSet, kbJwt: KBJWT?) {
     self.claimSet = claimSet
+    self.kbJwt = kbJwt
   }
 
   func createSignedJWT() throws {
     let header = JWSHeader(algorithm: .ES256)
-
-    guard let payloadData = self.serialize(kbJwt: kbJwt) else {
-      throw SDJWTError.serializationError
-    }
-    let payload = Payload(payloadData)
+    let payload = try Payload(claimSet.value.rawData())
   }
 
   func serialize(kbJwt: JSON?) -> Data? {
@@ -46,4 +43,12 @@ class SDJWTIssuer {
     })
     return output.data(using: .utf8)
   }
+}
+
+
+
+struct KBJWT: Codable {
+  var nonce: String
+  var aud: String
+  var iat: Int
 }

@@ -17,7 +17,12 @@ import Foundation
 import CryptoKit
 
 class SHA256Hasher: HashingAlgorithm {
+
+  // MARK: - Properties
+
   var identifier: String = "sha-256"
+
+  // MARK: - Methods
 
   func hash(disclosure: Disclosure) -> Data? {
     // Convert input string to Data

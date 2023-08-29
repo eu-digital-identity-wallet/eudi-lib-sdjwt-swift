@@ -18,6 +18,8 @@ import SwiftyJSON
 
 typealias ClaimSet = (value: JSON, disclosures: [Disclosure])
 
+/// A factory class responsible for creating and encoding SDJWT objects.
+/// Creates a valid JWT JSON along with its disclosures
 class SDJWTFactory {
 
   // MARK: - Properties
@@ -29,6 +31,12 @@ class SDJWTFactory {
   var decoyCounter = 0
   // MARK: - LifeCycle
 
+  /// Initializes an instance of `SDJWTFactory`.
+  ///
+  /// - Parameters:
+  ///   - saltProvider: An instance of `SaltProvider` for obtaining salt strings.
+  ///   - digestCreator: An instance of `DigestCreator` for creating digests and hashes.
+  ///   - decoysLimit: If decoys are requesed, defaults to 0
   init(digestCreator: DigestCreator = DigestCreator(), saltProvider: SaltProvider, decoysLimit: Int = 0) {
     self.digestCreator = digestCreator
     self.saltProvider = saltProvider
@@ -47,18 +55,28 @@ class SDJWTFactory {
 
   // MARK: - Methods - Private
 
+  /// Encodes an SDJWT object into a ClaimSet containing JSON and disclosure information.
+  ///
+  /// - Parameters:
+  ///   - sdjwtObject: The SDJWT object to be encoded.
+  /// - Returns: A ClaimSet containing the encoded JSON and an array of Disclosures.
+  /// - Throws: An error of type SDJWTError if the input object is not in the expected format.
+  ///
   private func encodeObject(sdjwtObject: [String: SdElement]?) throws -> ClaimSet {
+    // Check if the input object is of correct format
     guard let sdjwtObject else {
       throw SDJWTError.nonObjectFormat(ofElement: sdjwtObject)
     }
 
+    // Initialize arrays to store disclosures and JSON output
     var outputDisclosures: [Disclosure] = []
     var outputJson = JSON()
 
     try sdjwtObject.forEach { claimKey, claimValue in
       let (json, disclosures) = try self.encodeClaim(key: claimKey, value: claimValue)
       outputDisclosures.append(contentsOf: disclosures)
-      //      let (key, output) = mergeDictionaries(claimKey: claimKey, jsonToMerge: json, outputJson: outputJson)
+
+      // Update output JSON based on claim value type
       switch claimValue {
       case .flat, .recursiveArray, .recursiveObject:
         outputJson[Keys.sd.rawValue] = JSON(outputJson[Keys.sd].arrayValue + json[Keys.sd].arrayValue)
@@ -67,24 +85,38 @@ class SDJWTFactory {
       }
     }
 
+    // Return the encoded JSON and disclosures as a ClaimSet
     return (outputJson, outputDisclosures)
   }
 
+  /// Encodes a single SDJWT claim value into a ClaimSet containing encoded JSON and associated disclosures.
+  ///
+  /// - Parameters:
+  ///   - key: The key corresponding to the claim value being encoded.
+  ///   - value: The SDJWT claim value to be encoded.
+  /// - Returns: A ClaimSet containing the encoded JSON and an array of associated Disclosures.
+  /// - Throws: An error if the encoding process encounters an issue.
+  ///
   private func encodeClaim(key: String, value: SdElement) throws -> ClaimSet {
     switch value {
     case .plain(let plain):
+      // For plain values, return the value itself along with an empty array of disclosures.
       return (plain, [])
       // ...........
     case .flat(let json):
+      // Encode a primitive JSON claim value and disclose it.
       let (disclosure, digest) = try self.flatDisclose(key: key, value: json)
+      // Add Decoys if needed
       let decoys = self.addDecoy()
       let output: JSON = [Keys.sd.rawValue: ([digest] + decoys).sorted()]
       return(output, [disclosure])
       // ...........
     case .object(let object):
+      // Encode an object claim value by recursively encoding the SDJWT object.
       return try self.encodeObject(sdjwtObject: object)
       // ...........
     case .array(let array):
+      // Encode an array claim value, disclosing each element and adding decoys.
       var disclosures: [Disclosure] = []
       let output = try array.reduce(into: JSON([Disclosure]())) { partialResult, element in
         switch element {
@@ -105,11 +137,15 @@ class SDJWTFactory {
       return (output, disclosures)
       // ...........
     case .recursiveObject(let object):
+      // Encode a recursive object claim value by first encoding the nested object,
+      // then encoding it as a flat value and returning the combined disclosures.
       let encodedObject = try self.encodeObject(sdjwtObject: object)
       let sdElement = try self.encodeClaim(key: key, value: .flat(encodedObject.value))
       return (sdElement.value, encodedObject.disclosures + sdElement.disclosures)
       // ...........
     case .recursiveArray(let array):
+      // Encode a recursive array claim value by first encoding the nested array,
+      // then encoding it as a flat value and returning the combined disclosures.
       let encodedArray = try self.encodeClaim(key: key, value: .array(array))
       let sdElement = try self.encodeClaim(key: key, value: .flat(encodedArray.value))
       return (sdElement.value, encodedArray.disclosures + sdElement.disclosures)
@@ -117,14 +153,22 @@ class SDJWTFactory {
     }
   }
 
+  /// Generates a disclosure and its corresponding digest by flat-disclosing the provided key-value pair.
+  ///
+  /// - Parameters:
+  ///   - key: The key corresponding to the value being disclosed.
+  ///   - value: The JSON value to be disclosed.
+  /// - Returns: A tuple containing the Base64URLEncoded disclosure and its digest.
+  /// - Throws: An error if an issue occurs during encoding, URL encoding, or hashing.
+  ///       salt                      key                value
+  ///   ["6qMQvRL5haj", "family_name", "Möbius"]
   private func flatDisclose(key: String, value: JSON) throws -> (Disclosure, DisclosureDigest) {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, key, value)
-    let stringToEncode = try jsonArray
-      .toJSONString(outputFormatting: .withoutEscapingSlashes)
+    let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
     // TODO: Remove before flight
     //      .replacingOccurrences(of: ",", with: ", ")
-    guard let urlEncoded = stringToEncode.toBase64URLEncoded(),
+    guard let urlEncoded = stringToEncode?.toBase64URLEncoded(),
           let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
       throw SDJWTError.encodingError
     }
@@ -132,14 +176,22 @@ class SDJWTFactory {
     return (urlEncoded, digest)
   }
 
+  /// Generates a disclosure and its corresponding digest by flat-disclosing the provided key-value pair.
+  ///
+  /// - Parameters:
+  ///   - value: The JSON value of the array element to be disclosed
+  /// - Returns: A tuple containing the Base64URLEncoded disclosure and its digest.
+  /// - Throws: An error if an issue occurs during encoding, URL encoding, or hashing.
+  ///       salt                    value
+  ///   ["6qMQvRL5haj",  "Möbius"]
+  ///
   private func discloseArrayElement(value: JSON) throws -> (Disclosure, DisclosureDigest) {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, value)
-    let stringToEncode = try jsonArray
-      .toJSONString(outputFormatting: .withoutEscapingSlashes)
+    let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
     // TODO: Remove before flight
     //      .replacingOccurrences(of: ",", with: ", ")
-    guard let urlEncoded = stringToEncode.toBase64URLEncoded(),
+    guard let urlEncoded = stringToEncode?.toBase64URLEncoded(),
           let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
       throw SDJWTError.encodingError
     }

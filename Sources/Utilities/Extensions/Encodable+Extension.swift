@@ -16,7 +16,7 @@
 import Foundation
 
 extension Encodable {
-  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting) throws -> String {
+  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
     let encoder = JSONEncoder()
     encoder.outputFormatting = outputFormatting
 

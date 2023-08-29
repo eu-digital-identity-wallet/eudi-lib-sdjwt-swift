@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import Foundation
-
+import SwiftyJSON
 import XCTest
 
 @testable import eudi_lib_sdjwt_swift
@@ -123,9 +123,15 @@ final class SpecExamples: XCTestCase {
       PlainClaim("date_of_issuance", "2010-03-23")
       PlainClaim("date_of_expiry", "2020-03-22")
     }
-    
+
+    let exampleOutputJSON = JSON(stringLiteral: exampleOutputJSONString)
+
+    let disclosuresCount = exampleOutputJSON.reduce(into: 0) { partialResult, element in
+      
+    }
+
     let output = factory.createJWT(sdjwtObject: complex.asObject)
-    validateObjectResults(factoryResult: output, expectedDigests: complex.expectedDigests)
+    validateObjectResults(factoryResult: output, expectedDigests: 12)
     
     //    {
     //      "exp" : 1693239709.7396131,
@@ -177,5 +183,44 @@ final class SpecExamples: XCTestCase {
     //  ["AnIdB9NcoBBtX5QBTK0ErA","birth_middle_name","Timotheus"]
     //  ["biPz1nKQ6ShlMyckuSeMRQ","salutation","Dr."]
   }
+
+  let exampleOutputJSONString =
+  """
+  {
+    "_sd": [
+      "-aSznId9mWM8ocuQolCllsxVggq1-vHW4OtnhUtVmWw",
+      "IKbrYNn3vA7WEFrysvbdBJjDDU_EvQIr0W18vTRpUSg",
+      "otkxuT14nBiwzNJ3MPaOitOl9pVnXOaEHal_xkyNfKI"
+    ],
+    "iss": "https://example.com/issuer",
+    "iat": 1683000000,
+    "exp": 1883000000,
+    "verified_claims": {
+      "verification": {
+        "_sd": [
+          "7h4UE9qScvDKodXVCuoKfKBJpVBfXMF_TmAGVaZe3Sc",
+          "vTwe3raHIFYgFA3xaUD2aMxFz5oDo8iBu05qKlOg9Lw"
+        ],
+        "trust_framework": "de_aml",
+        "evidence": [
+          {
+            "...": "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k"
+          }
+        ]
+      },
+      "claims": {
+        "_sd": [
+          "RiOiCn6_w5ZHaadkQMrcQJf0Jte5RwurRs54231DTlo",
+          "S_498bbpKzB6Eanftss0xc7cOaoneRr3pKr7NdRmsMo",
+          "WNA-UNK7F_zhsAb9syWO6IIQ1uHlTmOU8r8CvJ0cIMk",
+          "Wxh_sV3iRH9bgrTBJi-aYHNCLt-vjhX1sd-igOf_9lk",
+          "_O-wJiH3enSB4ROHntToQT8JmLtz-mhO2f1c89XoerQ",
+          "hvDXhwmGcJQsBCA2OtjuLAcwAMpDsaU0nkovcKOqWNE"
+        ]
+      }
+    },
+    "_sd_alg": "sha-256"
+  }
+  """
 }
 

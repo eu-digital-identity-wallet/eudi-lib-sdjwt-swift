@@ -13,29 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import Foundation
 
-enum SDJWTError: Error {
-  case sdAsKey
-  case nullJSONValue
-  case encodingError
-  case discloseError
-  case serializationError
-  case nonObjectFormat(ofElement: Any)
-}
+import JOSESwift
+import CryptoKit
+import Security
 
-/// Static Keys Used by the JWT
-enum Keys: String {
-  case sd = "_sd"
-  case dots = "..."
-  case sdAlg = "_sd_alg"
-  case iss
-  case iat
-  case sub
-  case exp
-  case jti
-  case nbe
-  case aud
-  case cnf
-  case jwk
+class JWSController {
+
+  var privateKey: SecKey!
+  var publicKey: SecKey!
+
+
+  init(signatureAlgorithm: SignatureAlgorithm) throws {
+
+  }
 }

@@ -45,8 +45,6 @@ class SDJWTIssuer {
   }
 }
 
-
-
 struct KBJWT: Codable {
   var nonce: String
   var aud: String

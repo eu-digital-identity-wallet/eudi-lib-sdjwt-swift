@@ -109,8 +109,8 @@ final class BuilderTest: XCTestCase {
 
     let objectPlain = jwtFactory.createJWT(sdjwtObject: objects.asObject)
 
-    validateObjectResults(factoryResult: unsignedPlain, expectedDigests: plainJWT.expectedDigests)
-    validateObjectResults(factoryResult: objectPlain, expectedDigests: objects.expectedDigests)
+    validateObjectResults(factoryResult: unsignedPlain, expectedDigests: 0)
+    validateObjectResults(factoryResult: objectPlain, expectedDigests: 1)
   }
 
   func testFlat() {
@@ -135,8 +135,8 @@ final class BuilderTest: XCTestCase {
 
     let objectPlain = jwtFactory.createJWT(sdjwtObject: objects.asObject)
 
-    validateObjectResults(factoryResult: unsignedPlain, expectedDigests: plainJWT.expectedDigests)
-    validateObjectResults(factoryResult: objectPlain, expectedDigests: objects.expectedDigests)
+    validateObjectResults(factoryResult: unsignedPlain, expectedDigests: 4)
+    validateObjectResults(factoryResult: objectPlain, expectedDigests: 1)
   }
 
   func testRecursive() {

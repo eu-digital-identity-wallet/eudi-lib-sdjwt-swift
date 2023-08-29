@@ -63,6 +63,9 @@ func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expect
       .compactMap{ $0.base64URLDecode()}
       .forEach {print($0)}
     print("==============================")
+    if numberOfDecoys == 0 && decoysLimit == 0 {
+      XCTAssert(disclosures.count == expectedDigests)
+    }
     XCTAssert(expectedDigests + numberOfDecoys <= expectedDigests + decoysLimit)
 
   case .failure(let err):

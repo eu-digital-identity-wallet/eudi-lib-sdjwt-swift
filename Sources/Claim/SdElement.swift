@@ -49,18 +49,14 @@ enum SdElement: Encodable {
 
   func encode(to encoder: Encoder) {
     switch self {
-    case .object(let object):
+    case .object(let object), .recursiveObject(let object):
       try? object.encode(to: encoder)
     case .plain(let plain):
       try? plain.encode(to: encoder)
     case .flat(let flat):
       try? flat.encode(to: encoder)
-    case .array(let array):
+    case .array(let array), .recursiveArray(let array):
       try? array.encode(to: encoder)
-    case .recursiveObject:
-      print("not yet supported")
-    case .recursiveArray:
-      print("not yet supported")
     }
   }
 }

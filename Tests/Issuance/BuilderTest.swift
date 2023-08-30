@@ -18,8 +18,8 @@ import XCTest
 @testable import eudi_lib_sdjwt_swift
 
 final class BuilderTest: XCTestCase {
-  func testBuild() {
 
+  func testBuildingAnObject_GivenMultipleTypesOfClaims_ThenStringIsNotEmpty() {
     @SDJWTBuilder
     var sdObject: SdElement {
       PlainClaim("name", "Edmun")
@@ -34,22 +34,13 @@ final class BuilderTest: XCTestCase {
     XCTAssert(sd.jsonString?.isEmpty == false)
   }
 
-  func testSalt() {
+  func testMatchignOutput_GivenAFixedSaltValue_ThenJSONExists() {
 
     let salt = "2GLC42sKQveCfGfryNRN9w"
     let factory = SDJWTFactory(saltProvider: MockSaltProvider(saltString: salt))
 
     @SDJWTBuilder
-    var jwt: SdElement {
-      ObjectClaim("address") {
-        FlatDisclosedClaim("street_address", "Schulstr. 12")
-        FlatDisclosedClaim("locality", "Schulpforta")
-        FlatDisclosedClaim("region", "Sachs,n-Anhalt")
-        PlainClaim("country", "DE")
-      }
-    }
-    @SDJWTBuilder
-    var jwt2: SdElement {
+    var sdObject: SdElement {
       ObjectClaim("Adress") {
         ObjectClaim("Locality") {
           FlatDisclosedClaim("street_addres2s", "C Level")
@@ -60,19 +51,18 @@ final class BuilderTest: XCTestCase {
       }
     }
 
-    let unsignedJwt = factory.createJWT(sdjwtObject: jwt2.asObject)
+    let unsignedJwt = factory.createJWT(sdjwtObject: sdObject.asObject)
 
     switch unsignedJwt {
     case .success((let json, let disclosures)):
-      print(try! json.toJSONString(outputFormatting: .prettyPrinted))
-      print(disclosures)
+      XCTAssert(true)
     case .failure(let err):
       XCTFail("Failed to Create SDJWT")
     }
 
   }
 
-  func testStructuredObject() {
+  func testNestedArrays_GivenFixedSalts() {
 
     let salt = "_26bc4LT-ac6q2KI6cBW5es"
     let factory = SDJWTFactory(saltProvider: MockSaltProvider(saltString: salt))
@@ -86,7 +76,7 @@ final class BuilderTest: XCTestCase {
     validateObjectResults(factoryResult: unsignedJwt, expectedDigests: jwt.expectedDigests)
   }
 
-  func testPlain() {
+  func testPlainObjects_GivenNoElementsToBeDisclosed_ThenExpectedDigestsMatchesTheProducedDigests() {
     @SDJWTBuilder
     var plainJWT: SdElement {
       PlainClaim("string", "name")
@@ -113,7 +103,7 @@ final class BuilderTest: XCTestCase {
     validateObjectResults(factoryResult: objectPlain, expectedDigests: 1)
   }
 
-  func testFlat() {
+  func testDisclosedObjects_GivenOnlyFlatElementsToBeDisclosed_ThenExpectedDigestsMatchesTheProducedDigests() {
     @SDJWTBuilder
     var plainJWT: SdElement {
       FlatDisclosedClaim("string", "name")
@@ -161,7 +151,7 @@ final class BuilderTest: XCTestCase {
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: objects.expectedDigests)
   }
 
-  func testArray() {
+  func testRecursiveDisclosedObjects_GivenPlainAndFlatElementsToBeDisclosed_ThenExpectedDigestsMatchesTheProducedDigests() {
     @SDJWTBuilder
     var objects: SdElement {
       ObjectClaim("address") {
@@ -192,7 +182,7 @@ final class BuilderTest: XCTestCase {
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: 2)
   }
 
-  func testRecursiveArray() {
+  func testDisclosedObjects_GivenArrayElementsToBeDisclosed_ThenExpectedDigestsMatchesTheProducedDigests() {
     @SDJWTBuilder
     var array: SdElement {
       RecursiveSdArrayClaim("nationalities") {

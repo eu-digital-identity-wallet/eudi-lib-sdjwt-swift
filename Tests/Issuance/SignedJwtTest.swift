@@ -37,11 +37,10 @@ final class SignedJwtTest: XCTestCase {
   }
   let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-  func testSignedJwt() {
+  func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheJWTComponentOfTheSDJWTAndVerify() {
     let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: claims.asObject), expectedDigests: claims.expectedDigests)
 
     let keyPair = generateES256KeyPair()
-    print(keyPair.private, keyPair.public)
 
     let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private))
 
@@ -59,11 +58,10 @@ final class SignedJwtTest: XCTestCase {
     }
   }
 
-  func testSDJWTserialization() {
+  func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheSDJW_WithNoKeyBidning() {
     let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: claims.asObject), expectedDigests: claims.expectedDigests)
 
     let keyPair = generateES256KeyPair()
-    print(keyPair.private, keyPair.public)
 
     let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private))
 
@@ -86,10 +84,9 @@ final class SignedJwtTest: XCTestCase {
     let signedSDJWT = try issuer.createSignedJWT()
     let data = issuer.serialize(jws: signedSDJWT)!
     let serializedString = String(data: data, encoding: .utf8)
-    print(serializedString)
   }
 
-  func testWrapTest() {
+  func testGivenTheSpecExampe_WhenProvidedWithAES256KeyPair_ThenReturnTheSDJWT_WithNoKeyBinding() {
     XCTAssertNoThrow(try issuanceAsSpecExample())
   }
 }

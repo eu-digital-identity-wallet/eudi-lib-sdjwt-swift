@@ -22,7 +22,6 @@ let package = Package(
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "5.0.1"),
-        .package(url: "https://github.com/realm/SwiftLint.git", from: "0.52.4"),
         .package(url: "https://github.com/airsidemobile/JOSESwift.git", from: "2.3.0")
     ],
     targets: [
@@ -36,7 +35,7 @@ let package = Package(
             ],
             path: "Sources",
             plugins: [
-                .plugin(name: "SwiftLintPlugin", package: "SwiftLint")
+                
             ]
         ),
         .testTarget(

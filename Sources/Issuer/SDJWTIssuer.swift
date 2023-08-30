@@ -84,4 +84,3 @@ class SDJWTIssuer<SecKey> {
     return jws
   }
 }
-

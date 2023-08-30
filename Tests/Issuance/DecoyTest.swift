@@ -20,7 +20,7 @@ import XCTest
 
 final class DecoyTest: XCTestCase {
 
-  func testDecoy() {
+  func testDisclosedObjects_AdingDecoys_ThenExpectedDigestsMatchesTheProducedDigestsAndDecoys() {
     let decoysLimit = 10
 
     @SDJWTBuilder

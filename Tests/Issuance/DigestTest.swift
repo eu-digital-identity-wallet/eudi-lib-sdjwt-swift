@@ -19,7 +19,7 @@ import XCTest
 
 final class DigestTest: XCTestCase {
 
-  func testJWTCreation() {
+  func testDisclosureCreationg_GivenAfixedInput_ThenExpectBase64encodedDisclosure() {
 
     let parts = ["6qMQvRL5haj", "family_name", "Möbius"]
     let salt = parts[0]
@@ -32,40 +32,33 @@ final class DigestTest: XCTestCase {
     switch disclose {
     case .success((let json, let disclosures)):
       XCTAssertEqual(disclosures.first, "WyI2cU1RdlJMNWhhaiIsImZhbWlseV9uYW1lIiwiTcO2Yml1cyJd")
-      //      XCTAssertEqual(json[Keys.sd.rawValue].arrayValue.contains("uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"), true)
     case .failure(let err):
       XCTFail("Failed to Create SDJWT")
     }
 
   }
 
-  func testHashing() {
-    //     ["6qMQvRL5haj", "family_name", "Möbius"]
-    //    ["2GLC42sKQveCfGfryNRN9w", "street_address", "Schulst. 12"]
+  func testDigestCreationg_GivenAfixedInputWithSpacesAfterEachElement_ThenExpectTheHashedOutputToMatch() {
+    // this is the case where we add an extra space after each object
     let base64String = "WyI2cU1RdlJMNWhhaiIsICJmYW1pbHlfbmFtZSIsICJNw7ZiaXVzIl0"
-    print(base64String.base64ToUTF8())
     let signer = DigestCreator()
     let out = signer.hashAndBase64Encode(input: base64String)
-    print(out)
     let output = "uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"
 
     XCTAssertEqual(out, output)
   }
 
-  func testHashing2() {
-    //     ["6qMQvRL5haj", "family_name", "Möbius"]
-    //    ["2GLC42sKQveCfGfryNRN9w", "street_address", "Schulst. 12"]
-    // Test for values with no space between values (remove line
+  func testDigestCreationg_GivenAfixedInputWithoutSpacesAfterEachElement_ThenExpectTheHashedOutputToMatch() {
+    // this is the case where we remove the extra space after each object
     let base64String = "WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgInN0cmVldF9hZGRyZXNzIiwgIlNjaHVsc3RyLiAxMiJd"
     let signer = DigestCreator()
     let out = signer.hashAndBase64Encode(input: base64String)
-    print(out)
     let output = "9gjVuXtdFROCgRrtNcGUXmF65rdezi_6Er_j76kmYyM"
 
     XCTAssertEqual(out, output)
   }
 
-  func testArrayHashing() {
+  func testDigestCreationg_GivenAnArrayInput_ThenExpectTheHashedOutputToMatch() {
     let string =
     """
     ["lklxF5jMYlGTPUovMNIvCA", "FR"]
@@ -76,7 +69,7 @@ final class DigestTest: XCTestCase {
     XCTAssert(base64 == base64String)
     let signer = DigestCreator()
     let out = signer.hashAndBase64Encode(input: base64)
-    print(out)
     let output = "w0I8EKcdCtUPkGCNUrfwVp2xEgNjtoIDlOxc9-PlOhs"
+    XCTAssert(out == output)
   }
 }

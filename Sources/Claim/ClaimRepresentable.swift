@@ -87,7 +87,6 @@ extension ClaimRepresentable {
       key != Keys.sd.rawValue,
       key != Keys.dots.rawValue else {
       /// https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#section-5.1
-      print("Cannot have claims with _sd or _sd_alg as key")
       return .failure(.sdAsKey)
     }
     return .success(true)

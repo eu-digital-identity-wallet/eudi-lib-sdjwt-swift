@@ -55,16 +55,10 @@ extension SdElement {
 func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expectedDigests: Int, numberOfDecoys: Int = 0, decoysLimit: Int = 0) -> ClaimSet {
   switch result {
   case .success((let json, let disclosures)):
-    print("JSON Value of sdjwt")
-    print("==============================")
-    print(try! json.toJSONString(outputFormatting: .prettyPrinted))
-    print("==============================")
-    print("With Disclosures")
-    print("==============================")
-    disclosures
-      .compactMap { $0.base64URLDecode()}
-      .forEach {print($0)}
-    print("==============================")
+    XCTAssertNoThrow(try json.toJSONString(outputFormatting: .prettyPrinted))
+//    disclosures
+//      .compactMap { $0.base64URLDecode()}
+//      .forEach {print($0)}
     if numberOfDecoys == 0 && decoysLimit == 0 {
       XCTAssert(disclosures.count == expectedDigests)
     }

@@ -22,6 +22,7 @@ protocol ClaimRepresentable: Encodable {
   var key: String { get set }
   var value: SdElement { get set }
 
+  func checkKeyValidity() throws -> Result<Bool, SDJWTError>
 }
 
 struct ConstantClaims: ClaimRepresentable {
@@ -69,6 +70,15 @@ extension ClaimRepresentable {
     return string
   }
 
+  @discardableResult
+  func checkKeyValidity() -> Result<Bool, SDJWTError> {
+    guard
+      key != Keys.sd.rawValue,
+      key != Keys.sdAlg.rawValue else {
+      return .failure(.sdAsKey)
+    }
+    return .success(true)
+  }
   // MARK: - Encodable
 
   func encode(to encoder: Encoder) throws {

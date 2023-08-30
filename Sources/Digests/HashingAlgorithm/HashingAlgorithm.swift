@@ -23,5 +23,3 @@ protocol HashingAlgorithm {
 
   func hash(disclosure: Disclosure) -> Data?
 }
-
-// TODO: Add An enum that will map hashing algorithm header to Hashing algorithm implementation

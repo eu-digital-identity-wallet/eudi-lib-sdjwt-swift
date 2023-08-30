@@ -33,6 +33,10 @@ enum SDJWTBuilder {
     self.buildBlock(elements.compactMap({$0}))
   }
 
+//  static func buildExpression(_ expression: () -> SdElement) -> SdElement {
+//    expression()
+//  }
+
   static func build(@SDJWTBuilder builder: () -> SdElement) -> SdElement {
     return builder()
   }

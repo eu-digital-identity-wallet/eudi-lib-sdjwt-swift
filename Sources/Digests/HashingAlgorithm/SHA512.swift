@@ -16,24 +16,19 @@
 import Foundation
 import CryptoKit
 
-class SHA256Hasher: HashingAlgorithm {
+class SHA512Hashing: HashingAlgorithm {
 
   // MARK: - Properties
 
-  var identifier: String = "sha-256"
+  var identifier: String = "sha-512"
 
   // MARK: - Methods
 
   func hash(disclosure: Disclosure) -> Data? {
-    // Convert input string to Data
     guard let inputData = disclosure.data(using: .utf8) else {
       return nil
     }
-
-    // Calculate SHA-256 hash
-    let hashedData = SHA256.hash(data: inputData)
-
-    // Convert hash to Data
+    let hashedData = SHA512.hash(data: inputData)
     return Data(hashedData)
   }
 }

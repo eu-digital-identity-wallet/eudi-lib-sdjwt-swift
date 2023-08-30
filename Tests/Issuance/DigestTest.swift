@@ -14,7 +14,6 @@
   * limitations under the License.
   */
 import XCTest
-import SwiftyJSON
 
 @testable import eudi_lib_sdjwt_swift
 

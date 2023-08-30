@@ -66,6 +66,7 @@ final class SignedJwtTest: XCTestCase {
 
     let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private)!)
 
+    XCTAssertNoThrow(try issuer.createSignedJWT())
     let jws = try! issuer.createSignedJWT()
     let data = issuer.serialize(jws: jws)!
 

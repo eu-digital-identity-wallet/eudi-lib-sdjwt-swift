@@ -14,34 +14,21 @@
  * limitations under the License.
  */
 import Foundation
+import CryptoKit
 
-class DigestCreator {
+class SHA256Hashing: HashingAlgorithm {
 
   // MARK: - Properties
 
-  var hashingAlgorithm: HashingAlgorithm
-
-  let saltProvider = DefaultSaltProvider()
-  // MARK: - LifeCycle
-
-  init(hashingAlgorithm: HashingAlgorithm = SHA256Hashing()) {
-    self.hashingAlgorithm = hashingAlgorithm
-  }
+  var identifier: String = "sha-256"
 
   // MARK: - Methods
 
-  func hashAndBase64Encode(input: Disclosure) -> DisclosureDigest? {
-    guard let disclosureDigest = self.hashingAlgorithm.hash(disclosure: input) else {
+  func hash(disclosure: Disclosure) -> Data? {
+    guard let inputData = disclosure.data(using: .utf8) else {
       return nil
     }
-    // Encode hash data in base64
-    let base64Hash = disclosureDigest.base64URLEncode()
-
-    return base64Hash
+    let hashedData = SHA256.hash(data: inputData)
+    return Data(hashedData)
   }
-
-  func decoy() -> DisclosureDigest? {
-    return self.hashAndBase64Encode(input: saltProvider.saltString)
-  }
-
 }

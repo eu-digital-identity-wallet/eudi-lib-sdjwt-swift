@@ -30,7 +30,7 @@ class JWSController<SecKey> {
 
   // MARK: - Lifecycle
 
-  init?(signingAlgorithm: SignatureAlgorithm, privateKey: SecKey) throws {
+  init(signingAlgorithm: SignatureAlgorithm, privateKey: SecKey) throws {
     self.signatureAlgorithm = signingAlgorithm
     guard let signer = Signer(signingAlgorithm: signingAlgorithm, key: privateKey) else {
       throw JOSESwiftError.signingFailed(description: "Failed To Create Signing Algorith \(signingAlgorithm) with key \(privateKey)")

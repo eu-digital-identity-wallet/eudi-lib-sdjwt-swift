@@ -68,15 +68,20 @@ class SDJWTIssuer<SecKey> {
       partialResult += "~\(disclosure)"
     }
 
-    let kbJwtString = (try? self.kbJwt?.toJSONString() ?? "") ?? ""
+    let kbJwtString = "~" + (self.kbJwt?.compactSerializedString ?? "")
 
     let output = jwsString + disclosures + kbJwtString
     return output.data(using: .utf8)
   }
+
+  // TODO: Revisit Logic of who handles the signing 
+  func createKBJWT() throws -> KBJWT {
+    let header = JWSHeader(algorithm: .ES256)
+    let payload = Payload(Data())
+    let signer = jwsController.signer
+    let jws = try JWS(header: header, payload: payload, signer: signer)
+
+    return jws
+  }
 }
 
-struct KBJWT: Codable {
-  var nonce: String
-  var aud: String
-  var iat: Int
-}

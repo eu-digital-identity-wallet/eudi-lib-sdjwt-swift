@@ -22,27 +22,28 @@ import XCTest
 
 final class SignedJwtTest: XCTestCase {
   @SDJWTBuilder
-  var plainJWT: SdElement {
-    // Constant claims
-    ConstantClaims.iat(time: Date())
-    ConstantClaims.exp(time: Date().addingTimeInterval(3600))
+  var claims: SdElement {
+    ConstantClaims.sub(subject: "6c5c0a49-b589-431d-bae7-219122a9ec2c")
     ConstantClaims.iss(domain: "https://example.com/issuer")
-    // Payload
-    FlatDisclosedClaim("string", "name")
-    FlatDisclosedClaim("number", 36524)
-    FlatDisclosedClaim("bool", true)
-    FlatDisclosedClaim("array", ["GR", "DE"])
-  }
+    ConstantClaims.iat(time: 1516239022)
+    ConstantClaims.exp(time: 1516239022)
 
+    ObjectClaim("address") {
+      FlatDisclosedClaim("street_address", "Schulstr. 12")
+      FlatDisclosedClaim("locality", "Schulpforta")
+      FlatDisclosedClaim("region", "Sachsen-Anhalt")
+      FlatDisclosedClaim("country", "DE")
+    }
+  }
   let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
   func testSignedJwt() {
-    let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: plainJWT.asObject), expectedDigests: plainJWT.expectedDigests)
+    let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: claims.asObject), expectedDigests: claims.expectedDigests)
 
     let keyPair = generateES256KeyPair()
     print(keyPair.private, keyPair.public)
 
-    let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private)!)
+    let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private))
 
     let jws = try! issuer.createSignedJWT()
 
@@ -59,17 +60,36 @@ final class SignedJwtTest: XCTestCase {
   }
 
   func testSDJWTserialization() {
-    let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: plainJWT.asObject), expectedDigests: plainJWT.expectedDigests)
+    let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdjwtObject: claims.asObject), expectedDigests: claims.expectedDigests)
 
     let keyPair = generateES256KeyPair()
     print(keyPair.private, keyPair.public)
 
-    let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private)!)
+    let issuer = try! SDJWTIssuer(purpose: .issuance(claimSet), jwsController: JWSController(signingAlgorithm: .ES256, privateKey: keyPair.private))
 
     XCTAssertNoThrow(try issuer.createSignedJWT())
     let jws = try! issuer.createSignedJWT()
     let data = issuer.serialize(jws: jws)!
 
     let serializedString = String(data: data, encoding: .utf8)
+  }
+
+  func issuanceAsSpecExample() throws {
+
+    let keyPair: KeyPair = generateES256KeyPair()
+
+    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+    let claimSet = factory.createJWT(sdjwtObject: claims.asObject)
+    validateObjectResults(factoryResult: claimSet, expectedDigests: 4)
+    let issuer = try SDJWTIssuer(purpose: .issuance(claimSet.get()),
+                                 jwsController: .init(signingAlgorithm: .ES256, privateKey: keyPair.private))
+    let signedSDJWT = try issuer.createSignedJWT()
+    let data = issuer.serialize(jws: signedSDJWT)!
+    let serializedString = String(data: data, encoding: .utf8)
+    print(serializedString)
+  }
+
+  func testWrapTest() {
+    XCTAssertNoThrow(try issuanceAsSpecExample())
   }
 }

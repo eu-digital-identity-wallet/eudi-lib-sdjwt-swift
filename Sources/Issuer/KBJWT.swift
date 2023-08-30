@@ -14,26 +14,7 @@
  * limitations under the License.
  */
 import Foundation
+import JOSESwift
 
-@resultBuilder
-enum SDJWTBuilder {
-  static func buildBlock(_ elements: [ClaimRepresentable]) -> SdElement {
-    return .object(
-      elements.reduce(into: [:]) { partialResult, claim in
-        partialResult[claim.key] = claim.value
-      }
-    )
-  }
+typealias KBJWT = JWS
 
-  static func buildBlock(_ elements: ClaimRepresentable...) -> SdElement {
-    self.buildBlock(elements.map({$0}))
-  }
-
-  static func buildBlock(_ elements: ClaimRepresentable?...) -> SdElement {
-    self.buildBlock(elements.compactMap({$0}))
-  }
-
-  static func build(@SDJWTBuilder builder: () -> SdElement) -> SdElement {
-    return builder()
-  }
-}

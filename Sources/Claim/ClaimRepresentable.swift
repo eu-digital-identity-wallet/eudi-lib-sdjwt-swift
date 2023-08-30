@@ -53,10 +53,21 @@ struct ConstantClaims: ClaimRepresentable {
     return ConstantClaims(Keys.exp.rawValue, value: .plain(value: timestamp))
   }
 
+  static func iat(time: TimeInterval) -> ConstantClaims {
+    return ConstantClaims(Keys.iat.rawValue, value: .plain(value: Int(time.rounded())))
+  }
+
+  static func exp(time: TimeInterval) -> ConstantClaims {
+    return ConstantClaims(Keys.exp.rawValue, value: .plain(value: Int(time.rounded())))
+  }
+
   static func iss(domain: String) -> ConstantClaims {
     return ConstantClaims(Keys.iss.rawValue, value: .plain(value: domain))
   }
 
+  static func sub(subject: String) -> ConstantClaims {
+    return ConstantClaims(Keys.sub.rawValue, value: .plain(value: subject))
+  }
 }
 
 extension ClaimRepresentable {

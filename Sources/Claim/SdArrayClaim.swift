@@ -23,14 +23,20 @@ struct SdArrayClaim: ClaimRepresentable {
 
   // MARK: - Lifecycle
 
-  init(_ key: String, array: [SdElement]) {
+  init?(_ key: String, array: [SdElement]) {
     self.key = key
     self.value = .array(array)
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 
-  init(_ key: String, @SDJWTArrayBuilder builder: () -> [SdElement]) {
+  init?(_ key: String, @SDJWTArrayBuilder builder: () -> [SdElement]) {
     self.key = key
     self.value = .array(builder())
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 }
 

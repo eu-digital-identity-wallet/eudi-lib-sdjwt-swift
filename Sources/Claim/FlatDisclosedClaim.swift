@@ -22,19 +22,27 @@ struct FlatDisclosedClaim: ClaimRepresentable {
 
   // MARK: - Lifecycle
 
-  init(_ key: String, _ flat: Encodable) {
+  init?(_ key: String, _ flat: Encodable) {
     self.key = key
     self.value = SdElement.flat(value: flat)
-
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 
-  init(_ key: String, _ flat: [Encodable]) {
+  init?(_ key: String, _ flat: [Encodable]) {
     self.key = key
     self.value = SdElement.flat(value: flat)
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 
-  init(_ key: String, _ flat: [String: Encodable]) {
+  init?(_ key: String, _ flat: [String: Encodable]) {
     self.key = key
     self.value = SdElement.flat(value: flat)
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 }

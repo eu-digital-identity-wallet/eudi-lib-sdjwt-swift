@@ -29,11 +29,17 @@ struct ObjectClaim: ClaimRepresentable {
       return nil
     }
     self.value = .object(object)
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 
   init?(_ key: String, value: SdElement) {
     self.key = key
     self.value = value
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 }
 

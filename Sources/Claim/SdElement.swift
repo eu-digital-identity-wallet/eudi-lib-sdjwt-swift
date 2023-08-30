@@ -75,7 +75,7 @@ extension SdElement {
 
   var asObject: SDJWTObject? {
     switch self {
-    case .object(let object):
+    case .object(let object), .recursiveObject(let object):
       return object
     default:
       return nil

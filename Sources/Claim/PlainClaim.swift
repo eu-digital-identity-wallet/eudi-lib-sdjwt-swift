@@ -23,19 +23,27 @@ struct PlainClaim: ClaimRepresentable {
 
   // MARK: - Lifecycle
 
-  init(_ key: String, _ plain: Encodable) {
+  init?(_ key: String, _ plain: Encodable) {
     self.key = key
     self.value = SdElement.plain(value: plain)
-
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 
-  init(_ key: String, _ plain: [Encodable]) {
+  init?(_ key: String, _ plain: [Encodable]) {
     self.key = key
     self.value = SdElement.plain(value: plain)
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 
-  init(_ key: String, _ plain: [String: Encodable]) {
+  init?(_ key: String, _ plain: [String: Encodable]) {
     self.key = key
     self.value = SdElement.plain(value: plain)
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
   }
 }

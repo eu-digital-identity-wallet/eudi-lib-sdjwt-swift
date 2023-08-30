@@ -22,7 +22,7 @@ protocol ClaimRepresentable: Encodable {
   var key: String { get set }
   var value: SdElement { get set }
 
-  func checkKeyValidity() throws -> Result<Bool, SDJWTError>
+  func checkKeyValidity() -> Result<Bool, SDJWTError>
 }
 
 struct ConstantClaims: ClaimRepresentable {
@@ -74,7 +74,8 @@ extension ClaimRepresentable {
   func checkKeyValidity() -> Result<Bool, SDJWTError> {
     guard
       key != Keys.sd.rawValue,
-      key != Keys.sdAlg.rawValue else {
+      key != Keys.dots.rawValue else {
+      print("Cannot have claims with _sd or _sd_alg as key")
       return .failure(.sdAsKey)
     }
     return .success(true)

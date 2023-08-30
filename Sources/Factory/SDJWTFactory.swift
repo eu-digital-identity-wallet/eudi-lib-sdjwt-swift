@@ -37,6 +37,7 @@ class SDJWTFactory {
   ///   - saltProvider: An instance of `SaltProvider` for obtaining salt strings.
   ///   - digestCreator: An instance of `DigestCreator` for creating digests and hashes.
   ///   - decoysLimit: If decoys are requesed, defaults to 0
+  ///
   init(digestCreator: DigestCreator = DigestCreator(), saltProvider: SaltProvider, decoysLimit: Int = 0) {
     self.digestCreator = digestCreator
     self.saltProvider = saltProvider
@@ -163,6 +164,7 @@ class SDJWTFactory {
   /// - Throws: An error if an issue occurs during encoding, URL encoding, or hashing.
   ///       salt                      key                value
   ///   ["6qMQvRL5haj", "family_name", "Möbius"]
+  ///   
   private func flatDisclose(key: String, value: JSON) throws -> (Disclosure, DisclosureDigest) {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, key, value)

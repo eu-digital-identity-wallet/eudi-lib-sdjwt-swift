@@ -28,7 +28,7 @@ final class DigestTest: XCTestCase {
 
     let factory = SDJWTFactory(saltProvider: MockSaltProvider(saltString: salt))
 
-    let disclose = factory.createJWT(sdjwtObject: ["family_name": .flat(value: value)])
+    let disclose = factory.createJWT(sdJwtObject: ["family_name": .flat(value: value)])
     switch disclose {
     case .success((let json, let disclosures)):
       XCTAssertEqual(disclosures.first, "WyI2cU1RdlJMNWhhaiIsImZhbWlseV9uYW1lIiwiTcO2Yml1cyJd")

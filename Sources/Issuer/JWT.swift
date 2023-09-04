@@ -14,10 +14,29 @@
  * limitations under the License.
  */
 import Foundation
+import JOSESwift
+import SwiftyJSON
 
-@resultBuilder
-enum SDJWTArrayBuilder {
-  static func buildBlock(_ elements: SdElement...) -> [SdElement] {
-    elements.map({$0})
+
+struct JWT: JWTRepresentable {
+
+  // MARK: - Properties
+  var header: JWSHeader
+  var payload: Data
+
+  // MARK: - Lifecycle
+  init(header: JWSHeader, payload: Data) throws {
+    self.header = header
+    self.payload = payload
+  }
+
+  // MARK: - Methods
+
+  func sign<KeyType>(signer: Signer<KeyType>) throws -> JWS {
+    try JWS(header: header, payload: Payload(payload), signer: signer)
+  }
+
+  static func KBJWT(header: JWSHeader, KBJWTBody: JSON) throws -> JWT {
+    return try JWT(header: header, payload: KBJWTBody.rawData())
   }
 }

@@ -44,7 +44,7 @@ final class SpecExamples: XCTestCase {
       FlatDisclosedClaim("birthdate", "1940-01-01")
     }
     XCTAssert(structuredSDJWT.expectedDigests == 10)
-    let output = factory.createJWT(sdjwtObject: structuredSDJWT.asObject)
+    let output = factory.createJWT(sdJwtObject: structuredSDJWT.asObject)
     validateObjectResults(factoryResult: output,
                           expectedDigests: structuredSDJWT.expectedDigests,
                           numberOfDecoys: factory.decoyCounter,
@@ -66,10 +66,13 @@ final class SpecExamples: XCTestCase {
           PlainClaim("trust_framework", "de_aml")
           FlatDisclosedClaim("time", "2012-04-23T18:25Z")
           FlatDisclosedClaim("verification_process", "f24c6f-6d3f-4ec5-973e-b0d8506f3bc7")
-          SdArrayClaim("evidence") {
-            // TODO: Improve array builder functionality
-            evidenceObject
-          }
+          SdArrayClaim("evidence", array: [
+            .plain(""),
+            .object({
+              FlatDisclosedClaim("key", "claim")
+            })
+          ])
+
         }
         ObjectClaim("claims") {
           FlatDisclosedClaim("given_name", "Max")
@@ -108,7 +111,7 @@ final class SpecExamples: XCTestCase {
       PlainClaim("date_of_expiry", "2020-03-22")
     }
 
-    let output = factory.createJWT(sdjwtObject: complex.asObject)
+    let output = factory.createJWT(sdJwtObject: complex.asObject)
     validateObjectResults(factoryResult: output, expectedDigests: 12)
   }
 }

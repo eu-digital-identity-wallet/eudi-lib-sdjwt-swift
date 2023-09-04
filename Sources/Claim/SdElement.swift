@@ -45,6 +45,14 @@ enum SdElement: Encodable {
     return SdElement.flat(JSON(value))
   }
 
+  static func object(@SDJWTBuilder _ builder: () -> SdElement) -> SdElement {
+    return SdElement.object(builder().asObject ?? [:])
+  }
+
+  static func array(@SDJWTArrayBuilder _ builder: () -> [SdElement]) -> SdElement {
+    return SdElement.array(builder())
+  }
+
   // MARK: - Encodable
 
   func encode(to encoder: Encoder) {

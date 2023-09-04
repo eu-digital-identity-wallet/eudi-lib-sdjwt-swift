@@ -25,6 +25,7 @@ enum SDJWTError: Error {
   case serializationError
   case nonObjectFormat(ofElement: Any)
   case keyCreation
+  case algorithmMissMatch
 }
 
 /// Static Keys Used by the JWT

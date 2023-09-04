@@ -22,8 +22,6 @@ import SwiftyJSON
 
 final class KeyBindingTest: XCTestCase {
 
-
-
   @SDJWTBuilder
   var claims: SdElement {
     ConstantClaims.iat(time: Date())
@@ -32,6 +30,7 @@ final class KeyBindingTest: XCTestCase {
     FlatDisclosedClaim("sub", "6c5c0a49-b589-431d-bae7-219122a9ec2c")
     FlatDisclosedClaim("given_name", "太郎")
   }
+  
   func testKeyBinding() throws {
     let keyPair = generateES256KeyPair()
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
@@ -39,33 +38,32 @@ final class KeyBindingTest: XCTestCase {
     let keyBindingJwt = factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: pk)
   }
 
-  func testcCreateKeyBindingJWT() throws {
-    let keyPair = generateES256KeyPair()
-    var header = JWSHeader(algorithm: .ES256)
-    header.typ = "kb+jwt"
+  func testcCreateKeyBindingJWT_whenPassedAHardCodedKey() throws {
 
-    let payload: JSON = [
-      Keys.iat.rawValue: "",
-      Keys.exp.rawValue: "",
-      Keys.aud.rawValue: ""
-    ]
-
-    let kbjwt = try JWT.KBJWT(header: header, KBJWTBody: payload)
-    print(kbjwt)
-
-    try print(kbjwt.header.jwkTyped?.toJSONString())
-//    print(kbjwt.signature.compactSerializedString)
     let json = JSON(parseJSON: jwk)
     let ecPk = try ECPublicKey(data: json.rawData())
-    print(ecPk)
+    print(try ecPk.converted(to: SecKey.self))
+
+    let kbJws = try  JWS(compactSerialization: kbJwt)
+    let verifier = try SDJWTVerifier(signedJWT: kbJws, publicKey: ecPk.converted(to: SecKey.self))
+    try XCTAssertNoThrow(verifier.verify())
   }
+
+  let kbJwt = """
+  eyJhbGciOiAiRVMyNTYiLCAidHlwIjogImtiK2p3dCJ9
+  .eyJub25jZSI6ICIxMjM0NTY3ODkwIiwgImF1ZCI6ICJodHRwczovL2V4YW1wbGUuY29
+  tL3ZlcmlmaWVyIiwgImlhdCI6IDE2ODgxNjA0ODN9.duRIKesDpGY-5GkRcr98uhud64
+  PfmPhL0qMcXFeBL5x2IGbAc_buglOrpd0LZA_cgCGXDx4zQoMou2kKrl-WCA
+  """
+    .replacingOccurrences(of: "\n", with: "")
+    .replacingOccurrences(of: " ", with: "")
 
   let jwk = """
   {
     "kty": "EC",
     "crv": "P-256",
-    "x": "b28d4MwZMjw8-00CG4xfnn9SLMVMM19SlqZpVb_uNtQ",
-    "y": "Xv5zWwuoaTgdS6hV43yI6gBwTnjukmFQQnJ_kCxzqk8"
+    "x": "TCAER19Zvu3OHF4j4W4vfSVoHIP1ILilDls7vCeGemc",
+    "y": "ZxjiWWbZMQGHVWKVQ4hbSIirsVfuecCE6t4jT9F2HZQ"
   }
   """
     .replacingOccurrences(of: "\n", with: "")

@@ -68,4 +68,36 @@ final class KeyBindingTest: XCTestCase {
   """
     .replacingOccurrences(of: "\n", with: "")
     .replacingOccurrences(of: " ", with: "")
+
+  func testKeyBindingCreation() throws {
+    // Issuers Key Pair for es256
+    let issuersKeyPair = generateES256KeyPair()
+    // Holders Key Pair for es256
+    let holdersKeyPair = generateES256KeyPair()
+
+    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+
+    let json = JSON(parseJSON: jwk)
+    let holdersECPK = try ECPublicKey(publicKey: holdersKeyPair.public)
+
+    let claims = try  factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: holdersECPK).get()
+
+    let issuance = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claims),
+                                               signingKey: issuersKeyPair.private)
+
+    let kbjwtPayload: ClaimSet = (JSON(
+      [
+        Keys.aud.rawValue : "https://example.com/verifier",
+        Keys.iat.rawValue : Date().timeIntervalSince1970,
+        "nonce": "1234567890"]
+    ), [])
+
+    let presentation = try SDJWTIssuer.createSDJWT(purpose: .presentation(issuance, KBJWT(header: .init(algorithm: .ES256), payload: kbjwtPayload)),
+                                                   signingKey: holdersKeyPair.private)
+
+    let issuanceSigVerifier = try SignatureVerifier(signedJWT: issuance.jwt, publicKey: issuersKeyPair.public).verify()
+
+    let holdersKBVerifier = try SignatureVerifier(signedJWT: presentation.kbJwt!, publicKey: holdersKeyPair.public).verify()
+    let holdersSigVerifier = try SignatureVerifier(signedJWT: presentation.jwt, publicKey: issuersKeyPair.public).verify()
+  }
 }

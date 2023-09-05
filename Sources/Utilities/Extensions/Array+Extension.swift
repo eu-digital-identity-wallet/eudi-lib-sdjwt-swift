@@ -22,3 +22,13 @@ extension Array {
     self.append(newElement)
   }
 }
+
+extension Array {
+    subscript(safe range: Range<Index>) -> Array<Element>? {
+        if range.lowerBound >= startIndex && range.upperBound <= endIndex {
+            return Array(self[range])
+        } else {
+            return nil
+        }
+    }
+}

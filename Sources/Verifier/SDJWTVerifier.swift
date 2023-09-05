@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
 
-class Serializer {
-//  func serialize(sdjwt: SDJWT) -> Data? {
-//    let jwsString = jws.compactSerializedString
-//    let disclosures = self.sdjwt.disclosures.reduce(into: "") { partialResult, disclosure in
-//      partialResult += "~\(disclosure)"
-//    }
-//
-//  //    let kbJwtString = "~" + (self.kbJwt?.compactSerializedString ?? "")
-//
-//    let output = jwsString + disclosures //+ kbJwtString
-//    return output.data(using: .utf8)
-//  }
+class SdJwtVerifier {
+
+  func verify<KeyType>(serializer: Serialiser,
+                       signatureVerifier: SignatureVerifier<KeyType>,
+                       signedJWT: SignedSDJWT) {
+
+    let serialized = serializer.serialised
+
+  }
+
 }
-
-

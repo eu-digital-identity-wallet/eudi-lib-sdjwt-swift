@@ -30,6 +30,10 @@ class SDJWTIssuer {
 
   // MARK: - Methods
 
+  static func serialised(serialiser: Serialiser) -> String {
+    serialiser.serialised
+  }
+
   static func createSDJWT<KeyType>(purpose: Purpose, signingKey: KeyType) throws -> SignedSDJWT {
     switch purpose {
     case .issuance(let JWSHeader, let claimSet):

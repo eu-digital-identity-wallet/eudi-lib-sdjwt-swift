@@ -37,59 +37,32 @@ final class SignedJwtTest: XCTestCase {
   }
   let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-  func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheJWTComponentOfTheSDJWTAndVerify() throws {
-    let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdJwtObject: claims.asObject), expectedDigests: claims.expectedDigests)
-
-    let keyPair = generateES256KeyPair()
-
-    let issuer = try SDJWTIssuer(purpose: .issuance(.init(algorithm: .ES256), claimSet))
-
-    let jws = try issuer.createSignedJWT(jwsController: JWSController.init(signingAlgorithm: .ES256, privateKey: keyPair.private))
-
-    let verifier = try? SDJWTVerifier(signedJWT: jws, publicKey: keyPair.public)
-//    do {
-//      let verifier = Verifier(verifyingAlgorithm: .ES256, key: keyPair.public)!
-//
-//      let payload = try jws.validate(using: verifier).payload
-//      let message = try JSON.init(data: payload.data())
-//
-//      XCTAssertEqual(message, claimSet.value)
-//    } catch {
-//      XCTFail("Failed To Verfiy JWS")
-//    }
-    XCTAssertNoThrow(try verifier?.verify())
-  }
-
   func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheSDJW_WithNoKeyBidning() throws {
     let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdJwtObject: claims.asObject), expectedDigests: claims.expectedDigests)
 
     let keyPair = generateES256KeyPair()
+    let signedJWT = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claimSet),
+                                            signingKey: keyPair.private)
 
-    let issuer = try! SDJWTIssuer(purpose: .issuance(.init(algorithm: .ES256), claimSet))
+    let verifier = try SDJWTVerifier(signedJWT: signedJWT.jwt, publicKey: keyPair.public)
+    XCTAssertNoThrow(try verifier.verify())
 
-    let jws = try XCTUnwrap(try? issuer.createSignedJWT(jwsController: JWSController.init(signingAlgorithm: .ES256, privateKey: keyPair.private)))
-    let data = issuer.serialize(jws: jws)!
-
-    let serializedString = String(data: data, encoding: .utf8)
   }
 
-  func issuanceAsSpecExample() throws {
+  func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheJWTComponentOfTheSDJWTAndVerify() throws {
 
-    let keyPair: KeyPair = generateES256KeyPair()
+    let keyPair = generateES256KeyPair()
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
-    let claimSet = factory.createJWT(sdJwtObject: claims.asObject)
-    validateObjectResults(factoryResult: claimSet, expectedDigests: 4)
+    let claimSetResult = factory.createJWT(sdJwtObject: claims.asObject)
+    validateObjectResults(factoryResult: claimSetResult, expectedDigests: 4)
 
-    let issuer = try! SDJWTIssuer(purpose: .issuance(.init(algorithm: .ES256), claimSet.get()))
+    let claimSet = try claimSetResult.get()
 
-    let jws = try XCTUnwrap(try? issuer.createSignedJWT(jwsController: JWSController.init(signingAlgorithm: .ES256, privateKey: keyPair.private)))
+    let signedJWT = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claimSet),
+                                            signingKey: keyPair.private)
 
-//    let data = issuer.serialize(jws: signedSDJWT)!
-//    let serializedString = String(data: data, encoding: .utf8)
-  }
-
-  func testGivenTheSpecExampe_WhenProvidedWithAES256KeyPair_ThenReturnTheSDJWT_WithNoKeyBinding() {
-    XCTAssertNoThrow(try issuanceAsSpecExample())
+    let verifier = try SDJWTVerifier(signedJWT: signedJWT.jwt, publicKey: keyPair.public)
+    XCTAssertNoThrow(try verifier.verify())
   }
 }

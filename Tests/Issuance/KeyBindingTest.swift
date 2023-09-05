@@ -38,13 +38,13 @@ final class KeyBindingTest: XCTestCase {
     let keyBindingJwt = factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: pk)
   }
 
-  func testcCreateKeyBindingJWT_whenPassedAHardCodedKey() throws {
+  func testcCreateKeyBindingJWT_whenPassedECPublicKey() throws {
 
     let json = JSON(parseJSON: jwk)
     let ecPk = try ECPublicKey(data: json.rawData())
     print(try ecPk.converted(to: SecKey.self))
 
-    let kbJws = try  JWS(compactSerialization: kbJwt)
+    let kbJws = try JWS(compactSerialization: kbJwt)
     let verifier = try SDJWTVerifier(signedJWT: kbJws, publicKey: ecPk.converted(to: SecKey.self))
     try XCTAssertNoThrow(verifier.verify())
   }

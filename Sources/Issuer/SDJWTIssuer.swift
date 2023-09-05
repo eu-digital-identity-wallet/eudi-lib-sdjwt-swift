@@ -19,60 +19,42 @@ import SwiftyJSON
 
 class SDJWTIssuer {
 
-  // MARK: - Properties
-
-  var sdjwt: SDJWT
-
   enum Purpose {
     case issuance(JWSHeader, ClaimSet)
-    case presentation(JWSHeader, ClaimSet, KBJWTContent?)
+    case presentation(SignedSDJWT, KBJWTContent?)
   }
 
   // MARK: - Lifecycle
 
-  init(purpose: Purpose) throws {
-    switch purpose {
-    case .issuance(let header, let claimSet):
-      self.sdjwt = try SDJWT(header: header, claimSet: claimSet)
-    case .presentation(let header, let claimSet,  let kbJwtContent):
-      if let kbJwtContent {
-        self.sdjwt = try SDJWT(header: header, claimSet: claimSet, kbJwtHeader: kbJwtContent.header, KBJWTBody: kbJwtContent.payload)
-      } else {
-        self.sdjwt = try SDJWT(header: header, claimSet: claimSet)
-      }
-    }
-
-  }
+  private init() {}
 
   // MARK: - Methods
 
-  func createSignedJWT<KeyType>(jwsController: JWSController<KeyType>) throws -> JWS {
-    try sdjwt.jwt.sign(signer: jwsController.signer)
-  }
+  static func createSDJWT<KeyType>(purpose: Purpose, signingKey: KeyType) throws -> SignedSDJWT {
+    switch purpose {
+    case .issuance(let JWSHeader, let claimSet):
+      let ungsingedSDJWT = try SDJWT(header: JWSHeader, claimSet: claimSet)
+      return try createSignedSDJWT(sdJwt: ungsingedSDJWT, issuersPrivateKey: signingKey)
+      // ..........
+    case .presentation(let signedJWT, let kbJWTContent):
+      if let kbJWTContent {
 
-  func createSignedKBJWT<KeyType>(jwsController: JWSController<KeyType>) throws -> JWS? {
-    try sdjwt.kbJwt?.sign(signer: jwsController.signer)
-  }
-
-  func serialize(jws: JWS) -> Data? {
-    let jwsString = jws.compactSerializedString
-    let disclosures = self.sdjwt.disclosures.reduce(into: "") { partialResult, disclosure in
-      partialResult += "~\(disclosure)"
+        let payload = try kbJWTContent.payload.rawData()
+        let kbJwt = try JWT(header: kbJWTContent.header, payload: payload)
+        return try createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: kbJwt, holdersPrivateKey: signingKey)
+      }
+      return signedJWT
+      // ..........
     }
 
-//    let kbJwtString = "~" + (self.kbJwt?.compactSerializedString ?? "")
-
-    let output = jwsString + disclosures //+ kbJwtString
-    return output.data(using: .utf8)
   }
 
-  // TODO: Revisit Logic of who handles the signing 
-//  func createKBJWT() throws -> KBJWT {
-//    let header = JWSHeader(algorithm: .ES256)
-//    let payload = Payload(Data())
-//    let signer = jwsController.signer
-//    let jws = try JWS(header: header, payload: payload, signer: signer)
-//
-//    return jws
-//  }
+  private static func createSignedSDJWT<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) throws -> SignedSDJWT {
+    try SignedSDJWT.nonKeyBondedSDJWT(sdJwt: sdJwt, issuersPrivateKey: issuersPrivateKey)
+  }
+
+  private static func createKeyBondedSDJWT<KeyType>(signedSDJWT: SignedSDJWT, kbJWT: JWT, holdersPrivateKey: KeyType) throws -> SignedSDJWT {
+    try SignedSDJWT.keyBondedSDJWT(signedSDJWT: signedSDJWT, kbJWT: kbJWT, holdersPrivateKey: holdersPrivateKey)
+  }
+
 }

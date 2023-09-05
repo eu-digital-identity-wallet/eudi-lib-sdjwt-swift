@@ -44,7 +44,7 @@ final class SignedJwtTest: XCTestCase {
     let signedJWT = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claimSet),
                                             signingKey: keyPair.private)
 
-    let verifier = try SDJWTVerifier(signedJWT: signedJWT.jwt, publicKey: keyPair.public)
+    let verifier = try SignatureVerifier(signedJWT: signedJWT.jwt, publicKey: keyPair.public)
     XCTAssertNoThrow(try verifier.verify())
 
   }
@@ -55,14 +55,15 @@ final class SignedJwtTest: XCTestCase {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
     let claimSetResult = factory.createJWT(sdJwtObject: claims.asObject)
-    validateObjectResults(factoryResult: claimSetResult, expectedDigests: 4)
+    let digestCount = try! claimSetResult.get().value.findDigestCount()
+    validateObjectResults(factoryResult: claimSetResult, expectedDigests: digestCount)
 
     let claimSet = try claimSetResult.get()
 
     let signedJWT = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claimSet),
                                             signingKey: keyPair.private)
 
-    let verifier = try SDJWTVerifier(signedJWT: signedJWT.jwt, publicKey: keyPair.public)
+    let verifier = try SignatureVerifier(signedJWT: signedJWT.jwt, publicKey: keyPair.public)
     XCTAssertNoThrow(try verifier.verify())
   }
 }

@@ -23,17 +23,17 @@ typealias UnsignedJWT = (header: JWSHeader, payload: Payload)
 protocol JWTRepresentable {
 
   var header: JWSHeader { get }
-  var payload: Data { get }
+  var payload: ClaimSet { get }
 
   func asUnsignedJWT() throws -> UnsignedJWT
   func sign<KeyType>(signer: Signer<KeyType>) throws -> JWS
 
-  init(header: JWSHeader, payload: Data) throws 
+  init(header: JWSHeader, payload: ClaimSet) throws 
 }
 
 extension JWTRepresentable {
   func asUnsignedJWT() throws -> UnsignedJWT {
-    let payload = Payload(payload)
+    let payload = Payload(try payload.value.rawData())
     return(header, payload)
   }
 }

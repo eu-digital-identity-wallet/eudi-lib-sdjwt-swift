@@ -45,7 +45,7 @@ final class KeyBindingTest: XCTestCase {
     print(try ecPk.converted(to: SecKey.self))
 
     let kbJws = try JWS(compactSerialization: kbJwt)
-    let verifier = try SDJWTVerifier(signedJWT: kbJws, publicKey: ecPk.converted(to: SecKey.self))
+    let verifier = try SignatureVerifier(signedJWT: kbJws, publicKey: ecPk.converted(to: SecKey.self))
     try XCTAssertNoThrow(verifier.verify())
   }
 

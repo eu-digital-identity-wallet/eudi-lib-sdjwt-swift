@@ -23,3 +23,9 @@ protocol HashingAlgorithm {
 
   func hash(disclosure: Disclosure) -> Data?
 }
+
+enum HashingAlgorithmIdentifiers: String, CaseIterable {
+  case SHA256 = "sha-256"
+  case SHA384 = "sha-384"
+  case SHA512 = "sha-512"
+}

@@ -38,4 +38,20 @@ final class DecoyTest: XCTestCase {
 
     validateObjectResults(factoryResult: unsignedJwt, expectedDigests: sdObject.expectedDigests, numberOfDecoys: jwtFactory.decoyCounter, decoysLimit: decoysLimit)
   }
+
+  func testA() {
+    @SDJWTBuilder
+    var sdObject: SdElement {
+      PlainClaim("name", "Edmun")
+      SdArrayClaim("Nationalites", array: [.flat(value: "DE"), .flat(value: 123)])
+      ObjectClaim("adress") {
+        PlainClaim("locality", "gr")
+        FlatDisclosedClaim("adress", "Al. Mich")
+      }
+    }
+    let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: 0)
+    let payload = try! jwtFactory.createJWT(sdJwtObject: sdObject.asObject).get()
+
+    let digestsCount = payload.value.findDigestCount()
+  }
 }

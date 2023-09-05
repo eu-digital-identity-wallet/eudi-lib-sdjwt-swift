@@ -60,8 +60,8 @@ class SDJWTFactory {
     do {
       self.decoyCounter = 0
       var sdJwtObject = sdjwtObject
-      sdJwtObject = addSdAlgClaim(object: sdJwtObject)
-      sdJwtObject = addCnfClaim(object: sdJwtObject, jwk: holdersPublicKey)
+      sdJwtObject = try addSdAlgClaim(object: sdJwtObject)
+      sdJwtObject = try addCnfClaim(object: sdJwtObject, jwk: holdersPublicKey)
 
       return .success(try self.encodeObject(sdJwtObject: sdJwtObject))
     } catch {
@@ -183,11 +183,10 @@ class SDJWTFactory {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, key, value)
     let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
-    // TODO: Remove before flight
-    //      .replacingOccurrences(of: ",", with: ", ")
+    
     guard let urlEncoded = stringToEncode?.toBase64URLEncoded(),
           let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
-      throw SDJWTError.encodingError
+      throw SDJWTVerifierError.invalidDisclosure(disclosures: [stringToEncode ?? value.description])
     }
 
     return (urlEncoded, digest)
@@ -206,13 +205,12 @@ class SDJWTFactory {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, value)
     let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
-    // TODO: Remove before flight
-    //      .replacingOccurrences(of: ",", with: ", ")
+
     guard
       let urlEncoded = stringToEncode?.toBase64URLEncoded(),
       let digest = digestCreator.hashAndBase64Encode(input: urlEncoded)
     else {
-      throw SDJWTError.encodingError
+      throw SDJWTVerifierError.invalidDisclosure(disclosures: [stringToEncode ?? value.description])
     }
 
     return (urlEncoded, digest)
@@ -231,15 +229,22 @@ class SDJWTFactory {
     return []
   }
 
-  private func addSdAlgClaim(object: [String: SdElement]?) -> [String: SdElement]? {
+  private func addSdAlgClaim(object: [String: SdElement]?) throws -> [String: SdElement]? {
+
+    guard HashingAlgorithmIdentifiers.allCases
+      .map({$0.rawValue})
+      .contains(digestCreator.hashingAlgorithm.identifier) else {
+      throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
+    }
+
     var object = object
     object?[Keys.sdAlg.rawValue] = SdElement.plain(value: digestCreator.hashingAlgorithm.identifier)
     return object
   }
 
-  private func addCnfClaim(object: [String: SdElement]?, jwk: JWK) -> [String: SdElement]? {
+  private func addCnfClaim(object: [String: SdElement]?, jwk: JWK) throws -> [String: SdElement]? {
     guard let jsonData = jwk.jsonData() else {
-      return object
+      throw SDJWTVerifierError.keyBidningFailed(desription: "failled to decode jwk")
     }
     var object = object
     object?[Keys.cnf.rawValue] = SdElement.plain(value: jsonData)

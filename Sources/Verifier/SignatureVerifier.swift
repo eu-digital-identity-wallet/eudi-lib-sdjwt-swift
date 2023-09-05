@@ -17,11 +17,19 @@ import Foundation
 import JOSESwift
 
 enum SDJWTVerifierError: Error {
+  case parsingError
+  case invalidJwt
+  case keyBidningFailed(desription: String)
+  case invalidDisclosure(disclosures: [Disclosure])
+  case missingOrUnknownHashingAlgorithm
+  case nonUniqueDisclosures
+  case nonUniqueDisclosureDigests
+  case missingDigests(disclosures: [Disclosure])
   case noAlgorithmProvided
   case failedToCreateVerifier
 }
 
-class SDJWTVerifier<Key> {
+class SignatureVerifier<Key> {
 
   // MARK: - Properties
 

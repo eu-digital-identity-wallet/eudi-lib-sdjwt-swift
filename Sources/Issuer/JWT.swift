@@ -22,10 +22,18 @@ struct JWT: JWTRepresentable {
 
   // MARK: - Properties
   var header: JWSHeader
-  var payload: Data
+  var payload: ClaimSet
 
   // MARK: - Lifecycle
-  init(header: JWSHeader, payload: Data) throws {
+  init(header: JWSHeader, payload: ClaimSet) throws {
+    guard header.algorithm?.rawValue != Keys.none.rawValue else {
+      throw SDJWTError.noneAsAlgorithm
+    }
+
+    guard SignatureAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
+      throw SDJWTError.macAsAlgorithm
+    }
+
     self.header = header
     self.payload = payload
   }
@@ -33,10 +41,7 @@ struct JWT: JWTRepresentable {
   // MARK: - Methods
 
   func sign<KeyType>(signer: Signer<KeyType>) throws -> JWS {
-    try JWS(header: header, payload: Payload(payload), signer: signer)
-  }
-
-  static func KBJWT(header: JWSHeader, KBJWTBody: JSON) throws -> JWT {
-    return try JWT(header: header, payload: KBJWTBody.rawData())
+    let unsignedJWT = try self.asUnsignedJWT()
+    return try JWS(header: unsignedJWT.header, payload: unsignedJWT.payload, signer: signer)
   }
 }

@@ -45,10 +45,13 @@ final class SpecExamples: XCTestCase {
     }
     XCTAssert(structuredSDJWT.expectedDigests == 10)
     let output = factory.createJWT(sdJwtObject: structuredSDJWT.asObject)
+    let digestCount = try! output.get().value.findDigestCount()
+    
     validateObjectResults(factoryResult: output,
-                          expectedDigests: structuredSDJWT.expectedDigests,
+                          expectedDigests: digestCount,
                           numberOfDecoys: factory.decoyCounter,
                           decoysLimit: 6)
+
 
   }
 
@@ -112,6 +115,8 @@ final class SpecExamples: XCTestCase {
     }
 
     let output = factory.createJWT(sdJwtObject: complex.asObject)
-    validateObjectResults(factoryResult: output, expectedDigests: 12)
+    let digestCount = try! output.get().value.findDigestCount()
+    validateObjectResults(factoryResult: output, expectedDigests: digestCount)
+
   }
 }

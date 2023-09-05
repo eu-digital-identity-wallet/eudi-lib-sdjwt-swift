@@ -14,35 +14,14 @@
  * limitations under the License.
  */
 import Foundation
+import JOSESwift
 
-public typealias KeyPair = (public: SecKey, private: SecKey)
-
-enum SDJWTError: Error {
-  case sdAsKey
-  case nullJSONValue
-  case encodingError
-  case discloseError
-  case serializationError
-  case nonObjectFormat(ofElement: Any)
-  case keyCreation
-  case algorithmMissMatch
-  case noneAsAlgorithm
-  case macAsAlgorithm
-}
-
-/// Static Keys Used by the JWT
-enum Keys: String {
-  case sd = "_sd"
-  case dots = "..."
-  case sdAlg = "_sd_alg"
-  case iss
-  case iat
-  case sub
-  case exp
-  case jti
-  case nbe
-  case aud
-  case cnf
-  case jwk
-  case none
+extension SignatureAlgorithm: CaseIterable {
+  public static var allCases: [SignatureAlgorithm] {
+    if #available(iOS 11, *) {
+      return [.HS256, .HS384, .HS512, .RS256, .RS384, .RS512, .ES256, .ES384, .ES512, .PS256, .PS384, .PS512]
+    } else {
+      return [.HS256, .HS384, .HS512, .RS256, .RS384, .RS512, .ES256, .ES384, .ES512]
+    }
+  }
 }

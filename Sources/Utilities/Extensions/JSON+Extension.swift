@@ -30,3 +30,28 @@ extension Keys: JSONSubscriptType {
 extension JSON {
   static let empty = JSON()
 }
+
+extension JSON {
+
+  func findDigestCount() -> Int {
+    var foundValues = 0
+
+    if !self[Keys.sd.rawValue].arrayValue.isEmpty {
+      foundValues = self[Keys.sd.rawValue].arrayValue.count
+    }
+    
+    // Loop through the JSON data
+    for (_, subJson):(String, JSON) in self {
+      print(try! subJson.toJSONString())
+      if !subJson.dictionaryValue.isEmpty {
+        foundValues += subJson.findDigestCount()
+      } else if !subJson.arrayValue.isEmpty {
+        for object in subJson.arrayValue {
+          foundValues += object[Keys.dots.rawValue].exists() == true ? 1 : 0
+        }
+      }
+    }
+
+    return foundValues
+  }
+}

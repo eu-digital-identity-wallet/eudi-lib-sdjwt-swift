@@ -21,7 +21,7 @@ class SDJWTIssuer {
 
   enum Purpose {
     case issuance(JWSHeader, ClaimSet)
-    case presentation(SignedSDJWT, KBJWTContent?)
+    case presentation(SignedSDJWT, KBJWT?)
   }
 
   // MARK: - Lifecycle
@@ -36,12 +36,9 @@ class SDJWTIssuer {
       let ungsingedSDJWT = try SDJWT(header: JWSHeader, claimSet: claimSet)
       return try createSignedSDJWT(sdJwt: ungsingedSDJWT, issuersPrivateKey: signingKey)
       // ..........
-    case .presentation(let signedJWT, let kbJWTContent):
-      if let kbJWTContent {
-
-        let payload = try kbJWTContent.payload.rawData()
-        let kbJwt = try JWT(header: kbJWTContent.header, payload: payload)
-        return try createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: kbJwt, holdersPrivateKey: signingKey)
+    case .presentation(let signedJWT, let KBJWT):
+      if let KBJWT {
+        return try createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: KBJWT, holdersPrivateKey: signingKey)
       }
       return signedJWT
       // ..........

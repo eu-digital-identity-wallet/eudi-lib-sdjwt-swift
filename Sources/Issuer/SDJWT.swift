@@ -17,9 +17,7 @@ import Foundation
 import SwiftyJSON
 import JOSESwift
 
-typealias KBJWTContent = (header: KBJWTHeader, payload: KBJWTPayload)
-typealias KBJWTHeader = JWSHeader
-typealias KBJWTPayload = JSON
+typealias KBJWT = JWT
 
 struct SDJWT {
 
@@ -28,13 +26,13 @@ struct SDJWT {
   var kbJwt: JWT?
 
   init(header: JWSHeader, claimSet: ClaimSet) throws {
-    self.jwt = try .init(header: header, payload: claimSet.value.rawData())
+    self.jwt = try JWT(header: header, payload: claimSet)
     self.disclosures = claimSet.disclosures
   }
 
-  init(header: JWSHeader, claimSet: ClaimSet, kbJwtHeader: KBJWTHeader, KBJWTBody: KBJWTPayload) throws {
+  init(header: JWSHeader, claimSet: ClaimSet, kbJWT: JWTRepresentable) throws {
     try self.init(header: header, claimSet: claimSet)
-    self.kbJwt = try JWT.KBJWT(header: kbJwtHeader, KBJWTBody: KBJWTBody)
+    self.kbJwt = try JWT(header: kbJWT.header, payload: kbJWT.payload)
   }
 
 }
@@ -82,13 +80,13 @@ struct SignedSDJWT {
 
   static func nonKeyBondedSDJWT<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) throws -> SignedSDJWT {
     try .init(sdJwt: sdJwt, issuersPrivateKey: issuersPrivateKey) ?? {
-      throw SDJWTError.serializationError
+      throw SDJWTVerifierError.invalidJwt
     }()
   }
 
   static func keyBondedSDJWT<KeyType>(signedSDJWT: SignedSDJWT, kbJWT: JWT, holdersPrivateKey: KeyType) throws -> SignedSDJWT {
     try .init(signedSDJWT: signedSDJWT, kbJWT: kbJWT, holdersPrivateKey: holdersPrivateKey) ?? {
-      throw SDJWTError.serializationError
+      throw SDJWTVerifierError.invalidJwt
     }()
   }
 

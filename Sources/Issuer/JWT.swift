@@ -22,10 +22,10 @@ struct JWT: JWTRepresentable {
 
   // MARK: - Properties
   var header: JWSHeader
-  var payload: ClaimSet
+  var payload: JSON
 
   // MARK: - Lifecycle
-  init(header: JWSHeader, payload: ClaimSet) throws {
+  init(header: JWSHeader, payload: JSON) throws {
     guard header.algorithm?.rawValue != Keys.none.rawValue else {
       throw SDJWTError.noneAsAlgorithm
     }
@@ -47,7 +47,7 @@ struct JWT: JWTRepresentable {
       throw SDJWTError.macAsAlgorithm
     }
     self.header = header
-    self.payload = (value: kbJwtPayload, [])
+    self.payload = kbJwtPayload
   }
 
   // MARK: - Methods

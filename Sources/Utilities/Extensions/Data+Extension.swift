@@ -24,4 +24,8 @@ extension Data {
     return base64
   }
 
+  func decodeBase64(encoding: String.Encoding = .utf8) -> String? {
+    return String(data: self, encoding: encoding)
+  }
+
 }

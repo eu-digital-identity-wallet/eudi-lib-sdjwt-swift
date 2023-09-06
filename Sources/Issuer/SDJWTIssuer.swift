@@ -37,7 +37,7 @@ class SDJWTIssuer {
   static func createSDJWT<KeyType>(purpose: Purpose, signingKey: KeyType) throws -> SignedSDJWT {
     switch purpose {
     case .issuance(let JWSHeader, let claimSet):
-      let ungsingedSDJWT = try SDJWT(header: JWSHeader, claimSet: claimSet)
+      let ungsingedSDJWT = try SDJWT(jwt: JWT(header: JWSHeader, payload: claimSet.value), disclosures: claimSet.disclosures, kbJWT: nil)
       return try createSignedSDJWT(sdJwt: ungsingedSDJWT, issuersPrivateKey: signingKey)
       // ..........
     case .presentation(let signedJWT, let KBJWT):

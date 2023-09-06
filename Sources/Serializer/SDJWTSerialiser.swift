@@ -19,46 +19,34 @@ import JOSESwift
 class Serialiser {
 
   var serialised: String {
-    self.serializationOption.serialize(signedSDJWT: signedSDJWT)
+    self.serialisationFormat.serialize(signedSDJWT: signedSDJWT)
   }
 
   private var signedSDJWT: SignedSDJWT
-  private var serializationOption: SerializationOption
+  private var serialisationFormat: SerialisationFormat
 
-  init(signedSDJWT: SignedSDJWT, serializationOption: SerializationOption) {
+  init(signedSDJWT: SignedSDJWT, serialisationFormat: SerialisationFormat) {
     self.signedSDJWT = signedSDJWT
-    self.serializationOption = serializationOption
+    self.serialisationFormat = serialisationFormat
   }
+}
 
-  enum SerializationOption {
-    case combinedIssuance
-    case combinedPresentation
-
-    func serialize(signedSDJWT: SignedSDJWT) -> String {
-      switch self {
-      case .combinedIssuance:
-        return self.toCombinedIssuance(signedSDJWT: signedSDJWT)
-      case .combinedPresentation:
-        return self.toCombinedPresentation(signedSDJWT: signedSDJWT)
-      }
+extension SerialisationFormat {
+  func serialize(signedSDJWT: SignedSDJWT) -> String {
+    switch self {
+    case .serialised:
+      return serialised(signedSDJWT: signedSDJWT)
     }
 
-    func toCombinedIssuance(signedSDJWT: SignedSDJWT) -> String {
+    func serialised(signedSDJWT: SignedSDJWT) -> String {
       var output = ""
       output += signedSDJWT.jwt.compactSerializedString
       output += signedSDJWT.disclosures.reduce(into: "~", { partialResult, disclosure in
         partialResult += disclosure + "~"
       })
-      return output
-    }
-
-    func toCombinedPresentation(signedSDJWT: SignedSDJWT) -> String {
-      var output = self.toCombinedIssuance(signedSDJWT: signedSDJWT)
       output += signedSDJWT.kbJwt?.compactSerializedString ?? ""
       return output
     }
 
   }
 }
-
-

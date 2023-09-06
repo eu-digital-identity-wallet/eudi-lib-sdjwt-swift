@@ -25,16 +25,11 @@ struct SDJWT {
   var disclosures: [Disclosure]
   var kbJwt: JWT?
 
-  init(header: JWSHeader, claimSet: ClaimSet) throws {
-    self.jwt = try JWT(header: header, payload: claimSet)
-    self.disclosures = claimSet.disclosures
+  init(jwt: JWT, disclosures: [Disclosure], kbJWT: KBJWT?) throws {
+    self.jwt = jwt
+    self.disclosures = disclosures
+    self.kbJwt = kbJWT
   }
-
-  init(header: JWSHeader, claimSet: ClaimSet, kbJWT: JWTRepresentable) throws {
-    try self.init(header: header, claimSet: claimSet)
-    self.kbJwt = try JWT(header: kbJWT.header, payload: kbJWT.payload)
-  }
-
 }
 
 struct SignedSDJWT {
@@ -44,6 +39,25 @@ struct SignedSDJWT {
   var kbJwt: JWS?
   
   // MARK: - Lifecycle
+
+  init(serializedJwt: String,
+       disclosures: [Disclosure],
+       serializedKbJwt: String?) throws
+  {
+    self.jwt = try JWS(compactSerialization: serializedJwt)
+    self.disclosures = disclosures
+    self.kbJwt = try? JWS(compactSerialization: serializedKbJwt ?? "")
+  }
+
+  // Removes encoding and signatures
+  // Converts to "human readable format"
+  func toSDJWT() throws -> SDJWT {
+
+    try SDJWT(
+      jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
+      disclosures: disclosures,
+      kbJWT: JWT(header: kbJwt!.header, kbJwtPayload: kbJwt!.payloadJSON()))
+  }
 
   private init?<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) {
     // Create a Signed SDJWT with no key binding

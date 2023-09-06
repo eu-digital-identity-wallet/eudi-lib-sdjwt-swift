@@ -14,26 +14,18 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
-import SwiftyJSON
 
-typealias Base64String = String
-typealias UnsignedJWT = (header: JWSHeader, payload: Payload)
+class DisclosuresVerifier: VerifierProtocol {
 
-protocol JWTRepresentable {
+  var sdJwt: SDJWT
 
-  var header: JWSHeader { get }
-  var payload: JSON { get }
+  init(sdJwt: SDJWT) {
+    self.sdJwt = sdJwt
+  }
 
-  func asUnsignedJWT() throws -> UnsignedJWT
-  func sign<KeyType>(signer: Signer<KeyType>) throws -> JWS
+  func verify() throws -> Bool {
+    
 
-  init(header: JWSHeader, payload: JSON) throws 
-}
-
-extension JWTRepresentable {
-  func asUnsignedJWT() throws -> UnsignedJWT {
-    let payload = Payload(try payload.rawData())
-    return(header, payload)
+    return true
   }
 }

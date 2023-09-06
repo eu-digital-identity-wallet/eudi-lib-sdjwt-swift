@@ -35,7 +35,9 @@ final class KeyBindingTest: XCTestCase {
     let keyPair = generateES256KeyPair()
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
     let pk = try ECPublicKey(publicKey: keyPair.public)
-    let keyBindingJwt = factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: pk)
+    let jwk: JSON = try
+    ["jwk": JSON(data: pk.jsonData()!)]
+    let keyBindingJwt = factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: jwk)
   }
 
   func testcCreateKeyBindingJWT_whenPassedECPublicKey() throws {
@@ -69,7 +71,7 @@ final class KeyBindingTest: XCTestCase {
     .replacingOccurrences(of: "\n", with: "")
     .replacingOccurrences(of: " ", with: "")
 
-  func testKeyBindingCreation() throws {
+  func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification() throws -> (SignedSDJWT, SignedSDJWT) {
     // Issuers Key Pair for es256
     let issuersKeyPair = generateES256KeyPair()
     // Holders Key Pair for es256
@@ -77,10 +79,12 @@ final class KeyBindingTest: XCTestCase {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let json = JSON(parseJSON: jwk)
+//    let json = JSON(parseJSON: jwk)
     let holdersECPK = try ECPublicKey(publicKey: holdersKeyPair.public)
+    let jwk: JSON = try
+    ["jwk": JSON(data: holdersECPK.jsonData()!)]
 
-    let claims = try  factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: holdersECPK).get()
+    let claims = try factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: jwk).get()
 
     let issuance = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claims),
                                                signingKey: issuersKeyPair.private)
@@ -89,15 +93,17 @@ final class KeyBindingTest: XCTestCase {
       [
         Keys.aud.rawValue : "https://example.com/verifier",
         Keys.iat.rawValue : Date().timeIntervalSince1970,
-        "nonce": "1234567890"]
+        "nonce": "1234567890"] as [String : Any]
     ), [])
 
-    let presentation = try SDJWTIssuer.createSDJWT(purpose: .presentation(issuance, KBJWT(header: .init(algorithm: .ES256), payload: kbjwtPayload)),
+    let presentation = try SDJWTIssuer.createSDJWT(purpose: .presentation(issuance, KBJWT(header: .init(algorithm: .ES256), payload: kbjwtPayload.value)),
                                                    signingKey: holdersKeyPair.private)
 
-    let issuanceSigVerifier = try SignatureVerifier(signedJWT: issuance.jwt, publicKey: issuersKeyPair.public).verify()
+    try SignatureVerifier(signedJWT: issuance.jwt, publicKey: issuersKeyPair.public).verify()
 
-    let holdersKBVerifier = try SignatureVerifier(signedJWT: presentation.kbJwt!, publicKey: holdersKeyPair.public).verify()
-    let holdersSigVerifier = try SignatureVerifier(signedJWT: presentation.jwt, publicKey: issuersKeyPair.public).verify()
+    try SignatureVerifier(signedJWT: presentation.kbJwt!, publicKey: holdersKeyPair.public).verify()
+    try SignatureVerifier(signedJWT: presentation.jwt, publicKey: issuersKeyPair.public).verify()
+
+    return(issuance, presentation)
   }
 }

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import SwiftyJSON
+import JOSESwift
 
 extension JSON {
   subscript(key: Keys) -> JSON {
@@ -53,5 +54,11 @@ extension JSON {
     }
 
     return foundValues
+  }
+}
+
+extension JWS {
+  func payloadJSON() throws -> JSON {
+    try JSON(data: self.payload.data())
   }
 }

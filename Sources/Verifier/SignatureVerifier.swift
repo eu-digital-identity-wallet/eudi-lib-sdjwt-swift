@@ -29,7 +29,7 @@ enum SDJWTVerifierError: Error {
   case failedToCreateVerifier
 }
 
-class SignatureVerifier<Key> {
+class SignatureVerifier<Key>: VerifierProtocol {
 
   // MARK: - Properties
 

@@ -56,7 +56,7 @@ class SDJWTFactory {
     }
   }
 
-  func createJWT(sdjwtObject: [String: SdElement]?, holdersPublicKey: JWK) -> Result<ClaimSet, Error> {
+  func createJWT(sdjwtObject: [String: SdElement]?, holdersPublicKey: JSON) -> Result<ClaimSet, Error> {
     do {
       self.decoyCounter = 0
       var sdJwtObject = sdjwtObject
@@ -230,7 +230,6 @@ class SDJWTFactory {
   }
 
   private func addSdAlgClaim(object: [String: SdElement]?) throws -> [String: SdElement]? {
-
     guard HashingAlgorithmIdentifiers.allCases
       .map({$0.rawValue})
       .contains(digestCreator.hashingAlgorithm.identifier) else {
@@ -242,12 +241,9 @@ class SDJWTFactory {
     return object
   }
 
-  private func addCnfClaim(object: [String: SdElement]?, jwk: JWK) throws -> [String: SdElement]? {
-    guard let jsonData = jwk.jsonData() else {
-      throw SDJWTVerifierError.keyBidningFailed(desription: "failled to decode jwk")
-    }
+  private func addCnfClaim(object: [String: SdElement]?, jwk: JSON) throws -> [String: SdElement]? {
     var object = object
-    object?[Keys.cnf.rawValue] = SdElement.plain(value: jsonData)
+    object?[Keys.cnf.rawValue] = try SdElement.plain(value: jwk.rawData())
     return object
   }
 }

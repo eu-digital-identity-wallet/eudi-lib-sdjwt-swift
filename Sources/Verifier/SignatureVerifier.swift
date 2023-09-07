@@ -37,7 +37,7 @@ class SignatureVerifier<Key>: VerifierProtocol {
     self.verifier = verifier
     self.jws = signedJWT
   }
-  
+
   // MARK: - Methods
 
   func verify() throws -> JWS {

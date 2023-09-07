@@ -28,7 +28,7 @@ protocol JWTRepresentable {
   func asUnsignedJWT() throws -> UnsignedJWT
   func sign<KeyType>(signer: Signer<KeyType>) throws -> JWS
 
-  init(header: JWSHeader, payload: JSON) throws 
+  init(header: JWSHeader, payload: JSON) throws
 }
 
 extension JWTRepresentable {

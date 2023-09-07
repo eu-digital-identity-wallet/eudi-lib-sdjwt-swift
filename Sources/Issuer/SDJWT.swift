@@ -37,13 +37,12 @@ struct SignedSDJWT {
   var jwt: JWS
   var disclosures: [Disclosure]
   var kbJwt: JWS?
-  
+
   // MARK: - Lifecycle
 
   init(serializedJwt: String,
        disclosures: [Disclosure],
-       serializedKbJwt: String?) throws
-  {
+       serializedKbJwt: String?) throws {
     self.jwt = try JWS(compactSerialization: serializedJwt)
     self.disclosures = disclosures
     self.kbJwt = try? JWS(compactSerialization: serializedKbJwt ?? "")

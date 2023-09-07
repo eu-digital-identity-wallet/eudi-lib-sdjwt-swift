@@ -16,6 +16,7 @@
 
 import XCTest
 import Security
+import Foundation
 
 @testable import eudi_lib_sdjwt_swift
 
@@ -126,9 +127,6 @@ class MockSaltProvider: SaltProvider {
     self.salt = Data(saltString.utf8)
   }
 }
-
-
-import Foundation
 
 class TestLogger {
     static func log(_ message: String) {

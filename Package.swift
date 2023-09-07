@@ -35,7 +35,7 @@ let package = Package(
             ],
             path: "Sources",
             plugins: [
-                
+
             ]
         ),
         .testTarget(

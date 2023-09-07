@@ -33,7 +33,7 @@ class Parser {
     self.serialisationFormat = serialisationFormat
   }
   // MARK: - Methods
-  
+
   func getSignedSdJwt() throws -> SignedSDJWT {
     let (serialisedJWT, dislosuresInBase64, serialisedKBJWT) = self.parseCombined()
     return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: dislosuresInBase64, serializedKbJwt: serialisedKBJWT)
@@ -83,4 +83,3 @@ class Parser {
 
   }
 }
-

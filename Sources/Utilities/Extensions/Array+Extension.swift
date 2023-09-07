@@ -24,7 +24,7 @@ extension Array {
 }
 
 extension Array {
-    subscript(safe range: Range<Index>) -> Array<Element>? {
+    subscript(safe range: Range<Index>) -> [Element]? {
         if range.lowerBound >= startIndex && range.upperBound <= endIndex {
             return Array(self[range])
         } else {

@@ -29,7 +29,7 @@ enum HashingAlgorithmIdentifier: String, CaseIterable {
   case SHA384 = "sha-384"
   case SHA512 = "sha-512"
 
-  func hashingAlgorithm() -> HashingAlgorithm  {
+  func hashingAlgorithm() -> HashingAlgorithm {
 
     switch self {
     case .SHA256:

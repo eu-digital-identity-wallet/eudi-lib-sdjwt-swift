@@ -40,9 +40,9 @@ extension JSON {
     if !self[Keys.sd.rawValue].arrayValue.isEmpty {
       foundValues = self[Keys.sd.rawValue].arrayValue.count
     }
-    
+
     // Loop through the JSON data
-    for (_, subJson):(String, JSON) in self {
+    for (_, subJson): (String, JSON) in self {
       if !subJson.dictionaryValue.isEmpty {
         foundValues += subJson.findDigestCount()
       } else if !subJson.arrayValue.isEmpty {
@@ -65,7 +65,7 @@ extension JSON {
     }
 
     // Loop through the JSON data
-    for (_, subJson):(String, JSON) in self {
+    for (_, subJson): (String, JSON) in self {
       if !subJson.dictionaryValue.isEmpty {
         foundDigests += subJson.findDigests()
       } else if !subJson.arrayValue.isEmpty {

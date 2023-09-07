@@ -58,7 +58,6 @@ class DisclosuresVerifier: VerifierProtocol {
     return true
   }
 
-
   func matchDigests(disclosuresDigestsInPayload: [DigestType], digestsOfDisclosures: [DisclosureDigest]) throws -> [DisclosureDigest: Disclosure] {
 
     // Retrieve the value for each collected digest and create a set to remove
@@ -85,7 +84,7 @@ class DisclosuresVerifier: VerifierProtocol {
     return try dictionaryOfCommonElements(commonElements)
   }
 
-  fileprivate func dictionaryOfCommonElements(_ commonElements: Set<DisclosureDigest>) throws -> [DisclosureDigest : Disclosure] {
+  fileprivate func dictionaryOfCommonElements(_ commonElements: Set<DisclosureDigest>) throws -> [DisclosureDigest: Disclosure] {
     let digestsOfDisclosuresDict = try disclosuresReceivedInSDJWT.reduce(into: [DisclosureDigest: Disclosure]()) { partialResult, string in
       guard let digest = digestCreator.hashAndBase64Encode(input: string) else {
         throw SDJWTVerifierError.failedToCreateVerifier
@@ -98,7 +97,6 @@ class DisclosuresVerifier: VerifierProtocol {
       partialResult[key] = digestsOfDisclosuresDict[key]
     }
   }
-
 
   func verifyDigestsStructure(digestType: DigestType, disclosure: Disclosure) throws {
     // Decode the base64 string

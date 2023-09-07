@@ -183,7 +183,7 @@ class SDJWTFactory {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, key, value)
     let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
-    
+
     guard let urlEncoded = stringToEncode?.toBase64URLEncoded(),
           let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
       throw SDJWTVerifierError.invalidDisclosure(disclosures: [stringToEncode ?? value.description])

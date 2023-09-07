@@ -56,9 +56,9 @@ enum DigestType: RawRepresentable, Hashable {
   // MARK: - Properties
   var components: Int {
     switch self {
-    case .array(_):
+    case .array:
       return 2
-    case .object(_):
+    case .object:
       return 3
     }
   }

@@ -30,7 +30,7 @@ final class KeyBindingTest: XCTestCase {
     FlatDisclosedClaim("sub", "6c5c0a49-b589-431d-bae7-219122a9ec2c")
     FlatDisclosedClaim("given_name", "太郎")
   }
-  
+
   func testKeyBinding() throws {
     let keyPair = generateES256KeyPair()
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
@@ -91,9 +91,9 @@ final class KeyBindingTest: XCTestCase {
 
     let kbjwtPayload: ClaimSet = (JSON(
       [
-        Keys.aud.rawValue : "https://example.com/verifier",
-        Keys.iat.rawValue : Date().timeIntervalSince1970,
-        "nonce": "1234567890"] as [String : Any]
+        Keys.aud.rawValue: "https://example.com/verifier",
+        Keys.iat.rawValue: Date().timeIntervalSince1970,
+        "nonce": "1234567890"] as [String: Any]
     ), [])
 
     let presentation = try SDJWTIssuer.createSDJWT(purpose: .presentation(issuance, KBJWT(header: .init(algorithm: .ES256), payload: kbjwtPayload.value)),

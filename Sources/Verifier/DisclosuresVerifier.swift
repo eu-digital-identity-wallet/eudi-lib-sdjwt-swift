@@ -18,11 +18,13 @@ import SwiftyJSON
 
 class DisclosuresVerifier: VerifierProtocol {
 
-  var sdJwt: SDJWT
+  let disclosuresReceivedInSDJWT: [Disclosure]
+  let digestsFoundOnPayload: [DigestType]
   let digestCreator: DigestCreator
 
   init(sdJwt: SDJWT) throws {
-    self.sdJwt = sdJwt
+    self.disclosuresReceivedInSDJWT = sdJwt.disclosures
+    self.digestsFoundOnPayload = sdJwt.jwt.payload.findDigests()
 
     if sdJwt.jwt.payload[Keys.sdAlg.rawValue].exists() {
       let stringValue = sdJwt.jwt.payload[Keys.sdAlg.rawValue].stringValue
@@ -37,35 +39,53 @@ class DisclosuresVerifier: VerifierProtocol {
   }
 
   func verify() throws -> Bool {
+    // Create the digest for the enveloped disclosures
+    // Convert the base64 string to the hash, Digests we got passed
+    // Base64 [salt, key, value]
+    let digestsOfDisclosures = disclosuresReceivedInSDJWT.compactMap { string in
+      return digestCreator.hashAndBase64Encode(input: string)
+    }
 
-    let embededDigests = sdJwt.jwt.payload.findDigests()
-    let disclosureForDigestDict = try matchDigests(disclosuresDigests: embededDigests)
+    let disclosureForDigestDict = try matchDigests(disclosuresDigestsInPayload: digestsFoundOnPayload, digestsOfDisclosures: digestsOfDisclosures)
 
-    try embededDigests.forEach { digestType in
-      guard let disclosureForDigest = disclosureForDigestDict[digestType.rawValue] else {
-        throw SDJWTVerifierError.missingDigests(disclosures: [digestType.rawValue])
+    try digestsFoundOnPayload.forEach { digestType in
+      if let disclosureForDigest = disclosureForDigestDict[digestType.rawValue] {
+        try verifyDigestsStructure(digestType: digestType, disclosure: disclosureForDigest)
       }
-      try verifyDigestsStructure(digestType: digestType, disclosure: disclosureForDigest)
     }
 
     return true
   }
 
-  func matchDigests(disclosuresDigests: [DigestType]) throws -> [DisclosureDigest: Disclosure] {
 
-    let digestsOfDisclosures = self.sdJwt.disclosures.compactMap { string in
-      return digestCreator.hashAndBase64Encode(input: string)
+  func matchDigests(disclosuresDigestsInPayload: [DigestType], digestsOfDisclosures: [DisclosureDigest]) throws -> [DisclosureDigest: Disclosure] {
+
+    // Retrieve the value for each collected digest and create a set to remove
+    // any potential duplicates
+    // Digests found in JSON
+    let setOfCollectedDigests = Set(disclosuresDigestsInPayload.compactMap({$0.rawValue}))
+    guard setOfCollectedDigests.count == disclosuresDigestsInPayload.count else {
+      throw SDJWTVerifierError.nonUniqueDisclosureDigests
     }
-
-    let setOfCollectedDigests = Set(disclosuresDigests.compactMap({$0.rawValue}))
+    // Create a set of the digests of the enveloped disclosures
+    // Digests we got passed
     let setOfDisclosuresDigests = Set(digestsOfDisclosures)
+
+    guard setOfDisclosuresDigests.count == digestsOfDisclosures.count else {
+      throw SDJWTVerifierError.nonUniqueDisclosures
+    }
+    // Find the common elements
     let commonElements = setOfCollectedDigests.intersection(setOfDisclosuresDigests)
 
-    guard commonElements.count == sdJwt.disclosures.count else {
-      throw SDJWTVerifierError.missingDigests(disclosures: Array(commonElements.subtracting(setOfDisclosuresDigests)))
+    guard commonElements.count == setOfDisclosuresDigests.count else {
+      throw SDJWTVerifierError.missingDigests(disclosures: Array(setOfDisclosuresDigests.subtracting(commonElements)))
     }
 
-    let digestsOfDisclosuresDict = try self.sdJwt.disclosures.reduce(into: [DisclosureDigest: Disclosure]()) { partialResult, string in
+    return try dictionaryOfCommonElements(commonElements)
+  }
+
+  fileprivate func dictionaryOfCommonElements(_ commonElements: Set<DisclosureDigest>) throws -> [DisclosureDigest : Disclosure] {
+    let digestsOfDisclosuresDict = try disclosuresReceivedInSDJWT.reduce(into: [DisclosureDigest: Disclosure]()) { partialResult, string in
       guard let digest = digestCreator.hashAndBase64Encode(input: string) else {
         throw SDJWTVerifierError.failedToCreateVerifier
       }
@@ -73,8 +93,11 @@ class DisclosuresVerifier: VerifierProtocol {
       partialResult[digest] = string
     }
 
-    return digestsOfDisclosuresDict
+    return commonElements.reduce(into: [DisclosureDigest: Disclosure]()) { partialResult, key in
+      partialResult[key] = digestsOfDisclosuresDict[key]
+    }
   }
+
 
   func verifyDigestsStructure(digestType: DigestType, disclosure: Disclosure) throws {
     // Decode the base64 string

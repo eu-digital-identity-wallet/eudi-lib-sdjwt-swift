@@ -117,6 +117,9 @@ final class SpecExamples: XCTestCase {
     let digestCount = try XCTUnwrap(try? output.get().value.findDigestCount())
     validateObjectResults(factoryResult: output, expectedDigests: digestCount)
 
+    try output.get().disclosures.forEach { disclosure in
+      print(disclosure.base64URLDecode())
+    }
     let findDigest = try? XCTUnwrap(output.get().value.findDigests())
   }
 }

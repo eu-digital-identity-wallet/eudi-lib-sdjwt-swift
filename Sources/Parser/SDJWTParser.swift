@@ -60,6 +60,9 @@ class Parser {
     let parts = self.serialisedString
       .split(separator: "~")
       .map({String($0)})
+    guard parts.count > 1 else {
+      return ("", [], nil)
+    }
     let jwt = String(parts[0])
 
     switch self.serialisationFormat {

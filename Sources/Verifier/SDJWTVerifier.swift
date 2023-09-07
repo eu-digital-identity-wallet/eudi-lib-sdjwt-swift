@@ -20,24 +20,43 @@ protocol VerifierProtocol {
   func verify() throws -> ReturnType
 }
 
+enum SDJWTVerifierError: Error {
+  case parsingError
+  case invalidJwt
+  case keyBidningFailed(desription: String)
+  case invalidDisclosure(disclosures: [Disclosure])
+  case missingOrUnknownHashingAlgorithm
+  case nonUniqueDisclosures
+  case nonUniqueDisclosureDigests
+  case missingDigests(disclosures: [Disclosure])
+  case noAlgorithmProvided
+  case failedToCreateVerifier
+}
+
 class SdJwtVerifier {
+
+  func unsingedVerify(parser: Parser,
+                      disclosuresVerifier: () throws -> DisclosuresVerifier) -> Result<Void,Error> {
+    Result {
+      let hasValidDisclosures = try disclosuresVerifier().verify()
+    }
+  }
 
   func verify<KeyType>(parser: Parser,
                        issuersSignatureVerifier: () throws -> SignatureVerifier<KeyType>,
-                       disclosuresVerifier: () throws -> DisclosuresVerifier) throws -> Result<Void,Error> {
+                       disclosuresVerifier: () throws -> DisclosuresVerifier) -> Result<Void,Error> {
     Result {
       let sdJwt = try parser.getSignedSdJwt()
       let hasValidSignature = try issuersSignatureVerifier().verify()
       let hasValidDisclosures = try disclosuresVerifier().verify()
 
     }
-
   }
 
   func verify<IssuersKeyType, HoldersKeyType>(parser: Parser,
                                               issuersSignatureVerifier: () -> SignatureVerifier<IssuersKeyType>,
                                               disclosuresVerifier: () -> DisclosuresVerifier,
-                                              keyBindingVerifier: (() -> SignatureVerifier<HoldersKeyType>)? = nil) throws -> Result<Void,Error> {
+                                              keyBindingVerifier: (() -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<Void,Error> {
     Result {
       try self.verify(parser: parser, issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier)
       if let keyBindingVerifier {

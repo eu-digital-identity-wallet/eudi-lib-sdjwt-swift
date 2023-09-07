@@ -23,7 +23,8 @@ import XCTest
 @testable import eudi_lib_sdjwt_swift
 
 final class VerifierTest: XCTestCase {
-  func testVerifier() throws {
+
+  func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
     let key =
       """
       {
@@ -40,8 +41,48 @@ final class VerifierTest: XCTestCase {
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
     let ComplexStructureSDJWTString =
                 """
+                eyJhbGciOiAiRVMyNTYifQ.eyJfc2QiOiBbIkM5aW5wNllvUmFFWFI0Mjd6WUpQN1Fya
+                zFXSF84YmR3T0FfWVVyVW5HUVUiLCAiS3VldDF5QWEwSElRdlluT1ZkNTloY1ZpTzlVZ
+                zZKMmtTZnFZUkJlb3d2RSIsICJNTWxkT0ZGekIyZDB1bWxtcFRJYUdlcmhXZFVfUHBZZ
+                kx2S2hoX2ZfOWFZIiwgIlg2WkFZT0lJMnZQTjQwVjd4RXhad1Z3ejd5Um1MTmNWd3Q1R
+                Ew4Ukx2NGciLCAiWTM0em1JbzBRTExPdGRNcFhHd2pCZ0x2cjE3eUVoaFlUMEZHb2ZSL
+                WFJRSIsICJmeUdwMFdUd3dQdjJKRFFsbjFsU2lhZW9iWnNNV0ExMGJRNTk4OS05RFRzI
+                iwgIm9tbUZBaWNWVDhMR0hDQjB1eXd4N2ZZdW8zTUhZS08xNWN6LVJaRVlNNVEiLCAic
+                zBCS1lzTFd4UVFlVTh0VmxsdE03TUtzSVJUckVJYTFQa0ptcXhCQmY1VSJdLCAiaXNzI
+                jogImh0dHBzOi8vZXhhbXBsZS5jb20vaXNzdWVyIiwgImlhdCI6IDE2ODMwMDAwMDAsI
+                CJleHAiOiAxODgzMDAwMDAwLCAiYWRkcmVzcyI6IHsiX3NkIjogWyI2YVVoelloWjdTS
+                jFrVm1hZ1FBTzN1MkVUTjJDQzFhSGhlWnBLbmFGMF9FIiwgIkF6TGxGb2JrSjJ4aWF1c
+                FJFUHlvSnotOS1OU2xkQjZDZ2pyN2ZVeW9IemciLCAiUHp6Y1Z1MHFiTXVCR1NqdWxmZ
+                Xd6a2VzRDl6dXRPRXhuNUVXTndrclEtayIsICJiMkRrdzBqY0lGOXJHZzhfUEY4WmN2b
+                mNXN3p3Wmo1cnlCV3ZYZnJwemVrIiwgImNQWUpISVo4VnUtZjlDQ3lWdWIyVWZnRWs4a
+                nZ2WGV6d0sxcF9KbmVlWFEiLCAiZ2xUM2hyU1U3ZlNXZ3dGNVVEWm1Xd0JUdzMyZ25Vb
+                GRJaGk4aEdWQ2FWNCIsICJydkpkNmlxNlQ1ZWptc0JNb0d3dU5YaDlxQUFGQVRBY2k0M
+                G9pZEVlVnNBIiwgInVOSG9XWWhYc1poVkpDTkUyRHF5LXpxdDd0NjlnSkt5NVFhRnY3R
+                3JNWDQiXX0sICJfc2RfYWxnIjogInNoYS0yNTYifQ.rFsowW-KSZe7EITlWsGajR9nnG
+                BLlQ78qgtdGIZg3FZuZnxtapP0H8CUMnffJAwPQJmGnpFpulTkLWHiI1kMmw~WyJHMDJ
+                OU3JRZmpGWFE3SW8wOXN5YWpBIiwgInJlZ2lvbiIsICJcdTZlMmZcdTUzM2EiXQ~WyJs
+                a2x4RjVqTVlsR1RQVW92TU5JdkNBIiwgImNvdW50cnkiLCAiSlAiXQ~
+                """
+      .replacingOccurrences(of: "\n", with: "")
+      .replacingOccurrences(of: " ", with: "")
+
+    let parser = Parser(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
+
+    let result = SdJwtVerifier().verifyIssuance(parser: parser) { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
+    } disclosuresVerifier: {
+      try DisclosuresVerifier(parser: parser)
+    }
+
+
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifierBehaviour_WhenPassedNoSignature_ThenExpectToPassAllCriterias() throws {
+    let ComplexStructureSDJWTString =
+                """
                 eyJhbGciOiAiRVMyNTYifQ
-                
+
                 .ewogICJpc3MiOiAiaHR0cHM6Ly9leGFtcGxlLmNvbS9pc3N3NXIiLAogICJpYXQiOiAxNjgzMDAwMDAwLAogICJleHAiOiAxODgzMDAwMDAwLAogICJAY29udGV4dCI6IFsKICAgICJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsCiAgICAiaHR0cHM6Ly93M2lkLm9yZy92YWNjaW5hdGlvbi92MSIKICBdLAogICJ0eXBlIjogWwogICAgIlZlcmlmaWFibGVDcmVkZW50aWFsIiwKICAgICJWYWNjaW5hdGlvbkNlcnRpZmljYXRlIgogIF0sCiAgImlzc3VlciI6ICJodHRwczovL2V4YW1wbGUuY29tL2lzc3VlciIsCiAgImlzc3VhbmNlRGF0ZSI6ICIyMDIzLTAyLTA5VDExOjAxOjU5WiIsCiAgImV4cGlyYXRpb25EYXRlIjogIjIwMjgtMDItMDhUMTE6MDE6NTlaIiwKICAibmFtZSI6ICJDT1ZJRC0xOSBWYWNjaW5hdGlvbiBDZXJ0aWZpY2F0ZSIsCiAgImRlc2NyaXB0aW9uIjogIkNPVklELTE5IFZhY2NpbmF0aW9uIENlcnRpZmljYXRlIiwKICAiY3JlZGVudGlhbFN1YmplY3QiOiB7CiAgICAiX3NkIjogWwogICAgICAiMVZfSy04bERROGlGWEJGWGJaWTllaHFSNEhhYldDaTVUMHliSXpaUGV3dyIsCiAgICAgICJKempMZ3RQMjlkUC1CM3RkMTJQNjc0Z0ZtSzJ6eTgxSE10QmdmNkNKTldnIiwKICAgICAgIlIyZkdiZkEwN1pfWWxrcW1OWnltYTF4eXl4MVhzdElpUzZCMVlibDJKWjQiLAogICAgICAiVENtenJsN0syZ2V2X2R1N3BjTUl5elJMSHAtWWVnLUZsX2N4dHJVdlB4ZyIsCiAgICAgICJWN2tKQkxLNzhUbVZET21yZko3WnVVUEh1S18yY2M3eVpSYTRxVjF0eHdNIiwKICAgICAgImIwZVVzdkdQLU9ERGRGb1k0Tmx6bFhjM3REc2xXSnRDSkY3NU53OE9qX2ciLAogICAgICAiekpLX2VTTVhqd004ZFhtTVpMbkk4RkdNMDh6SjNfdWJHZUVNSi01VEJ5MCIKICAgIF0sCiAgICAidmFjY2luZSI6IHsKICAgICAgIl9zZCI6IFsKICAgICAgICAiMWNGNWhMd2toTU5JYXFmV0pyWEk3Tk1XZWRMLTlmNlkyUEE1MnlQalNaSSIsCiAgICAgICAgIkhpeTZXV3VlTEQ1Ym4xNjI5OHRQdjdHWGhtbGRNRE9UbkJpLUNaYnBoTm8iLAogICAgICAgICJMYjAyN3E2OTFqWFhsLWpDNzN2aThlYk9qOXNteDNDLV9vZzdnQTRUQlFFIgogICAgICBdLAogICAgICAidHlwZSI6ICJWYWNjaW5lIgogICAgfSwKICAgICJyZWNpcGllbnQiOiB7CiAgICAgICJfc2QiOiBbCiAgICAgICAgIjFsU1FCTlkyNHEwVGg2T0d6dGhxLTctNGw2Y0FheHJZWE9HWnBlV19sbkEiLAogICAgICAgICIzbnpMcTgxTTJvTjA2d2R2MXNoSHZPRUpWeFo1S0xtZERrSEVESkFCV0VJIiwKICAgICAgICAiUG4xc1dpMDZHNExKcm5uLV9SVDBSYk1fSFRkeG5QSlF1WDJmeld2X0pPVSIsCiJQbjFzV2kwNkc0TEpybm4tX1JUMFJiTV9IVGR4blBKUXVYMmZ6V3ZfSk9zIiwKICAgICAgICAibEY5dXpkc3c3SHBsR0xjNzE0VHI0V083TUdKemE3dHQ3UUZsZUNYNEl0dyIKICAgICAgXSwKICAgICAgInR5cGUiOiAiVmFjY2luZVJlY2lwaWVudCIKICAgIH0sCiAgICAidHlwZSI6ICJWYWNjaW5hdGlvbkV2ZW50IgogIH0sCiAgIl9zZF9hbGciOiAic2hhLTI1NiIKfQ.tKnLymr8fQfupOgvMgBK3GCEIDEzhgta4MgnxY
                 m9fWGMkqrz2R5PSkv0I-AXKXtIF6bdZRbjL-t43vC87jVoZQ
 
@@ -77,45 +118,7 @@ final class VerifierTest: XCTestCase {
     let result = verifier.unsingedVerify(parser: parser) {
       try DisclosuresVerifier(sdJwt: sdJWT)
     }
-//    let result = verifier.un(parser: parser) {
-//      try SignatureVerifier(signedJWT: signedSDJWT.jwt, publicKey: pk.converted(to: SecKey.self))
-//    } disclosuresVerifier: {
-//      try DisclosuresVerifier(sdJwt: sdJWT)
-//    }
 
     XCTAssertNoThrow(try result.get())
-  }
-
-  func testClaims() throws {
-    // .......
-    @SDJWTBuilder
-    var evidenceObject: SdElement {
-      PlainClaim("type", "document")
-      FlatDisclosedClaim("method", "pipp")
-      FlatDisclosedClaim("time", "2012-04-22T11:30Z")
-      ObjectClaim("document") {
-        PlainClaim("type", "idcard")
-        ObjectClaim("issuer") {
-          FlatDisclosedClaim("name", "Stadt Augsburg")
-          PlainClaim("country", "DE")
-        }
-      }
-    }
-    // ..........
-
-    @SDJWTBuilder
-    var claim: SdElement {
-      SdArrayClaim("evidence", array: [
-        evidenceObject
-      ])
-
-    }
-    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
-    let claimset = try factory.createJWT(sdJwtObject: claim.asObject).get()
-
-    let disclosures = claimset.disclosures.map({$0.base64URLDecode()})
-
-    let digests = claimset.value.findDigests()
-    print(digests)
   }
 }

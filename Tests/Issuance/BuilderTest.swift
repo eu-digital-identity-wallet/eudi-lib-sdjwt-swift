@@ -166,20 +166,11 @@ final class BuilderTest: XCTestCase {
       }
     }
 
-    @SDJWTBuilder
-    var array: SdElement {
-      SdArrayClaim("nationalities") {
-        SdElement.flat("DE")
-        SdElement.plain("GR")
-        objects
-      }
-    }
-
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let recursiveObject = jwtFactory.createJWT(sdJwtObject: array.asObject)
+    let recursiveObject = jwtFactory.createJWT(sdJwtObject: objects.asObject)
 
-    validateObjectResults(factoryResult: recursiveObject, expectedDigests: 2)
+    validateObjectResults(factoryResult: recursiveObject, expectedDigests: 5)
   }
 
   func testDisclosedObjects_GivenArrayElementsToBeDisclosed_ThenExpectedDigestsMatchesTheProducedDigests() {

@@ -15,6 +15,7 @@
  */
 import Foundation
 import SwiftyJSON
+import JOSESwift
 
 typealias ClaimSet = (value: JSON, disclosures: [Disclosure])
 
@@ -46,10 +47,23 @@ class SDJWTFactory {
 
   // MARK: - Methods - Public
 
-  func createJWT(sdjwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
+  func createJWT(sdJwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
     do {
       self.decoyCounter = 0
-      return .success(try self.encodeObject(sdjwtObject: addSdAlgClaim(object: sdjwtObject)))
+      return .success(try self.encodeObject(sdJwtObject: addSdAlgClaim(object: sdJwtObject)))
+    } catch {
+      return .failure(error)
+    }
+  }
+
+  func createJWT(sdjwtObject: [String: SdElement]?, holdersPublicKey: JSON) -> Result<ClaimSet, Error> {
+    do {
+      self.decoyCounter = 0
+      var sdJwtObject = sdjwtObject
+      sdJwtObject = try addSdAlgClaim(object: sdJwtObject)
+      sdJwtObject = try addCnfClaim(object: sdJwtObject, jwk: holdersPublicKey)
+
+      return .success(try self.encodeObject(sdJwtObject: sdJwtObject))
     } catch {
       return .failure(error)
     }
@@ -64,17 +78,17 @@ class SDJWTFactory {
   /// - Returns: A ClaimSet containing the encoded JSON and an array of Disclosures.
   /// - Throws: An error of type SDJWTError if the input object is not in the expected format.
   ///
-  private func encodeObject(sdjwtObject: [String: SdElement]?) throws -> ClaimSet {
+  private func encodeObject(sdJwtObject: [String: SdElement]?) throws -> ClaimSet {
     // Check if the input object is of correct format
-    guard let sdjwtObject else {
-      throw SDJWTError.nonObjectFormat(ofElement: sdjwtObject)
+    guard let sdJwtObject else {
+      throw SDJWTError.nonObjectFormat(ofElement: sdJwtObject)
     }
 
     // Initialize arrays to store disclosures and JSON output
     var outputDisclosures: [Disclosure] = []
     var outputJson = JSON()
 
-    try sdjwtObject.forEach { claimKey, claimValue in
+    try sdJwtObject.forEach { claimKey, claimValue in
       let (json, disclosures) = try self.encodeClaim(key: claimKey, value: claimValue)
       outputDisclosures.append(contentsOf: disclosures)
 
@@ -115,7 +129,7 @@ class SDJWTFactory {
       // ...........
     case .object(let object):
       // Encode an object claim value by recursively encoding the SDJWT object.
-      return try self.encodeObject(sdjwtObject: object)
+      return try self.encodeObject(sdJwtObject: object)
       // ...........
     case .array(let array):
       // Encode an array claim value, disclosing each element and adding decoys.
@@ -141,7 +155,7 @@ class SDJWTFactory {
     case .recursiveObject(let object):
       // Encode a recursive object claim value by first encoding the nested object,
       // then encoding it as a flat value and returning the combined disclosures.
-      let encodedObject = try self.encodeObject(sdjwtObject: object)
+      let encodedObject = try self.encodeObject(sdJwtObject: object)
       let sdElement = try self.encodeClaim(key: key, value: .flat(encodedObject.value))
       return (sdElement.value, encodedObject.disclosures + sdElement.disclosures)
       // ...........
@@ -169,11 +183,10 @@ class SDJWTFactory {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, key, value)
     let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
-    // TODO: Remove before flight
-    //      .replacingOccurrences(of: ",", with: ", ")
+
     guard let urlEncoded = stringToEncode?.toBase64URLEncoded(),
           let digest = digestCreator.hashAndBase64Encode(input: urlEncoded) else {
-      throw SDJWTError.encodingError
+      throw SDJWTVerifierError.invalidDisclosure(disclosures: [stringToEncode ?? value.description])
     }
 
     return (urlEncoded, digest)
@@ -192,13 +205,12 @@ class SDJWTFactory {
     let saltString = saltProvider.saltString
     let jsonArray = JSON(arrayLiteral: saltString, value)
     let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
-    // TODO: Remove before flight
-    //      .replacingOccurrences(of: ",", with: ", ")
+
     guard
       let urlEncoded = stringToEncode?.toBase64URLEncoded(),
       let digest = digestCreator.hashAndBase64Encode(input: urlEncoded)
     else {
-      throw SDJWTError.encodingError
+      throw SDJWTVerifierError.invalidDisclosure(disclosures: [stringToEncode ?? value.description])
     }
 
     return (urlEncoded, digest)
@@ -217,9 +229,21 @@ class SDJWTFactory {
     return []
   }
 
-  private func addSdAlgClaim(object: [String: SdElement]?) -> [String: SdElement]? {
+  private func addSdAlgClaim(object: [String: SdElement]?) throws -> [String: SdElement]? {
+    guard HashingAlgorithmIdentifier.allCases
+      .map({$0.rawValue})
+      .contains(digestCreator.hashingAlgorithm.identifier) else {
+      throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
+    }
+
     var object = object
     object?[Keys.sdAlg.rawValue] = SdElement.plain(value: digestCreator.hashingAlgorithm.identifier)
+    return object
+  }
+
+  private func addCnfClaim(object: [String: SdElement]?, jwk: JSON) throws -> [String: SdElement]? {
+    var object = object
+    object?[Keys.cnf.rawValue] = try SdElement.plain(value: jwk.rawData())
     return object
   }
 }

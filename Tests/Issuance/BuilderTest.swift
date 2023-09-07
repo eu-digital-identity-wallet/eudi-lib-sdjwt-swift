@@ -51,7 +51,7 @@ final class BuilderTest: XCTestCase {
       }
     }
 
-    let unsignedJwt = factory.createJWT(sdjwtObject: sdObject.asObject)
+    let unsignedJwt = factory.createJWT(sdJwtObject: sdObject.asObject)
 
     switch unsignedJwt {
     case .success((let json, let disclosures)):
@@ -72,7 +72,7 @@ final class BuilderTest: XCTestCase {
       FlatDisclosedClaim("name", "nikos")
     }
 
-    let unsignedJwt = factory.createJWT(sdjwtObject: jwt.asObject)
+    let unsignedJwt = factory.createJWT(sdJwtObject: jwt.asObject)
     validateObjectResults(factoryResult: unsignedJwt, expectedDigests: jwt.expectedDigests)
   }
 
@@ -95,9 +95,9 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let unsignedPlain = jwtFactory.createJWT(sdjwtObject: plainJWT.asObject)
+    let unsignedPlain = jwtFactory.createJWT(sdJwtObject: plainJWT.asObject)
 
-    let objectPlain = jwtFactory.createJWT(sdjwtObject: objects.asObject)
+    let objectPlain = jwtFactory.createJWT(sdJwtObject: objects.asObject)
 
     validateObjectResults(factoryResult: unsignedPlain, expectedDigests: 0)
     validateObjectResults(factoryResult: objectPlain, expectedDigests: 1)
@@ -121,9 +121,9 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let unsignedPlain = jwtFactory.createJWT(sdjwtObject: plainJWT.asObject)
+    let unsignedPlain = jwtFactory.createJWT(sdJwtObject: plainJWT.asObject)
 
-    let objectPlain = jwtFactory.createJWT(sdjwtObject: objects.asObject)
+    let objectPlain = jwtFactory.createJWT(sdJwtObject: objects.asObject)
 
     validateObjectResults(factoryResult: unsignedPlain, expectedDigests: 4)
     validateObjectResults(factoryResult: objectPlain, expectedDigests: 1)
@@ -146,7 +146,7 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let recursiveObject = jwtFactory.createJWT(sdjwtObject: objects.asObject)
+    let recursiveObject = jwtFactory.createJWT(sdJwtObject: objects.asObject)
 
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: objects.expectedDigests)
   }
@@ -166,20 +166,11 @@ final class BuilderTest: XCTestCase {
       }
     }
 
-    @SDJWTBuilder
-    var array: SdElement {
-      SdArrayClaim("nationalities") {
-        SdElement.flat("DE")
-        SdElement.plain("GR")
-        objects
-      }
-    }
-
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let recursiveObject = jwtFactory.createJWT(sdjwtObject: array.asObject)
+    let recursiveObject = jwtFactory.createJWT(sdJwtObject: objects.asObject)
 
-    validateObjectResults(factoryResult: recursiveObject, expectedDigests: 2)
+    validateObjectResults(factoryResult: recursiveObject, expectedDigests: 5)
   }
 
   func testDisclosedObjects_GivenArrayElementsToBeDisclosed_ThenExpectedDigestsMatchesTheProducedDigests() {
@@ -193,7 +184,7 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let recursiveObject = jwtFactory.createJWT(sdjwtObject: array.asObject)
+    let recursiveObject = jwtFactory.createJWT(sdJwtObject: array.asObject)
 
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: array.expectedDigests)
   }

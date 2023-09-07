@@ -15,6 +15,25 @@
  */
 import Foundation
 import JOSESwift
+import SwiftyJSON
 
-typealias KBJWT = JWS
+typealias Base64String = String
+typealias UnsignedJWT = (header: JWSHeader, payload: Payload)
 
+protocol JWTRepresentable {
+
+  var header: JWSHeader { get }
+  var payload: JSON { get }
+
+  func asUnsignedJWT() throws -> UnsignedJWT
+  func sign<KeyType>(signer: Signer<KeyType>) throws -> JWS
+
+  init(header: JWSHeader, payload: JSON) throws
+}
+
+extension JWTRepresentable {
+  func asUnsignedJWT() throws -> UnsignedJWT {
+    let payload = Payload(try payload.rawData())
+    return(header, payload)
+  }
+}

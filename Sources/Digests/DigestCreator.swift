@@ -45,3 +45,47 @@ class DigestCreator {
   }
 
 }
+
+enum DigestType: RawRepresentable, Hashable {
+
+  typealias RawValue = DisclosureDigest
+
+  case array(DisclosureDigest)
+  case object(DisclosureDigest)
+
+  // MARK: - Properties
+  var components: Int {
+    switch self {
+    case .array:
+      return 2
+    case .object:
+      return 3
+    }
+  }
+
+  var rawValue: DisclosureDigest {
+    switch self {
+    case .array(let disclosureDigest), .object(let disclosureDigest):
+      return disclosureDigest
+    }
+  }
+  // MARK: - Lifecycle
+
+  init?(rawValue: DisclosureDigest) {
+    let cleanRawValue = rawValue
+      .replacingOccurrences(of: "\"", with: "")
+      .replacingOccurrences(of: "[", with: "")
+      .replacingOccurrences(of: "]", with: "")
+    let components = rawValue.components(separatedBy: ",")
+
+    switch components.count {
+    case 2:
+      self = .array(rawValue)
+    case 3:
+      self = .object(rawValue)
+    default:
+      return nil
+    }
+  }
+
+}

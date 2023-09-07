@@ -70,6 +70,26 @@ In the example bellow, Issuer decides to issue an SD-JWT as follows:
 
 ## Holder Verification
 
+In this case, the SD-JWT is expected to be in serialized form.
+
+Holder must know:
+
+the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT
+
+```swift
+let unverifiedSdJwt = "..."
+let issuerPubKey: ECPublicKey = "..."
+
+let parser = Parser(serialisedString: unverifiedSdJwt, serialisationFormat: .serialised)
+
+let result = SdJwtVerifier().verifyIssuance(parser: parser) 
+{ jws in
+  try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
+} disclosuresVerifier: {
+  try DisclosuresVerifier(parser: parser)
+}
+
+```
 ## Presentation Verification
 
 ## Recreate original claims

@@ -35,7 +35,7 @@ final class SerialiserTest: XCTestCase {
   func testPareserWhenReceivingASerialisedFormatJWT_ThenConstructUnsignedSDJWT() throws {
     let serialisedString = try testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
     let parser = Parser(serialisedString: serialisedString, serialisationFormat: .serialised)
-    let jwt = try parser.getSdJwt()
+    let jwt = try parser.getSignedSdJwt().toSDJWT()
     print(jwt.disclosures)
   }
 

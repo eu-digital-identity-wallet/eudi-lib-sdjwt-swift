@@ -230,7 +230,7 @@ class SDJWTFactory {
   }
 
   private func addSdAlgClaim(object: [String: SdElement]?) throws -> [String: SdElement]? {
-    guard HashingAlgorithmIdentifiers.allCases
+    guard HashingAlgorithmIdentifier.allCases
       .map({$0.rawValue})
       .contains(digestCreator.hashingAlgorithm.identifier) else {
       throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm

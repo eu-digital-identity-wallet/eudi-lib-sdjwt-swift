@@ -55,8 +55,27 @@ final class SpecExamples: XCTestCase {
 
   }
 
-  func testComplexClaims_AsProvidedByTheSpec() {
+  func testComplexClaims_AsProvidedByTheSpec() throws {
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+
+    @SDJWTBuilder
+    var evidenceObject: SdElement {
+      PlainClaim("type", "document")
+      PlainClaim("method", "pipp")
+      PlainClaim("time", "2012-04-22T11:30Z")
+      ObjectClaim("document") {
+        PlainClaim("type", "idcard")
+        ObjectClaim("issuer") {
+          PlainClaim("name", "Stadt Augsburg")
+          PlainClaim("country", "DE")
+        }
+      }
+
+      PlainClaim("number", "53554554")
+      PlainClaim("date_of_issuance", "2010-03-23")
+      PlainClaim("date_of_expiry", "2020-03-22")
+    }
+    // .......
     @SDJWTBuilder
     var complex: SdElement {
 
@@ -70,10 +89,7 @@ final class SpecExamples: XCTestCase {
           FlatDisclosedClaim("time", "2012-04-23T18:25Z")
           FlatDisclosedClaim("verification_process", "f24c6f-6d3f-4ec5-973e-b0d8506f3bc7")
           SdArrayClaim("evidence", array: [
-            .plain(""),
-            .object({
-              FlatDisclosedClaim("key", "claim")
-            })
+            evidenceObject
           ])
 
         }
@@ -95,28 +111,12 @@ final class SpecExamples: XCTestCase {
       FlatDisclosedClaim("salutation", "Dr.")
       FlatDisclosedClaim("msisdn", "49123456789")
     }
-    // .......
-    @SDJWTBuilder
-    var evidenceObject: SdElement {
-      PlainClaim("type", "document")
-      PlainClaim("method", "pipp")
-      PlainClaim("time", "2012-04-22T11:30Z")
-      ObjectClaim("document") {
-        PlainClaim("type", "idcard")
-        ObjectClaim("issuer") {
-          PlainClaim("name", "Stadt Augsburg")
-          PlainClaim("country", "DE")
-        }
-      }
 
-      PlainClaim("number", "53554554")
-      PlainClaim("date_of_issuance", "2010-03-23")
-      PlainClaim("date_of_expiry", "2020-03-22")
-    }
 
     let output = factory.createJWT(sdJwtObject: complex.asObject)
-    let digestCount = try! output.get().value.findDigestCount()
+    let digestCount = try XCTUnwrap(try? output.get().value.findDigestCount())
     validateObjectResults(factoryResult: output, expectedDigests: digestCount)
 
+    let findDigest = try? XCTUnwrap(output.get().value.findDigests())
   }
 }

@@ -52,11 +52,17 @@ struct SignedSDJWT {
   // Removes encoding and signatures
   // Converts to "human readable format"
   func toSDJWT() throws -> SDJWT {
-
-    try SDJWT(
+    if let kbJwtHeader = kbJwt?.header,
+       let kbJWtPayload = try? kbJwt?.payloadJSON() {
+      return try SDJWT(
+        jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
+        disclosures: disclosures,
+        kbJWT: JWT(header: kbJwtHeader, kbJwtPayload: kbJWtPayload))
+    }
+    return try SDJWT(
       jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
       disclosures: disclosures,
-      kbJWT: JWT(header: kbJwt!.header, kbJwtPayload: kbJwt!.payloadJSON()))
+      kbJWT: nil)
   }
 
   private init?<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) {

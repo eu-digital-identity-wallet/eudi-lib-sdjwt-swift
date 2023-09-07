@@ -28,8 +28,8 @@ class SdJwtVerifier {
     Result {
       let sdJwt = try parser.getSignedSdJwt()
       let hasValidSignature = try issuersSignatureVerifier().verify()
-
       let hasValidDisclosures = try disclosuresVerifier().verify()
+
     }
 
   }

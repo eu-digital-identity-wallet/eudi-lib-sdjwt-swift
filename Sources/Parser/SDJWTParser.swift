@@ -33,12 +33,7 @@ class Parser {
     self.serialisationFormat = serialisationFormat
   }
   // MARK: - Methods
-
-  func getSdJwt() throws -> SDJWT {
-    let (serialisedJWT, dislosuresInBase64, serialisedKBJWT) = self.parseCombined()
-    return try parseSDJWT(serialisedJWT: serialisedJWT, dislosuresInBase64: dislosuresInBase64, serialisedKBJWT: serialisedKBJWT)
-  }
-
+  
   func getSignedSdJwt() throws -> SignedSDJWT {
     let (serialisedJWT, dislosuresInBase64, serialisedKBJWT) = self.parseCombined()
     return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: dislosuresInBase64, serializedKbJwt: serialisedKBJWT)
@@ -62,12 +57,14 @@ class Parser {
   }
 
   private func parseCombined() -> (String, [Disclosure], String?) {
-    let parts = self.serialisedString.split(separator: "~")
+    let parts = self.serialisedString
+      .split(separator: "~")
+      .map({String($0)})
     let jwt = String(parts[0])
 
     switch self.serialisationFormat {
     case .serialised:
-      if parts.last?.hasSuffix("~") == true {
+      if serialisedString.hasSuffix("~") == true {
         // means no key binding is present
         let disclosures = parts[safe: 1..<parts.count]?.compactMap({String($0)})
 

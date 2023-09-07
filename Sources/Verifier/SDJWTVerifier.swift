@@ -34,7 +34,7 @@ enum SDJWTVerifierError: Error {
   case failedToCreateVerifier
 }
 
-class SdJwtVerifier {
+class SDJWTVerifier {
 
   let parser: Parser
 
@@ -42,9 +42,9 @@ class SdJwtVerifier {
     self.parser = Parser(serialisedString: serialisedString, serialisationFormat: serialisationFormat)
   }
 
-  func unsingedVerify(disclosuresVerifier: () throws -> DisclosuresVerifier) -> Result<Void,Error> {
+  func unsingedVerify(disclosuresVerifier: (Parser) throws -> DisclosuresVerifier) -> Result<Void,Error> {
     Result {
-      let hasValidDisclosures = try disclosuresVerifier().verify()
+      let hasValidDisclosures = try disclosuresVerifier(parser).verify()
     }
   }
 

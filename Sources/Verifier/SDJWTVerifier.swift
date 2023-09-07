@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import Foundation
+import JOSESwift
 
 protocol VerifierProtocol {
   associatedtype ReturnType
@@ -42,23 +43,23 @@ class SdJwtVerifier {
     }
   }
 
-  func verify<KeyType>(parser: Parser,
-                       issuersSignatureVerifier: () throws -> SignatureVerifier<KeyType>,
+  func verifyIssuance<KeyType>(parser: Parser,
+                       issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<KeyType>,
                        disclosuresVerifier: () throws -> DisclosuresVerifier) -> Result<Void,Error> {
     Result {
       let sdJwt = try parser.getSignedSdJwt()
-      let hasValidSignature = try issuersSignatureVerifier().verify()
+      let hasValidSignature = try issuersSignatureVerifier(parser.getSignedSdJwt().jwt).verify()
       let hasValidDisclosures = try disclosuresVerifier().verify()
 
     }
   }
 
   func verify<IssuersKeyType, HoldersKeyType>(parser: Parser,
-                                              issuersSignatureVerifier: () -> SignatureVerifier<IssuersKeyType>,
+                                              issuersSignatureVerifier: (JWS) -> SignatureVerifier<IssuersKeyType>,
                                               disclosuresVerifier: () -> DisclosuresVerifier,
                                               keyBindingVerifier: (() -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<Void,Error> {
     Result {
-      try self.verify(parser: parser, issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier)
+      try self.verifyIssuance(parser: parser, issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier)
       if let keyBindingVerifier {
         try keyBindingVerifier().verify()
       }

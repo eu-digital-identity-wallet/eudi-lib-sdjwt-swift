@@ -22,7 +22,8 @@ class DisclosuresVerifier: VerifierProtocol {
   let digestsFoundOnPayload: [DigestType]
   let digestCreator: DigestCreator
 
-  init(sdJwt: SDJWT) throws {
+  init(parser: Parser) throws {
+    let sdJwt = try parser.getSignedSdJwt().toSDJWT()
     self.disclosuresReceivedInSDJWT = sdJwt.disclosures
     self.digestsFoundOnPayload = sdJwt.jwt.payload.findDigests()
 

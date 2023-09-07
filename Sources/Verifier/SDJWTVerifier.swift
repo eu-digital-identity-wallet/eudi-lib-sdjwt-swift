@@ -36,30 +36,33 @@ enum SDJWTVerifierError: Error {
 
 class SdJwtVerifier {
 
-  func unsingedVerify(parser: Parser,
-                      disclosuresVerifier: () throws -> DisclosuresVerifier) -> Result<Void,Error> {
+  let parser: Parser
+
+  init(serialisedString: String, serialisationFormat: SerialisationFormat) {
+    self.parser = Parser(serialisedString: serialisedString, serialisationFormat: serialisationFormat)
+  }
+
+  func unsingedVerify(disclosuresVerifier: () throws -> DisclosuresVerifier) -> Result<Void,Error> {
     Result {
       let hasValidDisclosures = try disclosuresVerifier().verify()
     }
   }
 
-  func verifyIssuance<KeyType>(parser: Parser,
-                       issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<KeyType>,
-                       disclosuresVerifier: () throws -> DisclosuresVerifier) -> Result<Void,Error> {
+  func verifyIssuance<KeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<KeyType>,
+                               disclosuresVerifier: (Parser) throws -> DisclosuresVerifier) -> Result<Void,Error> {
     Result {
       let sdJwt = try parser.getSignedSdJwt()
       let hasValidSignature = try issuersSignatureVerifier(parser.getSignedSdJwt().jwt).verify()
-      let hasValidDisclosures = try disclosuresVerifier().verify()
+      let hasValidDisclosures = try disclosuresVerifier(parser).verify()
 
     }
   }
 
-  func verify<IssuersKeyType, HoldersKeyType>(parser: Parser,
-                                              issuersSignatureVerifier: (JWS) -> SignatureVerifier<IssuersKeyType>,
-                                              disclosuresVerifier: () -> DisclosuresVerifier,
+  func verify<IssuersKeyType, HoldersKeyType>(issuersSignatureVerifier: (JWS) -> SignatureVerifier<IssuersKeyType>,
+                                              disclosuresVerifier: (Parser) -> DisclosuresVerifier,
                                               keyBindingVerifier: (() -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<Void,Error> {
     Result {
-      try self.verifyIssuance(parser: parser, issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier)
+      try self.verifyIssuance(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier)
       if let keyBindingVerifier {
         try keyBindingVerifier().verify()
       }

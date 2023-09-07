@@ -56,9 +56,16 @@ func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expect
   switch result {
   case .success((let json, let disclosures)):
     XCTAssertNoThrow(try json.toJSONString(outputFormatting: .prettyPrinted))
-//    disclosures
-//      .compactMap { $0.base64URLDecode()}
-//      .forEach {print($0)}
+    TestLogger.log("JSON Value of sdjwt")
+    TestLogger.log("==============================")
+    TestLogger.log(try! json.toJSONString(outputFormatting: .prettyPrinted))
+    TestLogger.log("==============================")
+    TestLogger.log("With Disclosures")
+    TestLogger.log("==============================")
+    disclosures
+      .compactMap { $0.base64URLDecode()}
+      .forEach {print($0)}
+    print("==============================")
     if numberOfDecoys == 0 && decoysLimit == 0 {
       XCTAssert(disclosures.count == expectedDigests)
     }
@@ -118,4 +125,25 @@ class MockSaltProvider: SaltProvider {
   func updateSalt(string: Salt) {
     self.salt = Data(saltString.utf8)
   }
+}
+
+
+import Foundation
+
+class TestLogger {
+    static func log(_ message: String) {
+        #if DEBUG
+//        if isRunningTests() {
+            print(message)
+//        }
+        #endif
+    }
+
+    private static func isRunningTests() -> Bool {
+        let environment = ProcessInfo.processInfo.environment
+        if let injectBundle = environment["XCInjectBundleInto"] {
+            return NSString(string: injectBundle).pathExtension == "xctest"
+        }
+        return false
+    }
 }

@@ -66,11 +66,12 @@ final class VerifierTest: XCTestCase {
       .replacingOccurrences(of: "\n", with: "")
       .replacingOccurrences(of: " ", with: "")
 
-    let parser = Parser(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
+    
 
-    let result = SdJwtVerifier().verifyIssuance(parser: parser) { jws in
+    let result = SdJwtVerifier(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
+      .verifyIssuance { jws in
       try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
-    } disclosuresVerifier: {
+    } disclosuresVerifier: { parser in
       try DisclosuresVerifier(parser: parser)
     }
 

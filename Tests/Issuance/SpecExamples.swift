@@ -119,6 +119,6 @@ final class SpecExamples: XCTestCase {
     try output.get().disclosures.forEach { disclosure in
       print(disclosure.base64URLDecode())
     }
-    let findDigest = try? XCTUnwrap(output.get().value.findDigests())
+    let findDigest = try? XCTUnwrap(output.get())
   }
 }

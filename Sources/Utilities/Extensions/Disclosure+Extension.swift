@@ -27,5 +27,3 @@ extension Disclosure {
     return (json.arrayValue[1])
   }
 }
-
-

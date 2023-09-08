@@ -34,8 +34,8 @@ extension Array {
 }
 
 extension Array where Element == String {
-  mutating func findAndRemoveFirst(from otherArray: Array<String>) -> (Array, Element?) {
-    for (index,element) in self.enumerated() {
+  mutating func findAndRemoveFirst(from otherArray: [String]) -> (Array, Element?) {
+    for (index, element) in self.enumerated() {
       if otherArray.contains(element) {
         self.remove(at: index)
         return (self, element)

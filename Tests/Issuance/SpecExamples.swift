@@ -21,7 +21,7 @@ import XCTest
 
 final class SpecExamples: XCTestCase {
 
-  func testStructuredClaims_AsProvidedByTheSpec() {
+  func testStructuredClaims_AsProvidedByTheSpec() throws {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: 6)
 
@@ -46,9 +46,14 @@ final class SpecExamples: XCTestCase {
     XCTAssert(structuredSDJWT.expectedDigests == 10)
     let output = factory.createJWT(sdJwtObject: structuredSDJWT.asObject)
     let digestCount = try! output.get().value.findDigestCount()
+    let keyPair = generateES256KeyPair()
+
+    let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), output.get()), signingKey: keyPair.private)
+
+    let disclosureVerifierOut = try DisclosuresVerifier(parser: Parser(serialisedString: SDJWTIssuer.serialised(serialiser: .init(signedSDJWT: sdjwt, serialisationFormat: .serialised)), serialisationFormat: .serialised)).verify()
 
     validateObjectResults(factoryResult: output,
-                          expectedDigests: digestCount,
+                          expectedDigests: disclosureVerifierOut.digestsFoundOnPayload.count,
                           numberOfDecoys: factory.decoyCounter,
                           decoysLimit: 6)
 
@@ -72,7 +77,6 @@ final class SpecExamples: XCTestCase {
         PlainClaim("date_of_issuance", "2010-03-23")
         PlainClaim("date_of_expiry", "2020-03-22")
       }
-
 
     }
     // .......

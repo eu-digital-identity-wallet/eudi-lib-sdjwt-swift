@@ -141,11 +141,10 @@ class DisclosuresVerifier: VerifierProtocol {
     }
   }
 
-
-  private func findDigests(json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType] ,recreatedClaims: JSON) {
+  private func findDigests(json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
     var json = json
     var foundDigests: [DigestType] = []
-    
+
     // try to find sd keys on the top level
     if let sdArray = json[Keys.sd.rawValue].array, !sdArray.isEmpty {
       var sdArray = sdArray.compactMap(\.string)
@@ -170,6 +169,7 @@ class DisclosuresVerifier: VerifierProtocol {
     for (key, subJson): (String, JSON) in json {
       if !subJson.dictionaryValue.isEmpty {
         let foundOnSubJSON = try self.findDigests(json: subJson, disclosures: disclosures)
+        // if found swap the disclosed value with the found value
         foundDigests += foundOnSubJSON.digestsFoundOnPayload
         json[key] = foundOnSubJSON.recreatedClaims
       } else if !subJson.arrayValue.isEmpty {
@@ -179,7 +179,7 @@ class DisclosuresVerifier: VerifierProtocol {
               .stringValue]?
               .base64URLDecode()?
               .arrayProperty {
-              
+
               foundDigests.appendOptional(.array(object[Keys.dots].stringValue))
 
               let ifHasNested = try findDigests(json: foundDisclosure, disclosures: disclosures)

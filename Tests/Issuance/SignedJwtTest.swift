@@ -60,7 +60,7 @@ final class SignedJwtTest: XCTestCase {
     let disclosureVerifier = try DisclosuresVerifier(parser: Parser(serialisedString: SDJWTIssuer.serialised(serialiser: .init(signedSDJWT: sdjwt, serialisationFormat: .serialised)), serialisationFormat: .serialised))
 
     let digestCount = disclosureVerifier.digestsOfDisclosuresDict.count
-    
+
     validateObjectResults(factoryResult: claimSetResult, expectedDigests: digestCount)
 
     let claimSet = try claimSetResult.get()

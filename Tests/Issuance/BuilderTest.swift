@@ -200,7 +200,7 @@ final class BuilderTest: XCTestCase {
             FlatDisclosedClaim("nested object in array key", "nested object in array value")
           })
         ]),
-        .plain(value: "other value"),
+        .plain(value: "other value")
       ])
     }
 

@@ -41,7 +41,7 @@ extension String {
 
     return data
   }
-  
+
   func base64URLDecode() -> String? {
     var base64 = self
       .replacingOccurrences(of: "-", with: "+")

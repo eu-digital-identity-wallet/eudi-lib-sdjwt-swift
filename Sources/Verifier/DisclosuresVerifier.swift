@@ -19,14 +19,17 @@ import SwiftyJSON
 class DisclosuresVerifier: VerifierProtocol {
 
   let disclosuresReceivedInSDJWT: [Disclosure]
-  let digestsFoundOnPayload: [DigestType]
+  var digestsFoundOnPayload: [DigestType] = []
   let digestCreator: DigestCreator
 
-  init(parser: Parser) throws {
-    let sdJwt = try parser.getSignedSdJwt().toSDJWT()
-    self.disclosuresReceivedInSDJWT = sdJwt.disclosures
-    self.digestsFoundOnPayload = sdJwt.jwt.payload.findDigests()
+  var digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]
 
+  init(parser: Parser) throws {
+    var sdJwt = try parser.getSignedSdJwt().toSDJWT()
+
+    sdJwt.disclosures.forEach({print($0.base64URLDecode())})
+
+    // Retrieve hashing algorithm from payload
     if sdJwt.jwt.payload[Keys.sdAlg.rawValue].exists() {
       let stringValue = sdJwt.jwt.payload[Keys.sdAlg.rawValue].stringValue
       let algorithIdentifier = HashingAlgorithmIdentifier.allCases.first(where: {$0.rawValue == stringValue})
@@ -37,12 +40,30 @@ class DisclosuresVerifier: VerifierProtocol {
     } else {
       self.digestCreator = DigestCreator(hashingAlgorithm: SHA256Hashing())
     }
+
+    self.disclosuresReceivedInSDJWT = sdJwt.disclosures
+
+    digestsOfDisclosuresDict = [:]
+    for disclosure in disclosuresReceivedInSDJWT {
+      let hashed = digestCreator.hashAndBase64Encode(input: disclosure)
+      if let hashed {
+        self.digestsOfDisclosuresDict[hashed] = disclosure
+      } else {
+        throw SDJWTVerifierError.failedToCreateVerifier
+      }
+    }
+
+    let result = try self.findDigests(json: sdJwt.jwt.payload, disclosures: sdJwt.disclosures)
+    digestsFoundOnPayload = result.0
+    let json = result.1
+    print(json)
   }
 
   func verify() throws -> Bool {
     // Create the digest for the enveloped disclosures
     // Convert the base64 string to the hash, Digests we got passed
     // Base64 [salt, key, value]
+
     let digestsOfDisclosures = disclosuresReceivedInSDJWT.compactMap { string in
       return digestCreator.hashAndBase64Encode(input: string)
     }
@@ -109,6 +130,75 @@ class DisclosuresVerifier: VerifierProtocol {
     guard jsonArray.arrayValue.count == digestType.components else {
       throw SDJWTVerifierError.invalidDisclosure(disclosures: [disclosure])
     }
+  }
+
+
+  func findDigests(json: JSON, disclosures: [Disclosure]) throws -> ([DigestType], JSON) {
+    var json = json
+    var foundDigests: [DigestType] = []
+    print("we found from this run")
+    print(foundDigests.count)
+    print(json.debugDescription)
+    // try to find sd keys on the top level
+    if let sdArray = json[Keys.sd.rawValue].array, !sdArray.isEmpty {
+      var sdArray = sdArray.compactMap(\.string)
+      // try to find matching digests in order to be replaced with the value
+      while true {
+        let (updatedSdArray, foundDigest) = sdArray.findAndRemoveFirst(from: digestsOfDisclosuresDict.compactMap({$0.key}))
+        if let foundDigest,
+           let foundDisclosure = digestsOfDisclosuresDict[foundDigest]?.base64URLDecode()?.objectProperty {
+          json[Keys.sd.rawValue].arrayObject = updatedSdArray
+          json[foundDisclosure.key] = foundDisclosure.value
+          foundDigests.append(.object(foundDigest))
+
+        } else {
+          json.dictionaryObject?.removeValue(forKey: Keys.sd.rawValue)
+          break
+        }
+      }
+
+    }
+
+    // Loop through the JSON data
+    for (key, subJson): (String, JSON) in json {
+      if !subJson.dictionaryValue.isEmpty {
+        let foundOnSubJSON = try self.findDigests(json: subJson, disclosures: disclosures)
+        foundDigests += foundOnSubJSON.0
+        json[key] = foundOnSubJSON.1
+      } else if !subJson.arrayValue.isEmpty {
+        for (index, object) in subJson.arrayValue.enumerated() {
+          if object[Keys.dots.rawValue].exists() {
+            if let foundDisclosure = digestsOfDisclosuresDict[object[Keys.dots]
+              .stringValue]?
+              .base64URLDecode()?
+              .arrayProperty {
+              
+              foundDigests.appendOptional(.array(object[Keys.dots].stringValue))
+
+              let ifHasNested = try findDigests(json: foundDisclosure, disclosures: disclosures)
+              foundDigests += ifHasNested.0
+              json[key].arrayObject?[index] = ifHasNested.1
+            }
+          }
+        }
+      }
+    }
+
+    return (foundDigests, json)
+  }
+
+}
+
+extension Array where Element == String {
+
+  mutating func findAndRemoveFirst(from otherArray: Array<String>) -> (Array, Element?) {
+    for (index,element) in self.enumerated() {
+      if otherArray.contains(element) {
+        self.remove(at: index)
+        return (self, element)
+      }
+    }
+    return (self, nil)
   }
 
 }

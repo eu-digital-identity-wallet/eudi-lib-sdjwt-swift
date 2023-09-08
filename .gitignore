@@ -102,3 +102,4 @@ project.json
 # Coverage reports
 xcov_output/
 
+.swiftpm/xcode/package.xcworkspace/xcuserdata/nsalampa.xcuserdatad/UserInterfaceState.xcuserstate

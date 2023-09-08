@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import SwiftyJSON
-import JOSESwift
 
 extension JSON {
   subscript(key: Keys) -> JSON {
@@ -26,10 +25,6 @@ extension Keys: JSONSubscriptType {
   var jsonKey: SwiftyJSON.JSONKey {
     return .key(self.rawValue)
   }
-}
-
-extension JSON {
-  static let empty = JSON()
 }
 
 extension JSON {
@@ -56,8 +51,6 @@ extension JSON {
   }
 }
 
-extension JWS {
-  func payloadJSON() throws -> JSON {
-    try JSON(data: self.payload.data())
-  }
+extension JSON {
+  static let empty = JSON()
 }

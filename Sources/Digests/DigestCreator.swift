@@ -76,7 +76,7 @@ enum DigestType: RawRepresentable, Hashable {
       .replacingOccurrences(of: "\"", with: "")
       .replacingOccurrences(of: "[", with: "")
       .replacingOccurrences(of: "]", with: "")
-    let components = rawValue.components(separatedBy: ",")
+    let components = cleanRawValue.components(separatedBy: ",")
 
     switch components.count {
     case 2:

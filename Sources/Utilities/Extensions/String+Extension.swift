@@ -1,18 +1,18 @@
 /*
-* Copyright (c) 2023 European Commission
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright (c) 2023 European Commission
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 import Foundation
 
 extension String {
@@ -41,24 +41,22 @@ extension String {
 
     return data
   }
-}
+  
+  func base64URLDecode() -> String? {
+    var base64 = self
+      .replacingOccurrences(of: "-", with: "+")
+      .replacingOccurrences(of: "_", with: "/")
 
-extension String {
-    func base64URLDecode() -> String? {
-        var base64 = self
-            .replacingOccurrences(of: "-", with: "+")
-            .replacingOccurrences(of: "_", with: "/")
-
-        // Padding the string with '=' characters to make its length a multiple of 4
-        let paddingLength = 4 - base64.count % 4
-        if paddingLength < 4 {
-            base64.append(contentsOf: String(repeating: "=", count: paddingLength))
-        }
-
-        if let data = Data(base64Encoded: base64) {
-            return String(data: data, encoding: .utf8)
-        }
-
-        return nil
+    // Padding the string with '=' characters to make its length a multiple of 4
+    let paddingLength = 4 - base64.count % 4
+    if paddingLength < 4 {
+      base64.append(contentsOf: String(repeating: "=", count: paddingLength))
     }
+
+    if let data = Data(base64Encoded: base64) {
+      return String(data: data, encoding: .utf8)
+    }
+
+    return nil
+  }
 }

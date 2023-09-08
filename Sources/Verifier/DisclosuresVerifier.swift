@@ -16,18 +16,29 @@
 import Foundation
 import SwiftyJSON
 
-class DisclosuresVerifier: VerifierProtocol {
+struct DisclosuresVerifierOutput {
+  var digestsFoundOnPayload: [DigestType]
+  var disclosedSDJWT: SDJWT
+  var recreatedClaims: JSON
+}
 
+class DisclosuresVerifier: VerifierProtocol {
+  // MARK: - Properties
   let disclosuresReceivedInSDJWT: [Disclosure]
   var digestsFoundOnPayload: [DigestType] = []
   let digestCreator: DigestCreator
-
   var digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]
 
-  init(parser: Parser) throws {
-    var sdJwt = try parser.getSignedSdJwt().toSDJWT()
+  private let sdJwt: SDJWT
+  private var recreatedClaims: JSON = .empty
 
-    sdJwt.disclosures.forEach({print($0.base64URLDecode())})
+  // MARK: - Lifecycle
+
+  init(parser: Parser) throws {
+    // Get the header and payload values
+    // Ignore signatures
+    // It is the signatures verifier job to confirm that
+    sdJwt = try parser.getSignedSdJwt().toSDJWT()
 
     // Retrieve hashing algorithm from payload
     if sdJwt.jwt.payload[Keys.sdAlg.rawValue].exists() {
@@ -38,7 +49,7 @@ class DisclosuresVerifier: VerifierProtocol {
       }
       self.digestCreator = DigestCreator(hashingAlgorithm: algorithIdentifier.hashingAlgorithm())
     } else {
-      self.digestCreator = DigestCreator(hashingAlgorithm: SHA256Hashing())
+      throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
     }
 
     self.disclosuresReceivedInSDJWT = sdJwt.disclosures
@@ -54,20 +65,18 @@ class DisclosuresVerifier: VerifierProtocol {
     }
 
     let result = try self.findDigests(json: sdJwt.jwt.payload, disclosures: sdJwt.disclosures)
-    digestsFoundOnPayload = result.0
-    let json = result.1
-    print(json)
+    digestsFoundOnPayload = result.digestsFoundOnPayload
+    recreatedClaims = result.recreatedClaims
   }
 
-  func verify() throws -> Bool {
+  // MARK: - Methods
+
+  func verify() throws -> DisclosuresVerifierOutput {
     // Create the digest for the enveloped disclosures
     // Convert the base64 string to the hash, Digests we got passed
     // Base64 [salt, key, value]
 
-    let digestsOfDisclosures = disclosuresReceivedInSDJWT.compactMap { string in
-      return digestCreator.hashAndBase64Encode(input: string)
-    }
-
+    let digestsOfDisclosures = Array(digestsOfDisclosuresDict.keys)
     let disclosureForDigestDict = try matchDigests(disclosuresDigestsInPayload: digestsFoundOnPayload, digestsOfDisclosures: digestsOfDisclosures)
 
     try digestsFoundOnPayload.forEach { digestType in
@@ -76,10 +85,10 @@ class DisclosuresVerifier: VerifierProtocol {
       }
     }
 
-    return true
+    return DisclosuresVerifierOutput(digestsFoundOnPayload: digestsFoundOnPayload, disclosedSDJWT: sdJwt, recreatedClaims: recreatedClaims)
   }
 
-  func matchDigests(disclosuresDigestsInPayload: [DigestType], digestsOfDisclosures: [DisclosureDigest]) throws -> [DisclosureDigest: Disclosure] {
+  private func matchDigests(disclosuresDigestsInPayload: [DigestType], digestsOfDisclosures: [DisclosureDigest]) throws -> [DisclosureDigest: Disclosure] {
 
     // Retrieve the value for each collected digest and create a set to remove
     // any potential duplicates
@@ -105,7 +114,7 @@ class DisclosuresVerifier: VerifierProtocol {
     return try dictionaryOfCommonElements(commonElements)
   }
 
-  fileprivate func dictionaryOfCommonElements(_ commonElements: Set<DisclosureDigest>) throws -> [DisclosureDigest: Disclosure] {
+  private func dictionaryOfCommonElements(_ commonElements: Set<DisclosureDigest>) throws -> [DisclosureDigest: Disclosure] {
     let digestsOfDisclosuresDict = try disclosuresReceivedInSDJWT.reduce(into: [DisclosureDigest: Disclosure]()) { partialResult, string in
       guard let digest = digestCreator.hashAndBase64Encode(input: string) else {
         throw SDJWTVerifierError.failedToCreateVerifier
@@ -119,7 +128,7 @@ class DisclosuresVerifier: VerifierProtocol {
     }
   }
 
-  func verifyDigestsStructure(digestType: DigestType, disclosure: Disclosure) throws {
+  private func verifyDigestsStructure(digestType: DigestType, disclosure: Disclosure) throws {
     // Decode the base64 string
     guard let decodedFromBase64 = disclosure.base64URLDecode() else {
       throw SDJWTVerifierError.invalidDisclosure(disclosures: [disclosure])
@@ -133,12 +142,10 @@ class DisclosuresVerifier: VerifierProtocol {
   }
 
 
-  func findDigests(json: JSON, disclosures: [Disclosure]) throws -> ([DigestType], JSON) {
+  private func findDigests(json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType] ,recreatedClaims: JSON) {
     var json = json
     var foundDigests: [DigestType] = []
-    print("we found from this run")
-    print(foundDigests.count)
-    print(json.debugDescription)
+    
     // try to find sd keys on the top level
     if let sdArray = json[Keys.sd.rawValue].array, !sdArray.isEmpty {
       var sdArray = sdArray.compactMap(\.string)
@@ -159,12 +166,12 @@ class DisclosuresVerifier: VerifierProtocol {
 
     }
 
-    // Loop through the JSON data
+    // Loop through the inner JSON data
     for (key, subJson): (String, JSON) in json {
       if !subJson.dictionaryValue.isEmpty {
         let foundOnSubJSON = try self.findDigests(json: subJson, disclosures: disclosures)
-        foundDigests += foundOnSubJSON.0
-        json[key] = foundOnSubJSON.1
+        foundDigests += foundOnSubJSON.digestsFoundOnPayload
+        json[key] = foundOnSubJSON.recreatedClaims
       } else if !subJson.arrayValue.isEmpty {
         for (index, object) in subJson.arrayValue.enumerated() {
           if object[Keys.dots.rawValue].exists() {
@@ -176,8 +183,8 @@ class DisclosuresVerifier: VerifierProtocol {
               foundDigests.appendOptional(.array(object[Keys.dots].stringValue))
 
               let ifHasNested = try findDigests(json: foundDisclosure, disclosures: disclosures)
-              foundDigests += ifHasNested.0
-              json[key].arrayObject?[index] = ifHasNested.1
+              foundDigests += ifHasNested.digestsFoundOnPayload
+              json[key].arrayObject?[index] = ifHasNested.recreatedClaims
             }
           }
         }
@@ -185,20 +192,6 @@ class DisclosuresVerifier: VerifierProtocol {
     }
 
     return (foundDigests, json)
-  }
-
-}
-
-extension Array where Element == String {
-
-  mutating func findAndRemoveFirst(from otherArray: Array<String>) -> (Array, Element?) {
-    for (index,element) in self.enumerated() {
-      if otherArray.contains(element) {
-        self.remove(at: index)
-        return (self, element)
-      }
-    }
-    return (self, nil)
   }
 
 }

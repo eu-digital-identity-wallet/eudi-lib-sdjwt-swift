@@ -113,7 +113,7 @@ class MockSaltProvider: SaltProvider {
     return salt.base64EncodedString().base64ToUTF8() ?? ""
   }
 
-  var salt: Data = Data()
+  var salt: Data
 
   // MARK: - LifeCycle
 

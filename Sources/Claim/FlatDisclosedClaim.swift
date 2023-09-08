@@ -45,4 +45,12 @@ struct FlatDisclosedClaim: ClaimRepresentable {
       return nil
     }
   }
+
+  init?(_ key: String, @SDJWTBuilder _ flat: () -> SdElement) {
+    self.key = key
+    self.value = SdElement.flat(value: flat().asJSON)
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
+  }
 }

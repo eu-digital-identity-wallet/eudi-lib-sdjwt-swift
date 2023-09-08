@@ -59,20 +59,21 @@ final class SpecExamples: XCTestCase {
 
     @SDJWTBuilder
     var evidenceObject: SdElement {
-      PlainClaim("type", "document")
-      PlainClaim("method", "pipp")
-      PlainClaim("time", "2012-04-22T11:30Z")
-      ObjectClaim("document") {
+      FlatDisclosedClaim("type", "document")
+      FlatDisclosedClaim("method", "pipp")
+      FlatDisclosedClaim("time", "2012-04-22T11:30Z")
+      FlatDisclosedClaim("document") {
         PlainClaim("type", "idcard")
         ObjectClaim("issuer") {
           PlainClaim("name", "Stadt Augsburg")
           PlainClaim("country", "DE")
         }
+        PlainClaim("number", "53554554")
+        PlainClaim("date_of_issuance", "2010-03-23")
+        PlainClaim("date_of_expiry", "2020-03-22")
       }
 
-      PlainClaim("number", "53554554")
-      PlainClaim("date_of_issuance", "2010-03-23")
-      PlainClaim("date_of_expiry", "2020-03-22")
+
     }
     // .......
     @SDJWTBuilder
@@ -113,7 +114,7 @@ final class SpecExamples: XCTestCase {
 
     let output = factory.createJWT(sdJwtObject: complex.asObject)
     let digestCount = try XCTUnwrap(try? output.get().value.findDigestCount())
-    validateObjectResults(factoryResult: output, expectedDigests: digestCount)
+    validateObjectResults(factoryResult: output, expectedDigests: 16)
 
     try output.get().disclosures.forEach { disclosure in
       print(disclosure.base64URLDecode())

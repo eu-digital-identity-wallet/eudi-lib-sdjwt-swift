@@ -19,19 +19,26 @@ import SwiftyJSON
 
 enum SerialisationFormat {
   case serialised
+  case envelope
 }
 
-class Parser {
+class CompactParser: ParserProtocol {
+
   // MARK: - Properties
 
   var serialisedString: String
-  var serialisationFormat: SerialisationFormat
+  var serialisationFormat: SerialisationFormat = .serialised
   // MARK: - Lifecycle
 
-  init(serialisedString: String, serialisationFormat: SerialisationFormat) {
-    self.serialisedString = serialisedString
-    self.serialisationFormat = serialisationFormat
+  required init(serialiserProtocol: SerialiserProtocol) {
+    self.serialisedString = serialiserProtocol.serialised
   }
+
+  init(serialisedString: String) {
+    self.serialisedString = serialisedString
+//    self.serialisationFormat = serialisationFormat
+  }
+
   // MARK: - Methods
 
   func getSignedSdJwt() throws -> SignedSDJWT {
@@ -47,9 +54,6 @@ class Parser {
       throw SDJWTVerifierError.parsingError
     }
     let jwt = String(parts[0])
-
-    switch self.serialisationFormat {
-    case .serialised:
       if serialisedString.hasSuffix("~") == true {
         // means no key binding is present
         let disclosures = parts[safe: 1..<parts.count]?.compactMap({String($0)})
@@ -61,8 +65,6 @@ class Parser {
         let kbJwt = String(parts[parts.count - 1])
         return (jwt, disclosures ?? [], kbJwt)
       }
-
-    }
 
   }
 }

@@ -34,7 +34,7 @@ class DisclosuresVerifier: VerifierProtocol {
 
   // MARK: - Lifecycle
 
-  init(parser: Parser) throws {
+  init(parser: ParserProtocol) throws {
     // Get the header and payload values
     // Ignore signatures
     // It is the signatures verifier job to confirm that

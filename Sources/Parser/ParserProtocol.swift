@@ -15,35 +15,9 @@
  */
 import Foundation
 
-public typealias KeyPair = (public: SecKey, private: SecKey)
+protocol ParserProtocol {
+  
+  func getSignedSdJwt() throws -> SignedSDJWT
 
-enum SDJWTError: Error {
-  case sdAsKey
-  case nullJSONValue
-  case encodingError
-  case discloseError
-  case serializationError
-  case nonObjectFormat(ofElement: Any)
-  case keyCreation
-  case algorithmMissMatch
-  case noneAsAlgorithm
-  case macAsAlgorithm
-}
-
-/// Static Keys Used by the JWT
-enum Keys: String {
-  case sd = "_sd"
-  case dots = "..."
-  case sdAlg = "_sd_alg"
-  case sdJwt = "_sd_jwt"
-  case iss
-  case iat
-  case sub
-  case exp
-  case jti
-  case nbe
-  case aud
-  case cnf
-  case jwk
-  case none
+  init(serialiserProtocol: SerialiserProtocol)
 }

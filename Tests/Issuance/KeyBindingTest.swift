@@ -28,8 +28,7 @@ final class KeyBindingTest: XCTestCase {
   tL3ZlcmlmaWVyIiwgImlhdCI6IDE2ODgxNjA0ODN9.duRIKesDpGY-5GkRcr98uhud64
   PfmPhL0qMcXFeBL5x2IGbAc_buglOrpd0LZA_cgCGXDx4zQoMou2kKrl-WCA
   """
-    .replacingOccurrences(of: "\n", with: "")
-    .replacingOccurrences(of: " ", with: "")
+    .clean()
 
   let jwk = """
   {
@@ -39,8 +38,7 @@ final class KeyBindingTest: XCTestCase {
     "y": "ZxjiWWbZMQGHVWKVQ4hbSIirsVfuecCE6t4jT9F2HZQ"
   }
   """
-    .replacingOccurrences(of: "\n", with: "")
-    .replacingOccurrences(of: " ", with: "")
+    .clean()
 
   @SDJWTBuilder
   var claims: SdElement {

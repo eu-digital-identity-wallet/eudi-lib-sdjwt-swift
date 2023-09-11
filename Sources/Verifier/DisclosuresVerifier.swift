@@ -66,7 +66,7 @@ class DisclosuresVerifier: VerifierProtocol {
 
     let claimExtractor =
     try ClaimExtractor(digestsOfDisclosuresDict: digestsOfDisclosuresDict)
-      .findDigests(json: sdJwt.jwt.payload, disclosures: sdJwt.disclosures)
+      .findDigests(payload: sdJwt.jwt.payload, disclosures: sdJwt.disclosures)
 
     digestsFoundOnPayload = claimExtractor.digestsFoundOnPayload
     recreatedClaims = claimExtractor.recreatedClaims

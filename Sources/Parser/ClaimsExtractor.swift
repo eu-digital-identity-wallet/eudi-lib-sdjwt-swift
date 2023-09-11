@@ -23,7 +23,7 @@ class ClaimExtractor {
     self.digestsOfDisclosuresDict = digestsOfDisclosuresDict
   }
 
-  func findDigests(json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
+  func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
     var json = json
     var foundDigests: [DigestType] = []
 
@@ -55,23 +55,27 @@ class ClaimExtractor {
     // Loop through the inner JSON data
     for (key, subJson): (String, JSON) in json {
       if !subJson.dictionaryValue.isEmpty {
-        let foundOnSubJSON = try self.findDigests(json: subJson, disclosures: disclosures)
+        let foundOnSubJSON = try self.findDigests(payload: subJson, disclosures: disclosures)
         // if found swap the disclosed value with the found value
         foundDigests += foundOnSubJSON.digestsFoundOnPayload
         json[key] = foundOnSubJSON.recreatedClaims
       } else if !subJson.arrayValue.isEmpty {
         for (index, object) in subJson.arrayValue.enumerated() {
           if object[Keys.dots.rawValue].exists() {
-            if let foundDisclosure = digestsOfDisclosuresDict[object[Keys.dots]
+            if let foundDisclosedArrayElement = digestsOfDisclosuresDict[object[Keys.dots]
               .stringValue]?
               .base64URLDecode()?
               .arrayProperty {
 
               foundDigests.appendOptional(.array(object[Keys.dots].stringValue))
-
-              let ifHasNested = try findDigests(json: foundDisclosure, disclosures: disclosures)
-              foundDigests += ifHasNested.digestsFoundOnPayload
-              json[key].arrayObject?[index] = ifHasNested.recreatedClaims
+              // If the object is a json we should further process it and replace
+              // the element with the value found in the disclosure
+              // Example https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
+              if let ifHasNested = try? findDigests(payload: foundDisclosedArrayElement, disclosures: disclosures),
+                 !ifHasNested.digestsFoundOnPayload.isEmpty {
+                foundDigests += ifHasNested.digestsFoundOnPayload
+                json[key].arrayObject?[index] = ifHasNested.recreatedClaims
+              }
             }
           }
         }

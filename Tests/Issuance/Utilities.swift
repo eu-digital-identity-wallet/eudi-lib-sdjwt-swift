@@ -145,3 +145,11 @@ class TestLogger {
         return false
     }
 }
+
+extension String {
+  func clean() -> String {
+    self
+    .replacingOccurrences(of: "\n", with: "")
+    .replacingOccurrences(of: " ", with: "")
+  }
+}

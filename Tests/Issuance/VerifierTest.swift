@@ -33,8 +33,7 @@ final class VerifierTest: XCTestCase {
         "y": "Xv5zWwuoaTgdS6hV43yI6gBwTnjukmFQQnJ_kCxzqk8"
       }
       """
-      .replacingOccurrences(of: "\n", with: "")
-      .replacingOccurrences(of: " ", with: "")
+      .clean()
 
     let pk = try! ECPublicKey(data: JSON(parseJSON: key).rawData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
@@ -70,15 +69,14 @@ final class VerifierTest: XCTestCase {
                 9jb2RlIjogIjEyMzQ0IiwgImNvdW50cnkiOiAiREUiLCAic3RyZWV0X2FkZHJlc3MiOi
                 AiV2VpZGVuc3RyYVx1MDBkZmUgMjIifV0~
                 """
-      .replacingOccurrences(of: "\n", with: "")
-      .replacingOccurrences(of: " ", with: "")
+      .clean()
 
     var result = SDJWTVerifier(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
       .verifyIssuance { jws in
-      try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
-    } disclosuresVerifier: { parser in
-      try DisclosuresVerifier(parser: parser)
-    }
+        try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
+      } disclosuresVerifier: { parser in
+        try DisclosuresVerifier(parser: parser)
+      }
 
     XCTAssertNoThrow(try result.get())
   }
@@ -140,13 +138,12 @@ final class VerifierTest: XCTestCase {
                 ~WyI1YTJXMF9OcmxFWnpmcW1rXzdQcS13IiwgImFkbWluaXN0ZXJpbmdDZW50cmUiLCAiUHJheGlzIFNvbW1lcmdhcnRlbiJd
                 ~WyJ5MXNWVTV3ZGZKYWhWZGd3UGdTN1JRIiwgImJhdGNoTnVtYmVyIiwgIjE2MjYzODI3MzYiXQ~WyJIYlE0WDhzclZXM1FEeG5JSmRxeU9BIiwgImhlYWx0aFByb2Zlc3Npb25hbCIsICI4ODMxMTAwMDAwMTUzNzYiXQ~
                 """
-      .replacingOccurrences(of: "\n", with: "")
-      .replacingOccurrences(of: " ", with: "")
+      .clean()
 
     let result = SDJWTVerifier(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
       .unsingedVerify { parser in
-      try DisclosuresVerifier(parser: parser)
-    }
+        try DisclosuresVerifier(parser: parser)
+      }
 
 
     XCTAssertNoThrow(try result.get())
@@ -154,11 +151,56 @@ final class VerifierTest: XCTestCase {
 
   func testVerifier_WhenPassingSameKeys_ThenExpectToFail() throws {
 
-    let serialized = "eyJraWQiOiJlMzQ3YjlmOS04MDhlLTQzM2ItYjE3NC1iMzkxMTBhNzkyYmEiLCJhbGciOiJFUzI1NiJ9.ew0KICAiZW1haWwiOiAiMTIzNDU2Nzg5MCIsDQogICJlbWFpbCI6ICJBbmlzaCBOYXRoIg0KfQ.jN6rDnOqJBmkLEAWJ70KwtPC3tm_B4Khv_304son7HBnYDdNSH0O0_QchCoAy-A-2XWtUPxZqjs8_myMuVRXmA.jN6rDnOqJBmkLEAWJ70KwtPC3tm_B4Khv_304son7HBnYDdNSH0O0_QchCoAy-A-2XWtUPxZqjs8_myMuVRXmA"
+    let jsonElementArray: JSON = [
+      "...": "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k"
+    ]
 
-    let parser = Parser(serialisedString: serialized, serialisationFormat: .serialised)
+    let json: JSON = [
+      "evidence": [
+        jsonElementArray
+      ],
+      "time": "2012-04-22T11:30Z",
+      "method": "pipp",
+      "_sd": [
+        "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ"
+      ]
+    ]
 
-    let result = try DisclosuresVerifier(parser: parser)
+    let element = """
+      WyJQYzMzSk0yTGNoY1VfbEhnZ3ZfdWZRIiwgeyJfc2QiOiBbIjl3cGpWUFd1
+      RDdQSzBuc1FETDhCMDZsbWRnVjNMVnliaEh5ZFFwVE55TEkiLCAiRzVFbmhP
+      QU9vVTlYXzZRTU52ekZYanBFQV9SYy1BRXRtMWJHX3djYUtJayIsICJJaHdG
+      cldVQjYzUmNacTl5dmdaMFhQYzdHb3doM08ya3FYZUJJc3dnMUI0IiwgIldw
+      eFE0SFNvRXRjVG1DQ0tPZURzbEJfZW11Y1lMejJvTzhvSE5yMWJFVlEiXX1d
+      """
+      .clean()
 
+    let enclosedInDisclosure = """
+      WyJRZ19PNjR6cUF4ZTQxMmExMDhpcm9BIiwgInRpbWUiLCAiMjAxMi0wNC0y
+      MlQxMTozMFoiXQ
+
+      """
+      .clean()
+    let duplicateSD = """
+      WyJlSThaV205UW5LUHBOUGVOZW5IZGhRIiwgIm1ldGhvZCIsICJwaXBwIl0
+      """
+      .clean()
+
+    let disclosureForDigestDict = [
+      "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k":element,
+      "9wpjVPWuD7PK0nsQDL8B06lmdgV3LVybhHydQpTNyLI":enclosedInDisclosure,
+      "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ":duplicateSD
+    ]
+
+    let claimExtractor = ClaimExtractor(digestsOfDisclosuresDict: disclosureForDigestDict)
+    XCTAssertThrowsError(try claimExtractor.findDigests(payload: json, disclosures: [element, enclosedInDisclosure])) { error in
+      let error = error as? SDJWTVerifierError
+      switch error {
+      case .nonUniqueDisclosures:
+        XCTAssert(true)
+      default:
+        XCTFail("wrong type of error \(error)")
+      }
+    }
   }
 }

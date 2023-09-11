@@ -94,7 +94,7 @@ final class KeyBindingTest: XCTestCase {
         "nonce": "1234567890"] as [String: Any]
     ), [])
 
-    let presentation = try SDJWTIssuer.createSDJWT(purpose: .presentation(issuance, KBJWT(header: .init(algorithm: .ES256), payload: kbjwtPayload.value)),
+    let presentation = try SDJWTIssuer.createSDJWT(purpose: .presentation(issuance, issuance.disclosures, KBJWT(header: .init(algorithm: .ES256), payload: kbjwtPayload.value)),
                                                    signingKey: holdersKeyPair.private)
 
     try SignatureVerifier(signedJWT: issuance.jwt, publicKey: issuersKeyPair.public).verify()

@@ -23,10 +23,10 @@ final class SerialiserTest: XCTestCase {
     let keyBindingTest = KeyBindingTest()
     let (issuersSDJWT, holdersSDJWT) = try keyBindingTest.testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification()
 
-    let issuersSerialisedFormat = Serialiser(signedSDJWT: issuersSDJWT, serialisationFormat: .serialised).serialised
+    let issuersSerialisedFormat = CompactSerialiser(signedSDJWT: issuersSDJWT).serialised
     XCTAssert(issuersSerialisedFormat.components(separatedBy: "~").count >= 2)
 
-    let holdersSerialisedFormat = Serialiser(signedSDJWT: holdersSDJWT, serialisationFormat: .serialised).serialised
+    let holdersSerialisedFormat = CompactSerialiser(signedSDJWT: holdersSDJWT).serialised
     XCTAssert(holdersSerialisedFormat.components(separatedBy: "~").count >= 3)
 
     return holdersSerialisedFormat
@@ -34,7 +34,7 @@ final class SerialiserTest: XCTestCase {
 
   func testPareserWhenReceivingASerialisedFormatJWT_ThenConstructUnsignedSDJWT() throws {
     let serialisedString = try testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
-    let parser = Parser(serialisedString: serialisedString, serialisationFormat: .serialised)
+    let parser = CompactParser(serialisedString: serialisedString)
     let jwt = try parser.getSignedSdJwt().toSDJWT()
     print(jwt.disclosures)
   }

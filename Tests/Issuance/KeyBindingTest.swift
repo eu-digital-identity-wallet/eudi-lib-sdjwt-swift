@@ -108,4 +108,8 @@ final class KeyBindingTest: XCTestCase {
   func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerificationInvoke() {
     XCTAssertNoThrow(try testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification())
   }
+
+  func testEnvelopeFormating() {
+    
+  }
 }

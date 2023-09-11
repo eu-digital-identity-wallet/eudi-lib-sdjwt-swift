@@ -47,7 +47,7 @@ class DisclosuresVerifier: VerifierProtocol {
       guard let algorithIdentifier else {
         throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
       }
-      self.digestCreator = DigestCreator(hashingAlgorithm: algorithIdentifier.hashingAlgorithm())
+      digestCreator = DigestCreator(hashingAlgorithm: algorithIdentifier.hashingAlgorithm())
     } else {
       throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
     }
@@ -64,9 +64,12 @@ class DisclosuresVerifier: VerifierProtocol {
       }
     }
 
-    let result = try self.findDigests(json: sdJwt.jwt.payload, disclosures: sdJwt.disclosures)
-    digestsFoundOnPayload = result.digestsFoundOnPayload
-    recreatedClaims = result.recreatedClaims
+    let claimExtractor =
+    try ClaimExtractor(digestsOfDisclosuresDict: digestsOfDisclosuresDict)
+      .findDigests(json: sdJwt.jwt.payload, disclosures: sdJwt.disclosures)
+
+    digestsFoundOnPayload = claimExtractor.digestsFoundOnPayload
+    recreatedClaims = claimExtractor.recreatedClaims
   }
 
   // MARK: - Methods
@@ -139,59 +142,6 @@ class DisclosuresVerifier: VerifierProtocol {
     guard jsonArray.arrayValue.count == digestType.components else {
       throw SDJWTVerifierError.invalidDisclosure(disclosures: [disclosure])
     }
-  }
-
-  private func findDigests(json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
-    var json = json
-    var foundDigests: [DigestType] = []
-
-    // try to find sd keys on the top level
-    if let sdArray = json[Keys.sd.rawValue].array, !sdArray.isEmpty {
-      var sdArray = sdArray.compactMap(\.string)
-      // try to find matching digests in order to be replaced with the value
-      while true {
-        let (updatedSdArray, foundDigest) = sdArray.findAndRemoveFirst(from: digestsOfDisclosuresDict.compactMap({$0.key}))
-        if let foundDigest,
-           let foundDisclosure = digestsOfDisclosuresDict[foundDigest]?.base64URLDecode()?.objectProperty {
-          json[Keys.sd.rawValue].arrayObject = updatedSdArray
-          json[foundDisclosure.key] = foundDisclosure.value
-          foundDigests.append(.object(foundDigest))
-
-        } else {
-          json.dictionaryObject?.removeValue(forKey: Keys.sd.rawValue)
-          break
-        }
-      }
-
-    }
-
-    // Loop through the inner JSON data
-    for (key, subJson): (String, JSON) in json {
-      if !subJson.dictionaryValue.isEmpty {
-        let foundOnSubJSON = try self.findDigests(json: subJson, disclosures: disclosures)
-        // if found swap the disclosed value with the found value
-        foundDigests += foundOnSubJSON.digestsFoundOnPayload
-        json[key] = foundOnSubJSON.recreatedClaims
-      } else if !subJson.arrayValue.isEmpty {
-        for (index, object) in subJson.arrayValue.enumerated() {
-          if object[Keys.dots.rawValue].exists() {
-            if let foundDisclosure = digestsOfDisclosuresDict[object[Keys.dots]
-              .stringValue]?
-              .base64URLDecode()?
-              .arrayProperty {
-
-              foundDigests.appendOptional(.array(object[Keys.dots].stringValue))
-
-              let ifHasNested = try findDigests(json: foundDisclosure, disclosures: disclosures)
-              foundDigests += ifHasNested.digestsFoundOnPayload
-              json[key].arrayObject?[index] = ifHasNested.recreatedClaims
-            }
-          }
-        }
-      }
-    }
-
-    return (foundDigests, json)
   }
 
 }

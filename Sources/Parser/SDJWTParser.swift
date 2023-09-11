@@ -35,16 +35,16 @@ class Parser {
   // MARK: - Methods
 
   func getSignedSdJwt() throws -> SignedSDJWT {
-    let (serialisedJWT, disclosuresInBase64, serialisedKBJWT) = self.parseCombined()
+    let (serialisedJWT, disclosuresInBase64, serialisedKBJWT) = try self.parseCombined()
     return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: disclosuresInBase64, serializedKbJwt: serialisedKBJWT)
   }
 
-  private func parseCombined() -> (String, [Disclosure], String?) {
+  private func parseCombined() throws -> (String, [Disclosure], String?) {
     let parts = self.serialisedString
       .split(separator: "~")
-      .map({String($0)})
+      .map {String($0)}
     guard parts.count > 1 else {
-      return ("", [], nil)
+      throw SDJWTVerifierError.parsingError
     }
     let jwt = String(parts[0])
 

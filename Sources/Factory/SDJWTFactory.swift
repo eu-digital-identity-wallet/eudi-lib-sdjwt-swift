@@ -166,6 +166,7 @@ class SDJWTFactory {
       return try self.encodeObject(sdJwtObject: object)
       // ...........
     case .array(let array):
+      // Encode Each array element baed on each disclosure type
       return try encodeArray(array)
       // ...........
     case .recursiveObject(let object):

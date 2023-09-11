@@ -30,8 +30,21 @@ class SDJWTIssuer {
 
   // MARK: - Methods
 
-  static func serialised(serialiser: Serialiser) -> String {
-    serialiser.serialised
+  static func issue<KeyType>(issuersPrivateKey: KeyType,
+                             header: JWSHeader,
+                             decoys: Int = 0,
+                             buildSDJWT: () -> SDJWTObject) throws -> SignedSDJWT {
+
+    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: decoys)
+    let claimSet = try factory.createJWT(sdJwtObject: buildSDJWT()).get()
+    let signedSDJWT = try self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
+    return signedSDJWT
+  }
+
+  static func presentation<KeyType>(holdersPrivateKey: KeyType,
+                                    signedSDJWT: SignedSDJWT,
+                                    keyBindingJWT: KBJWT?) {
+    
   }
 
   static func createSDJWT<KeyType>(purpose: Purpose, signingKey: KeyType) throws -> SignedSDJWT {

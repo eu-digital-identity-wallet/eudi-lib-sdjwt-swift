@@ -113,4 +113,10 @@ struct SignedSDJWT {
   private static func createSignedJWT<KeyType>(jwsController: JWSController<KeyType>, jwt: JWT) throws -> JWS {
     try jwt.sign(signer: jwsController.signer)
   }
+
+  func disclosuresToPresent(disclosures: [Disclosure]) -> Self {
+    var updated = self
+    updated.disclosures = disclosures
+    return updated
+  }
 }

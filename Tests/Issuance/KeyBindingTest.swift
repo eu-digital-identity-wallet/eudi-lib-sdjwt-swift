@@ -22,6 +22,24 @@ import SwiftyJSON
 
 final class KeyBindingTest: XCTestCase {
 
+  let kbJwt = """
+  eyJhbGciOiAiRVMyNTYiLCAidHlwIjogImtiK2p3dCJ9
+  .eyJub25jZSI6ICIxMjM0NTY3ODkwIiwgImF1ZCI6ICJodHRwczovL2V4YW1wbGUuY29
+  tL3ZlcmlmaWVyIiwgImlhdCI6IDE2ODgxNjA0ODN9.duRIKesDpGY-5GkRcr98uhud64
+  PfmPhL0qMcXFeBL5x2IGbAc_buglOrpd0LZA_cgCGXDx4zQoMou2kKrl-WCA
+  """
+    .clean()
+
+  let jwk = """
+  {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "TCAER19Zvu3OHF4j4W4vfSVoHIP1ILilDls7vCeGemc",
+    "y": "ZxjiWWbZMQGHVWKVQ4hbSIirsVfuecCE6t4jT9F2HZQ"
+  }
+  """
+    .clean()
+
   @SDJWTBuilder
   var claims: SdElement {
     ConstantClaims.iat(time: Date())
@@ -50,26 +68,6 @@ final class KeyBindingTest: XCTestCase {
     let verifier = try SignatureVerifier(signedJWT: kbJws, publicKey: ecPk.converted(to: SecKey.self))
     try XCTAssertNoThrow(verifier.verify())
   }
-
-  let kbJwt = """
-  eyJhbGciOiAiRVMyNTYiLCAidHlwIjogImtiK2p3dCJ9
-  .eyJub25jZSI6ICIxMjM0NTY3ODkwIiwgImF1ZCI6ICJodHRwczovL2V4YW1wbGUuY29
-  tL3ZlcmlmaWVyIiwgImlhdCI6IDE2ODgxNjA0ODN9.duRIKesDpGY-5GkRcr98uhud64
-  PfmPhL0qMcXFeBL5x2IGbAc_buglOrpd0LZA_cgCGXDx4zQoMou2kKrl-WCA
-  """
-    .replacingOccurrences(of: "\n", with: "")
-    .replacingOccurrences(of: " ", with: "")
-
-  let jwk = """
-  {
-    "kty": "EC",
-    "crv": "P-256",
-    "x": "TCAER19Zvu3OHF4j4W4vfSVoHIP1ILilDls7vCeGemc",
-    "y": "ZxjiWWbZMQGHVWKVQ4hbSIirsVfuecCE6t4jT9F2HZQ"
-  }
-  """
-    .replacingOccurrences(of: "\n", with: "")
-    .replacingOccurrences(of: " ", with: "")
 
   func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification() throws -> (SignedSDJWT, SignedSDJWT) {
     // Issuers Key Pair for es256
@@ -105,5 +103,9 @@ final class KeyBindingTest: XCTestCase {
     try SignatureVerifier(signedJWT: presentation.jwt, publicKey: issuersKeyPair.public).verify()
 
     return(issuance, presentation)
+  }
+
+  func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerificationInvoke() {
+    XCTAssertNoThrow(try testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification())
   }
 }

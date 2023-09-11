@@ -14,30 +14,16 @@
  * limitations under the License.
  */
 import Foundation
+import SwiftyJSON
 
-typealias Disclosure = String
-typealias DisclosureDigest = String
+extension Disclosure {
+  var objectProperty: (key: String, value: JSON) {
+    let json = JSON(parseJSON: self)
+    return (json.arrayValue[1].stringValue, json.arrayValue[2])
+  }
 
-protocol HashingAlgorithm {
-  var identifier: String { get }
-
-  func hash(disclosure: Disclosure) -> Data?
-}
-
-enum HashingAlgorithmIdentifier: String, CaseIterable {
-  case SHA256 = "sha-256"
-  case SHA384 = "sha-384"
-  case SHA512 = "sha-512"
-
-  func hashingAlgorithm() -> HashingAlgorithm {
-
-    switch self {
-    case .SHA256:
-      return SHA256Hashing()
-    case .SHA384:
-      return SHA384Hashing()
-    case .SHA512:
-      return SHA512Hashing()
-    }
+  var arrayProperty: JSON {
+    let json = JSON(parseJSON: self)
+    return (json.arrayValue[1])
   }
 }

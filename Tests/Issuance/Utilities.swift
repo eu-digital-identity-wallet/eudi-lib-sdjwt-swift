@@ -113,7 +113,7 @@ class MockSaltProvider: SaltProvider {
     return salt.base64EncodedString().base64ToUTF8() ?? ""
   }
 
-  var salt: Data = Data()
+  var salt: Data
 
   // MARK: - LifeCycle
 
@@ -144,4 +144,12 @@ class TestLogger {
         }
         return false
     }
+}
+
+extension String {
+  func clean() -> String {
+    self
+    .replacingOccurrences(of: "\n", with: "")
+    .replacingOccurrences(of: " ", with: "")
+  }
 }

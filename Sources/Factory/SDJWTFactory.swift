@@ -105,6 +105,40 @@ class SDJWTFactory {
     return (outputJson, outputDisclosures)
   }
 
+  fileprivate func encodeArray(_ array: ([SdElement])) throws -> ClaimSet {
+    // Encode an array claim value, disclosing each element and adding decoys.
+    var disclosures: [Disclosure] = []
+
+    let output = try array.reduce(into: JSON([Disclosure]())) { partialResult, element in
+      switch element {
+      case .plain(let json):
+        partialResult.arrayObject?.append(json)
+        // //............
+      case .object(let object):
+        let claimSet = try self.encodeObject(sdJwtObject: object)
+        disclosures.append(contentsOf: claimSet.disclosures)
+        let (disclosure, digest) = try self.discloseArrayElement(value: claimSet.value)
+        let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
+        partialResult.arrayObject?.append(dottedKeyJson)
+        disclosures.append(disclosure)
+        // //............
+      case .array(let array):
+        let claims = try encodeClaim(key: Keys.dots.rawValue, value: .array(array))
+        partialResult.arrayObject?.append(claims.value)
+        disclosures.append(contentsOf: claims.disclosures)
+        // //............
+      default:
+        let (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
+        let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
+        partialResult.arrayObject?.append(dottedKeyJson)
+        disclosures.append(disclosure)
+      }
+      // //............
+    }
+
+    return (output, disclosures)
+  }
+
   /// Encodes a single SDJWT claim value into a ClaimSet containing encoded JSON and associated disclosures.
   ///
   /// - Parameters:
@@ -132,25 +166,8 @@ class SDJWTFactory {
       return try self.encodeObject(sdJwtObject: object)
       // ...........
     case .array(let array):
-      // Encode an array claim value, disclosing each element and adding decoys.
-      var disclosures: [Disclosure] = []
-      let output = try array.reduce(into: JSON([Disclosure]())) { partialResult, element in
-        switch element {
-        case .plain(let json):
-          partialResult.arrayObject?.append(json)
-        default:
-          let (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
-          let decoys = self.addDecoy()
-            .sorted()
-            .map {JSON([Keys.dots: $0])}
-          let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
-          partialResult.arrayObject?.append(dottedKeyJson)
-          partialResult.arrayObject?.append(contentsOf: decoys)
-          disclosures.append(disclosure)
-        }
-      }
-
-      return (output, disclosures)
+      // Encode Each array element baed on each disclosure type
+      return try encodeArray(array)
       // ...........
     case .recursiveObject(let object):
       // Encode a recursive object claim value by first encoding the nested object,

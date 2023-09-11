@@ -35,33 +35,16 @@ class Parser {
   // MARK: - Methods
 
   func getSignedSdJwt() throws -> SignedSDJWT {
-    let (serialisedJWT, dislosuresInBase64, serialisedKBJWT) = self.parseCombined()
-    return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: dislosuresInBase64, serializedKbJwt: serialisedKBJWT)
+    let (serialisedJWT, disclosuresInBase64, serialisedKBJWT) = try self.parseCombined()
+    return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: disclosuresInBase64, serializedKbJwt: serialisedKBJWT)
   }
 
-  private func parseSDJWT(serialisedJWT: String, dislosuresInBase64: [Disclosure], serialisedKBJWT: String?) throws -> SDJWT {
-    let jws = try JWS(compactSerialization: serialisedJWT)
-
-    let disclosures = dislosuresInBase64
-      .compactMap({$0.base64URLDecode()})
-
-    let jwt = try JWT(header: jws.header, payload: jws.payloadJSON())
-
-    guard let serialisedKBJWT, let kbJWS = try? JWS(compactSerialization: serialisedKBJWT) else {
-      return try SDJWT(jwt: jwt, disclosures: disclosures, kbJWT: nil)
-    }
-
-    let kbJWT = try JWT(header: kbJWS.header, kbJwtPayload: kbJWS.payloadJSON())
-
-    return try SDJWT(jwt: jwt, disclosures: disclosures, kbJWT: kbJWT)
-  }
-
-  private func parseCombined() -> (String, [Disclosure], String?) {
+  private func parseCombined() throws -> (String, [Disclosure], String?) {
     let parts = self.serialisedString
       .split(separator: "~")
-      .map({String($0)})
+      .map {String($0)}
     guard parts.count > 1 else {
-      return ("", [], nil)
+      throw SDJWTVerifierError.parsingError
     }
     let jwt = String(parts[0])
 

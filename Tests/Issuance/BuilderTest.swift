@@ -189,4 +189,23 @@ final class BuilderTest: XCTestCase {
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: array.expectedDigests)
   }
 
+  func testNestedArrays() {
+    @SDJWTBuilder
+    var nestedArrays: SdElement {
+      SdArrayClaim("array", array: [
+        .array([
+          .plain(1),
+          .flat(2),
+          .object({
+            FlatDisclosedClaim("nested object in array key", "nested object in array value")
+          })
+        ]),
+        .plain(value: "other value")
+      ])
+    }
+
+    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+
+    validateObjectResults(factoryResult: factory.createJWT(sdJwtObject: nestedArrays.asObject), expectedDigests: 3)
+  }
 }

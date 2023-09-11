@@ -55,7 +55,12 @@ final class SignedJwtTest: XCTestCase {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
     let claimSetResult = factory.createJWT(sdJwtObject: claims.asObject)
-    let digestCount = try! claimSetResult.get().value.findDigestCount()
+    let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claimSetResult.get()), signingKey: keyPair.private)
+
+    let disclosureVerifier = try DisclosuresVerifier(parser: Parser(serialisedString: SDJWTIssuer.serialised(serialiser: .init(signedSDJWT: sdjwt, serialisationFormat: .serialised)), serialisationFormat: .serialised))
+
+    let digestCount = disclosureVerifier.digestsOfDisclosuresDict.count
+
     validateObjectResults(factoryResult: claimSetResult, expectedDigests: digestCount)
 
     let claimSet = try claimSetResult.get()

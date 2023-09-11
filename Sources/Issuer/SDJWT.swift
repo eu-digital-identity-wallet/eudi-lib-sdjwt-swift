@@ -58,6 +58,7 @@ struct SignedSDJWT {
         disclosures: disclosures,
         kbJWT: JWT(header: kbJwtHeader, kbJwtPayload: kbJWtPayload))
     }
+    
     return try SDJWT(
       jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
       disclosures: disclosures,

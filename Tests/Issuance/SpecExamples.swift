@@ -21,7 +21,7 @@ import XCTest
 
 final class SpecExamples: XCTestCase {
 
-  func testStructuredClaims_AsProvidedByTheSpec() {
+  func testStructuredClaims_AsProvidedByTheSpec() throws {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: 6)
 
@@ -46,9 +46,14 @@ final class SpecExamples: XCTestCase {
     XCTAssert(structuredSDJWT.expectedDigests == 10)
     let output = factory.createJWT(sdJwtObject: structuredSDJWT.asObject)
     let digestCount = try! output.get().value.findDigestCount()
+    let keyPair = generateES256KeyPair()
+
+    let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), output.get()), signingKey: keyPair.private)
+
+    let disclosureVerifierOut = try DisclosuresVerifier(parser: Parser(serialisedString: SDJWTIssuer.serialised(serialiser: .init(signedSDJWT: sdjwt, serialisationFormat: .serialised)), serialisationFormat: .serialised)).verify()
 
     validateObjectResults(factoryResult: output,
-                          expectedDigests: digestCount,
+                          expectedDigests: disclosureVerifierOut.digestsFoundOnPayload.count,
                           numberOfDecoys: factory.decoyCounter,
                           decoysLimit: 6)
 
@@ -59,20 +64,20 @@ final class SpecExamples: XCTestCase {
 
     @SDJWTBuilder
     var evidenceObject: SdElement {
-      PlainClaim("type", "document")
-      PlainClaim("method", "pipp")
-      PlainClaim("time", "2012-04-22T11:30Z")
-      ObjectClaim("document") {
+      FlatDisclosedClaim("type", "document")
+      FlatDisclosedClaim("method", "pipp")
+      FlatDisclosedClaim("time", "2012-04-22T11:30Z")
+      FlatDisclosedClaim("document") {
         PlainClaim("type", "idcard")
         ObjectClaim("issuer") {
           PlainClaim("name", "Stadt Augsburg")
           PlainClaim("country", "DE")
         }
+        PlainClaim("number", "53554554")
+        PlainClaim("date_of_issuance", "2010-03-23")
+        PlainClaim("date_of_expiry", "2020-03-22")
       }
 
-      PlainClaim("number", "53554554")
-      PlainClaim("date_of_issuance", "2010-03-23")
-      PlainClaim("date_of_expiry", "2020-03-22")
     }
     // .......
     @SDJWTBuilder
@@ -113,11 +118,11 @@ final class SpecExamples: XCTestCase {
 
     let output = factory.createJWT(sdJwtObject: complex.asObject)
     let digestCount = try XCTUnwrap(try? output.get().value.findDigestCount())
-    validateObjectResults(factoryResult: output, expectedDigests: digestCount)
+    validateObjectResults(factoryResult: output, expectedDigests: 16)
 
     try output.get().disclosures.forEach { disclosure in
       print(disclosure.base64URLDecode())
     }
-    let findDigest = try? XCTUnwrap(output.get().value.findDigests())
+    let findDigest = try? XCTUnwrap(output.get())
   }
 }

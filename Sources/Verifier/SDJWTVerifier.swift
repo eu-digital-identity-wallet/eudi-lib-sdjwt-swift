@@ -36,20 +36,20 @@ enum SDJWTVerifierError: Error {
 
 class SDJWTVerifier {
 
-  let parser: CompactParser
+  let parser: ParserProtocol
 
-  init(serialisedString: String, serialisationFormat: SerialisationFormat) {
-    self.parser = CompactParser(serialisedString: serialisedString)
+  init(parser: ParserProtocol) {
+    self.parser = parser
   }
 
-  func unsingedVerify(disclosuresVerifier: (CompactParser) throws -> DisclosuresVerifier) -> Result<Void, Error> {
+  func unsingedVerify(disclosuresVerifier: (ParserProtocol) throws -> DisclosuresVerifier) -> Result<Void, Error> {
     Result {
       let hasValidDisclosures = try disclosuresVerifier(parser).verify()
     }
   }
 
   func verifyIssuance<KeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<KeyType>,
-                               disclosuresVerifier: (CompactParser) throws -> DisclosuresVerifier) -> Result<Void, Error> {
+                               disclosuresVerifier: (ParserProtocol) throws -> DisclosuresVerifier) -> Result<Void, Error> {
     Result {
       let sdJwt = try parser.getSignedSdJwt()
       let hasValidSignature = try issuersSignatureVerifier(parser.getSignedSdJwt().jwt).verify()
@@ -59,7 +59,7 @@ class SDJWTVerifier {
   }
 
   func verify<IssuersKeyType, HoldersKeyType>(issuersSignatureVerifier: (JWS) -> SignatureVerifier<IssuersKeyType>,
-                                              disclosuresVerifier: (CompactParser) -> DisclosuresVerifier,
+                                              disclosuresVerifier: (ParserProtocol) -> DisclosuresVerifier,
                                               keyBindingVerifier: (() -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<Void, Error> {
     Result {
       try self.verifyIssuance(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier)

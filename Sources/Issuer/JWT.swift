@@ -47,6 +47,7 @@ struct JWT: JWTRepresentable {
     }
     self.header = header
     self.payload = kbJwtPayload
+    self.addKBTyp()
   }
 
   // MARK: - Methods
@@ -55,4 +56,23 @@ struct JWT: JWTRepresentable {
     let unsignedJWT = try self.asUnsignedJWT()
     return try JWS(header: unsignedJWT.header, payload: unsignedJWT.payload, signer: signer)
   }
+
+  mutating func addKBTyp() {
+    self.header.typ = "kb+jwt"
+  }
+}
+
+struct KBJWTBody {
+  var json: JSON {
+    return JSON([
+      Keys.nonce.rawValue: nonce,
+      Keys.aud.rawValue: aud,
+      Keys.iat.rawValue: iat
+    ] as [String : Any])
+  }
+
+  var nonce: String
+  var aud: String
+  var iat: Int
+
 }

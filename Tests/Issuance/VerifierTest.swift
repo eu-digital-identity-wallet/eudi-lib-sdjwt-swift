@@ -71,7 +71,7 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    var result = SDJWTVerifier(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
+    var result = SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
       .verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
       } disclosuresVerifier: { parser in
@@ -140,11 +140,10 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    let result = SDJWTVerifier(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
+    let result = SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
       .unsingedVerify { parser in
         try DisclosuresVerifier(parser: parser)
       }
-
 
     XCTAssertNoThrow(try result.get())
   }
@@ -187,9 +186,9 @@ final class VerifierTest: XCTestCase {
       .clean()
 
     let disclosureForDigestDict = [
-      "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k":element,
-      "9wpjVPWuD7PK0nsQDL8B06lmdgV3LVybhHydQpTNyLI":enclosedInDisclosure,
-      "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ":duplicateSD
+      "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k": element,
+      "9wpjVPWuD7PK0nsQDL8B06lmdgV3LVybhHydQpTNyLI": enclosedInDisclosure,
+      "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ": duplicateSD
     ]
 
     let claimExtractor = ClaimExtractor(digestsOfDisclosuresDict: disclosureForDigestDict)

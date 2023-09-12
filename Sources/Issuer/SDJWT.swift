@@ -58,7 +58,7 @@ struct SignedSDJWT {
         disclosures: disclosures,
         kbJWT: JWT(header: kbJwtHeader, kbJwtPayload: kbJWtPayload))
     }
-    
+
     return try SDJWT(
       jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
       disclosures: disclosures,
@@ -82,6 +82,7 @@ struct SignedSDJWT {
     // Assume that we have a valid signed jwt from the issuer
     // And key exchange has been established
     // signed SDJWT might contain or not the cnf claim
+
     self.jwt = signedSDJWT.jwt
     self.disclosures = signedSDJWT.disclosures
 
@@ -118,5 +119,15 @@ struct SignedSDJWT {
     var updated = self
     updated.disclosures = disclosures
     return updated
+  }
+}
+
+extension SignedSDJWT {
+  func serialised(serialiser: (SignedSDJWT) -> (SerialiserProtocol)) throws -> Data {
+    serialiser(self).data
+  }
+
+  func serialised(serialiser: (SignedSDJWT) -> (SerialiserProtocol)) throws -> String {
+    serialiser(self).serialised
   }
 }

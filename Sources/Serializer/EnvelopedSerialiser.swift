@@ -18,7 +18,7 @@ import SwiftyJSON
 import JOSESwift
 
 class EnvelopedSerialiser: SerialiserProtocol {
-  
+
   // MARK: - Properties
   private var payload: JSON
   private var serialisationFormat: SerialisationFormat = .envelope

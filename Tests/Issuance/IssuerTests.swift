@@ -15,7 +15,6 @@
  */
 import Foundation
 
-import Foundation
 import XCTest
 import JOSESwift
 import SwiftyJSON

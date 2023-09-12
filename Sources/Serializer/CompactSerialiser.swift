@@ -17,7 +17,7 @@ import Foundation
 import JOSESwift
 
 class CompactSerialiser: SerialiserProtocol {
-  
+
   // MARK: - Properties
 
   var data: Data {

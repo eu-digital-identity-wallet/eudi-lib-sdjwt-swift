@@ -17,7 +17,7 @@ import Foundation
 
 class EnvelopedParser: ParserProtocol {
   required init(serialiserProtocol: SerialiserProtocol) {
-    
+
   }
 
   func getSignedSdJwt() throws -> SignedSDJWT {

@@ -62,8 +62,7 @@ class ClaimExtractor {
       } else if !subJson.arrayValue.isEmpty {
         for (index, object) in subJson.arrayValue.enumerated() {
           if object[Keys.dots.rawValue].exists() {
-            if let foundDisclosedArrayElement = digestsOfDisclosuresDict[object[Keys.dots]
-              .stringValue]?
+            if let foundDisclosedArrayElement = digestsOfDisclosuresDict[object[Keys.dots].stringValue]?
               .base64URLDecode()?
               .arrayProperty {
 

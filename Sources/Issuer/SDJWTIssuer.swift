@@ -48,7 +48,7 @@ class SDJWTIssuer {
   static func issue<KeyType>(issuersPrivateKey: KeyType,
                              header: JWSHeader,
                              decoys: Int = 0,
-                             buildSDJWT: () -> SDJWTObject) throws -> SignedSDJWT {
+                             buildSDJWT: () -> SDJWTObject?) throws -> SignedSDJWT {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: decoys)
     let claimSet = try factory.createJWT(sdJwtObject: buildSDJWT()).get()
@@ -67,8 +67,21 @@ class SDJWTIssuer {
   static func presentation<KeyType>(holdersPrivateKey: KeyType,
                                     signedSDJWT: SignedSDJWT,
                                     disclosuresToPresent: [Disclosure],
-                                    keyBindingJWT: KBJWT?) {
-    
+                                    keyBindingJWT: KBJWT?) throws -> SignedSDJWT {
+    return try createSDJWT(purpose: .presentation(signedSDJWT, disclosuresToPresent, keyBindingJWT), signingKey: holdersPrivateKey)
+
+  }
+
+  /// Present a signed SDJWT.
+  /// Present the sdjwt without any key binding information
+  /// - Parameters:
+  ///   - signedSDJWT: The signed SDJWT to present.
+  ///   - disclosuresToPresent: The disclosures to include in the presentation.
+  ///
+  static func presentation(signedSDJWT: SignedSDJWT,
+                           disclosuresToPresent: [Disclosure]) throws -> SignedSDJWT{
+    return try createSDJWT(purpose: .presentation(signedSDJWT, disclosuresToPresent, nil), signingKey: Void.self)
+
   }
 
   /// Create a signed SDJWT based on the specified purpose.
@@ -85,7 +98,7 @@ class SDJWTIssuer {
       let ungsingedSDJWT = try SDJWT(jwt: JWT(header: JWSHeader, payload: claimSet.value), disclosures: claimSet.disclosures, kbJWT: nil)
       return try createSignedSDJWT(sdJwt: ungsingedSDJWT, issuersPrivateKey: signingKey)
       // ..........
-    case .presentation(let signedJWT,let selectedDisclosures, let KBJWT):
+    case .presentation(let signedJWT, let selectedDisclosures, let KBJWT):
       let signedJWT = signedJWT.disclosuresToPresent(disclosures: selectedDisclosures)
       if let KBJWT {
         return try createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: KBJWT, holdersPrivateKey: signingKey)
@@ -95,7 +108,7 @@ class SDJWTIssuer {
     }
 
   }
-  
+
   /// Create a signed SDJWT without key binding.
   ///
   /// - Parameters:

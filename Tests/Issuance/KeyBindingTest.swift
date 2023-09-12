@@ -110,6 +110,6 @@ final class KeyBindingTest: XCTestCase {
   }
 
   func testEnvelopeFormating() {
-    
+
   }
 }

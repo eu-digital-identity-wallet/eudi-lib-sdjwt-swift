@@ -45,14 +45,12 @@ final class SpecExamples: XCTestCase {
     }
     XCTAssert(structuredSDJWT.expectedDigests == 10)
     let output = factory.createJWT(sdJwtObject: structuredSDJWT.asObject)
-    
+
     let keyPair = generateES256KeyPair()
 
     let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), output.get()), signingKey: keyPair.private)
 
     let string = CompactSerialiser(signedSDJWT: sdjwt).serialised
-
-
 
     let disclosureVerifierOut = try DisclosuresVerifier(parser: CompactParser(serialisedString: string)).verify()
 

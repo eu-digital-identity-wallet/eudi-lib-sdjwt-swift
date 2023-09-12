@@ -45,5 +45,6 @@ enum Keys: String {
   case aud
   case cnf
   case jwk
+  case nonce
   case none
 }

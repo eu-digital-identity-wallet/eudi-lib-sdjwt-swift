@@ -19,5 +19,12 @@ protocol ParserProtocol {
 
   func getSignedSdJwt() throws -> SignedSDJWT
 
-  init(serialiserProtocol: SerialiserProtocol)
+}
+
+struct NoParser: ParserProtocol {
+  var sdJWT: SignedSDJWT
+
+  func getSignedSdJwt() throws -> SignedSDJWT {
+    return try self.sdJWT
+  }
 }

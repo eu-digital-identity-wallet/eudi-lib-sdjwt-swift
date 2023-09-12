@@ -16,13 +16,19 @@
 import SwiftyJSON
 
 class ClaimExtractor {
+  
+  // MARK: - Properties
 
   var digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]
+
+  // MARK: - Lifecycle
 
   init(digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]) {
     self.digestsOfDisclosuresDict = digestsOfDisclosuresDict
   }
 
+  // MARK: - Methods
+  
   func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
     var json = json
     var foundDigests: [DigestType] = []

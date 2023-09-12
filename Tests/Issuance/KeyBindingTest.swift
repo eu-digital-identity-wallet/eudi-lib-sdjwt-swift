@@ -55,7 +55,7 @@ final class KeyBindingTest: XCTestCase {
     let pk = try ECPublicKey(publicKey: keyPair.public)
     let jwk: JSON = try
     ["jwk": JSON(data: pk.jsonData()!)]
-    let keyBindingJwt = factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: jwk)
+    let keyBindingJwt = factory.createSDJWTPayload(sdjwtObject: claims.asObject, holdersPublicKey: jwk)
   }
 
   func testcCreateKeyBindingJWT_whenPassedECPublicKey() throws {
@@ -82,7 +82,7 @@ final class KeyBindingTest: XCTestCase {
     let jwk: JSON = try
     ["jwk": JSON(data: holdersECPK.jsonData()!)]
 
-    let claims = try factory.createJWT(sdjwtObject: claims.asObject, holdersPublicKey: jwk).get()
+    let claims = try factory.createSDJWTPayload(sdjwtObject: claims.asObject, holdersPublicKey: jwk).get()
 
     let issuance = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claims),
                                                signingKey: issuersKeyPair.private)

@@ -36,7 +36,6 @@ class CompactParser: ParserProtocol {
 
   init(serialisedString: String) {
     self.serialisedString = serialisedString
-//    self.serialisationFormat = serialisationFormat
   }
 
   // MARK: - Methods

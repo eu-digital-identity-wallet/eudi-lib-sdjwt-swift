@@ -30,6 +30,7 @@ class SDJWTFactory {
   let decoysLimit: Int
 
   var decoyCounter = 0
+  
   // MARK: - LifeCycle
 
   /// Initialises an instance of `SDJWTFactory`.
@@ -47,7 +48,7 @@ class SDJWTFactory {
 
   // MARK: - Methods - Public
 
-  func createJWT(sdJwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
+  func createSDJWTPayload(sdJwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
     do {
       self.decoyCounter = 0
       return .success(try self.encodeObject(sdJwtObject: addSdAlgClaim(object: sdJwtObject)))
@@ -56,7 +57,7 @@ class SDJWTFactory {
     }
   }
 
-  func createJWT(sdjwtObject: [String: SdElement]?, holdersPublicKey: JSON) -> Result<ClaimSet, Error> {
+  func createSDJWTPayload(sdjwtObject: [String: SdElement]?, holdersPublicKey: JSON) -> Result<ClaimSet, Error> {
     do {
       self.decoyCounter = 0
       var sdJwtObject = sdjwtObject

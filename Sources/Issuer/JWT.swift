@@ -20,10 +20,12 @@ import SwiftyJSON
 struct JWT: JWTRepresentable {
 
   // MARK: - Properties
+  
   var header: JWSHeader
   var payload: JSON
 
   // MARK: - Lifecycle
+
   init(header: JWSHeader, payload: JSON) throws {
     guard header.algorithm?.rawValue != Keys.none.rawValue else {
       throw SDJWTError.noneAsAlgorithm

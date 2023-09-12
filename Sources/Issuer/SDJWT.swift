@@ -21,9 +21,13 @@ typealias KBJWT = JWT
 
 struct SDJWT {
 
+  // MARK: - Properties
+
   var jwt: JWT
   var disclosures: [Disclosure]
   var kbJwt: JWT?
+
+  // MARK: - Lifecycle
 
   init(jwt: JWT, disclosures: [Disclosure], kbJWT: KBJWT?) throws {
     self.jwt = jwt
@@ -33,6 +37,8 @@ struct SDJWT {
 }
 
 struct SignedSDJWT {
+
+  // MARK: - Properties
 
   var jwt: JWS
   var disclosures: [Disclosure]
@@ -46,23 +52,6 @@ struct SignedSDJWT {
     self.jwt = try JWS(compactSerialization: serializedJwt)
     self.disclosures = disclosures
     self.kbJwt = try? JWS(compactSerialization: serializedKbJwt ?? "")
-  }
-
-  // Removes encoding and signatures
-  // Converts to "human readable format"
-  func toSDJWT() throws -> SDJWT {
-    if let kbJwtHeader = kbJwt?.header,
-       let kbJWtPayload = try? kbJwt?.payloadJSON() {
-      return try SDJWT(
-        jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
-        disclosures: disclosures,
-        kbJWT: JWT(header: kbJwtHeader, kbJwtPayload: kbJWtPayload))
-    }
-
-    return try SDJWT(
-      jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
-      disclosures: disclosures,
-      kbJWT: nil)
   }
 
   private init?<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) {
@@ -120,6 +109,22 @@ struct SignedSDJWT {
     updated.disclosures = disclosures
     return updated
   }
+
+  func toSDJWT() throws -> SDJWT {
+    if let kbJwtHeader = kbJwt?.header,
+       let kbJWtPayload = try? kbJwt?.payloadJSON() {
+      return try SDJWT(
+        jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
+        disclosures: disclosures,
+        kbJWT: JWT(header: kbJwtHeader, kbJwtPayload: kbJWtPayload))
+    }
+
+    return try SDJWT(
+      jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
+      disclosures: disclosures,
+      kbJWT: nil)
+  }
+
 }
 
 extension SignedSDJWT {

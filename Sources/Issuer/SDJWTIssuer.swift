@@ -31,6 +31,7 @@ class SDJWTIssuer {
 
   // MARK: - Lifecycle
   /// Private initializer to prevent direct instantiation of the class.
+  /// 
   private init() {}
 
   // MARK: - Methods
@@ -51,13 +52,13 @@ class SDJWTIssuer {
                              buildSDJWT: () -> SDJWTObject?) throws -> SignedSDJWT {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: decoys)
-    let claimSet = try factory.createJWT(sdJwtObject: buildSDJWT()).get()
+    let claimSet = try factory.createSDJWTPayload(sdJwtObject: buildSDJWT()).get()
     let signedSDJWT = try self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
     return signedSDJWT
   }
 
   /// Present a signed SDJWT.
-  ///
+  /// Adding holder's key binding information
   /// - Parameters:
   ///   - holdersPrivateKey: The private key of the holder.
   ///   - signedSDJWT: The signed SDJWT to present.

@@ -208,4 +208,12 @@ final class BuilderTest: XCTestCase {
 
     validateObjectResults(factoryResult: factory.createSDJWTPayload(sdJwtObject: nestedArrays.asObject), expectedDigests: 3)
   }
+
+  func testKeyValidity_WhenPassedBindedKeysAsKey_ExpectToFail() {
+    let claim = FlatDisclosedClaim(Keys.sd.rawValue, "value")
+    let dotsClaim = FlatDisclosedClaim(Keys.dots.rawValue, "value")
+
+    XCTAssertNil(claim)
+    XCTAssertNil(dotsClaim)
+  }
 }

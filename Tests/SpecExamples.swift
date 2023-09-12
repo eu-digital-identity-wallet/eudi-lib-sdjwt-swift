@@ -44,7 +44,7 @@ final class SpecExamples: XCTestCase {
       FlatDisclosedClaim("birthdate", "1940-01-01")
     }
     XCTAssert(structuredSDJWT.expectedDigests == 10)
-    let output = factory.createJWT(sdJwtObject: structuredSDJWT.asObject)
+    let output = factory.createSDJWTPayload(sdJwtObject: structuredSDJWT.asObject)
 
     let keyPair = generateES256KeyPair()
 
@@ -118,7 +118,7 @@ final class SpecExamples: XCTestCase {
       FlatDisclosedClaim("msisdn", "49123456789")
     }
 
-    let output = factory.createJWT(sdJwtObject: complex.asObject)
+    let output = factory.createSDJWTPayload(sdJwtObject: complex.asObject)
     let digestCount = try XCTUnwrap(try? output.get().value.findDigestCount())
     validateObjectResults(factoryResult: output, expectedDigests: 16)
 

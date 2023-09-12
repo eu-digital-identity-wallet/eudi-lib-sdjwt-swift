@@ -50,9 +50,8 @@ final class KeyBindingTest: XCTestCase {
   }
 
   func testKeyBinding() throws {
-    let keyPair = generateES256KeyPair()
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
-    let pk = try ECPublicKey(publicKey: keyPair.public)
+    let pk = try ECPublicKey(publicKey: issuersKeyPair.public)
     let jwk: JSON = try
     ["jwk": JSON(data: pk.jsonData()!)]
     let keyBindingJwt = factory.createSDJWTPayload(sdjwtObject: claims.asObject, holdersPublicKey: jwk)
@@ -70,10 +69,7 @@ final class KeyBindingTest: XCTestCase {
   }
 
   func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification() throws -> (SignedSDJWT, SignedSDJWT) {
-    // Issuers Key Pair for es256
-    let issuersKeyPair = generateES256KeyPair()
-    // Holders Key Pair for es256
-    let holdersKeyPair = generateES256KeyPair()
+    
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
@@ -107,9 +103,5 @@ final class KeyBindingTest: XCTestCase {
 
   func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerificationInvoke() {
     XCTAssertNoThrow(try testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification())
-  }
-
-  func testEnvelopeFormating() {
-
   }
 }

@@ -16,12 +16,44 @@
 import Foundation
 
 class EnvelopedParser: ParserProtocol {
-  required init(serialiserProtocol: SerialiserProtocol) {
 
+  // MARK: - Properties
+  var sdJwt: SignedSDJWT
+
+  // MARK: - Lifecycle
+
+  init(serialiserProtocol: SerialiserProtocol) throws {
+    let jsonDecoder = JSONDecoder()
+    let envelopedJwt = try jsonDecoder.decode(EnvelopedJwt.self, from: serialiserProtocol.data)
+    let compactParser = CompactParser(serialisedString: envelopedJwt.sdJwt)
+    self.sdJwt = try compactParser.getSignedSdJwt()
   }
+
+  init(data: Data) throws {
+    let jsonDecoder = JSONDecoder()
+    let envelopedJwt = try jsonDecoder.decode(EnvelopedJwt.self, from: data)
+    let compactParser = CompactParser(serialisedString: envelopedJwt.sdJwt)
+    self.sdJwt = try compactParser.getSignedSdJwt()
+  }
+
+  // MARK: - Methods
 
   func getSignedSdJwt() throws -> SignedSDJWT {
-    return try SignedSDJWT(serializedJwt: "", disclosures: [], serializedKbJwt: nil)
+    return sdJwt
   }
 
+}
+
+struct EnvelopedJwt: Codable {
+    let aud: String
+    let iat: Int
+    let nonce: String
+    let sdJwt: String
+
+    enum CodingKeys: String, CodingKey {
+        case aud
+        case iat
+        case nonce
+        case sdJwt = "_sd_jwt"
+    }
 }

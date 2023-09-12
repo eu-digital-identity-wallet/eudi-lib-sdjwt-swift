@@ -158,7 +158,8 @@ final class BuilderTest: XCTestCase {
         FlatDisclosedClaim("street_address", "Schulstr. 12")
         FlatDisclosedClaim("locality", "Schulpforta")
         FlatDisclosedClaim("region", "Sachs,n-Anhalt")
-        PlainClaim("country", "DE")
+        let string = "123"
+        PlainClaim("country", string)
         RecursiveObject("deep object embeded") {
           PlainClaim("deep", "deeep value")
           FlatDisclosedClaim("deep_disclosed", "deep disclosed claim")

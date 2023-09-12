@@ -39,4 +39,23 @@ final class SerialiserTest: XCTestCase {
     print(jwt.disclosures)
   }
 
+  func testSerialiseWhenChosingEnvelopeFormat_AppylingNoKeyBinding_ThenExpectACorrectJWT() throws {
+    let compactParser = try CompactParser(serialisedString: testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT())
+
+    let envelopeSerializer = try EnvelopedSerialiser(SDJWT: compactParser.getSignedSdJwt(),
+                                                 jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData().payload)
+
+    let parser = try EnvelopedParser(serialiserProtocol: envelopeSerializer)
+
+    let verifier = try SDJWTVerifier(parser: parser).verifyIssuance { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+    } disclosuresVerifier: { signedSDJWT in
+      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
+    } claimVerifier: {
+      ClaimsVerifier()
+    }.get()
+
+    print(verifier)
+  }
+
 }

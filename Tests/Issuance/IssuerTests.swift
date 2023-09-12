@@ -22,8 +22,7 @@ import SwiftyJSON
 @testable import eudi_lib_sdjwt_swift
 
 final class IssuerTest: XCTestCase {
-  let issuersKeyPair = generateES256KeyPair()
-
+  
   func testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey() throws -> SignedSDJWT {
     let signedSDJWT = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
                                        header: .init(algorithm: .ES256)) {

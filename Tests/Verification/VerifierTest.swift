@@ -24,16 +24,7 @@ import XCTest
 final class VerifierTest: XCTestCase {
 
   func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
-    let key =
-      """
-      {
-        "kty": "EC",
-        "crv": "P-256",
-        "x": "b28d4MwZMjw8-00CG4xfnn9SLMVMM19SlqZpVb_uNtQ",
-        "y": "Xv5zWwuoaTgdS6hV43yI6gBwTnjukmFQQnJ_kCxzqk8"
-      }
-      """
-      .clean()
+
 
     let pk = try! ECPublicKey(data: JSON(parseJSON: key).rawData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
@@ -71,11 +62,13 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    var result = SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
+    var result = try SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
       .verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
-      } disclosuresVerifier: { parser in
-        try DisclosuresVerifier(parser: parser)
+      } disclosuresVerifier: { signedSDJWT in
+        try DisclosuresVerifier(signedSDJWT: signedSDJWT)
+      } claimVerifier: {
+        ClaimsVerifier()
       }
 
     XCTAssertNoThrow(try result.get())
@@ -140,9 +133,9 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    let result = SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
-      .unsingedVerify { parser in
-        try DisclosuresVerifier(parser: parser)
+    let result = try SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
+      .unsingedVerify { signedSDJWT in
+        try DisclosuresVerifier(signedSDJWT: signedSDJWT)
       }
 
     XCTAssertNoThrow(try result.get())

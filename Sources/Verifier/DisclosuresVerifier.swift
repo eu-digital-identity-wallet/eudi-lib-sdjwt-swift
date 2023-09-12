@@ -36,11 +36,8 @@ class DisclosuresVerifier: VerifierProtocol {
 
   // MARK: - Lifecycle
 
-  init(parser: ParserProtocol) throws {
-    // Get the header and payload values
-    // Ignore signatures
-    // It is the signatures verifier job to confirm that
-    sdJwt = try parser.getSignedSdJwt().toSDJWT()
+  init(signedSDJWT: SignedSDJWT) throws {
+    self.sdJwt = try signedSDJWT.toSDJWT()
 
     // Retrieve hashing algorithm from payload
     if sdJwt.jwt.payload[Keys.sdAlg.rawValue].exists() {
@@ -72,6 +69,10 @@ class DisclosuresVerifier: VerifierProtocol {
 
     digestsFoundOnPayload = claimExtractor.digestsFoundOnPayload
     recreatedClaims = claimExtractor.recreatedClaims
+  }
+
+  convenience init(parser: ParserProtocol) throws {
+    try self.init(signedSDJWT: try parser.getSignedSdJwt())
   }
 
   // MARK: - Methods

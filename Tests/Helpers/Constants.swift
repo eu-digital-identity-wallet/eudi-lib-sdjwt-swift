@@ -15,23 +15,17 @@
  */
 import Foundation
 
-extension Encodable {
-  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = outputFormatting
-
-    let jsonData = try encoder.encode(self)
-
-    if let jsonString = String(data: jsonData, encoding: .utf8) {
-      return jsonString
-    } else {
-      throw SDJWTError.serializationError
-    }
+let key =
+  """
+  {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "b28d4MwZMjw8-00CG4xfnn9SLMVMM19SlqZpVb_uNtQ",
+    "y": "Xv5zWwuoaTgdS6hV43yI6gBwTnjukmFQQnJ_kCxzqk8"
   }
+  """
+  .clean()
+// Key Pairs Used in the examples
+let holdersKeyPair = generateES256KeyPair()
 
-  func toJSONData() throws -> Data {
-    let encoder = JSONEncoder()
-    let jsonData = try encoder.encode(self)
-    return jsonData
-  }
-}
+let issuersKeyPair = generateES256KeyPair()

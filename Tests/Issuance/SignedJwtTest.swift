@@ -48,10 +48,12 @@ final class SignedJwtTest: XCTestCase {
       CompactSerialiser(signedSDJWT: jwt)
     }
 
-    let verifier = SDJWTVerifier(parser: CompactParser(serialisedString: serialised)).verifyIssuance { jws in
+    let verifier = try SDJWTVerifier(parser: CompactParser(serialisedString: serialised)).verifyIssuance { jws in
       try SignatureVerifier(signedJWT: jws, publicKey: keyPair.public)
-    } disclosuresVerifier: { parser in
-      try DisclosuresVerifier(parser: parser)
+    } disclosuresVerifier: { signedSDJWT in
+      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
+    } claimVerifier: {
+      ClaimsVerifier()
     }
   }
 

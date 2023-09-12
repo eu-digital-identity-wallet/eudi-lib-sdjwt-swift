@@ -15,23 +15,32 @@
  */
 import Foundation
 
-extension Encodable {
-  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = outputFormatting
+class ClaimsVerifier: VerifierProtocol {
 
-    let jsonData = try encoder.encode(self)
+  typealias ReturnType = Bool
 
-    if let jsonString = String(data: jsonData, encoding: .utf8) {
-      return jsonString
-    } else {
-      throw SDJWTError.serializationError
+  var iat: Int?
+  var nbf: Int?
+  var exp: Int?
+
+
+  func verify() throws -> Bool {
+    if let iat {
+      try verifyIatClaim(iat: iat)
     }
+
+    if let nbf {
+
+    }
+
+    if let exp {
+      
+    }
+
+    return true
   }
 
-  func toJSONData() throws -> Data {
-    let encoder = JSONEncoder()
-    let jsonData = try encoder.encode(self)
-    return jsonData
+  func verifyIatClaim(iat: Int) throws {
+
   }
 }

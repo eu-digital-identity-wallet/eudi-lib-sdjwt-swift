@@ -64,7 +64,7 @@ struct JWT: JWTRepresentable {
   }
 }
 
-struct KBJWTBody {
+struct JWTBody: Codable {
   var json: JSON {
     return JSON([
       Keys.nonce.rawValue: nonce,

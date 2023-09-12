@@ -36,33 +36,40 @@ enum SDJWTVerifierError: Error {
 
 class SDJWTVerifier {
 
-  let parser: ParserProtocol
+  let sdJwt: SignedSDJWT
 
-  init(parser: ParserProtocol) {
-    self.parser = parser
+  init(parser: ParserProtocol) throws {
+    self.sdJwt = try parser.getSignedSdJwt()
   }
 
-  func unsingedVerify(disclosuresVerifier: (ParserProtocol) throws -> DisclosuresVerifier) -> Result<Void, Error> {
+  init(sdJwt: SignedSDJWT) {
+    self.sdJwt = sdJwt
+  }
+
+  func unsingedVerify(disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier) -> Result<Void, Error> {
     Result {
-      let hasValidDisclosures = try disclosuresVerifier(parser).verify()
+      _ = try disclosuresVerifier(sdJwt).verify()
     }
   }
 
   func verifyIssuance<KeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<KeyType>,
-                               disclosuresVerifier: (ParserProtocol) throws -> DisclosuresVerifier) -> Result<Void, Error> {
+                               disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
+                               claimVerifier: () throws -> ClaimsVerifier) -> Result<SignedSDJWT, Error> {
     Result {
-      let sdJwt = try parser.getSignedSdJwt()
-      let hasValidSignature = try issuersSignatureVerifier(parser.getSignedSdJwt().jwt).verify()
-      let hasValidDisclosures = try disclosuresVerifier(parser).verify()
-
+      _ = try issuersSignatureVerifier(sdJwt.jwt).verify()
+      // The recreated json, and the disclosures
+      let output = try disclosuresVerifier(sdJwt).verify()
+      try claimVerifier().verify()
+      return sdJwt
     }
   }
 
-  func verify<IssuersKeyType, HoldersKeyType>(issuersSignatureVerifier: (JWS) -> SignatureVerifier<IssuersKeyType>,
-                                              disclosuresVerifier: (ParserProtocol) -> DisclosuresVerifier,
-                                              keyBindingVerifier: (() -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<Void, Error> {
+  func verifyPresentation<IssuersKeyType, HoldersKeyType>(issuersSignatureVerifier: (JWS) -> SignatureVerifier<IssuersKeyType>,
+                                                          disclosuresVerifier: (SignedSDJWT) -> DisclosuresVerifier,
+                                                          claimVerifier: () throws -> ClaimsVerifier,
+                                                          keyBindingVerifier: (() -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<Void, Error> {
     Result {
-      try self.verifyIssuance(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier)
+      self.verifyIssuance(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier)
       if let keyBindingVerifier {
         try keyBindingVerifier().verify()
       }
@@ -72,5 +79,9 @@ class SDJWTVerifier {
   func with(verifierProtocol: () -> any VerifierProtocol) throws -> Self {
     try verifierProtocol().verify()
     return self
+  }
+
+  func verifyIat(iat: Int, dateCollision: Date) throws {
+
   }
 }

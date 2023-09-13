@@ -21,9 +21,9 @@ is implemented in Swift.
 
 - [Issuance](#issuance): As an Issuer use the library to issue a SD-JWT (in Combined Issuance Format) ✅︎
 - [Holder Verification](#holder-verification): As Holder verify a SD-JWT (in Combined Issuance Format) issued by an
-  Issuer
-- [Presentation Verification](#presentation-verification): As a Verifier verify SD-JWT in Combined Presentation Format or in Envelope Format
-- [Recreate initial claims](#recreate-original-claims): Given a SD-JWT recreate the original claims
+  Issuer ✅︎
+- [Presentation Verification](#presentation-verification): As a Verifier verify SD-JWT in Combined Presentation Format ✅︎ or in Envelope Format 
+- [Recreate initial claims](#recreate-original-claims): Given a SD-JWT recreate the original claims ✅︎
 
 ## Issuance
 
@@ -42,10 +42,11 @@ In the example bellow, Issuer decides to issue an SD-JWT as follows:
 - Uses his key pair to sign the SD-JWT
 
 ```Swift
-    let keyPair: KeyPair!
+    let issuersKeyPair: KeyPair!
 
-    @SDJWTBuilder
-    var claims: SdElement {
+    let signedSDJWT = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                            decoys: 0, // Can be omitted
+                                            header: .init(algorithm: .ES256)) {
       ConstantClaims.sub(subject: "6c5c0a49-b589-431d-bae7-219122a9ec2c")
       ConstantClaims.iss(domain: "https://example.com/issuer")
       ConstantClaims.iat(time: 1516239022)
@@ -58,13 +59,6 @@ In the example bellow, Issuer decides to issue an SD-JWT as follows:
         FlatDisclosedClaim("country", "DE")
       }
     }
-    
-    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
-    let claimSet = try factory.createJWT(sdjwtObject: claims.asObject).get()
-    let issuer = try SDJWTIssuer(purpose: .issuance(claimSet),
-                                 jwsController: .init(signingAlgorithm: .ES256, privateKey: keyPair.private))
-                                 
-    let signedSDJWT = try issuer.createSignedJWT()
 
 ```
 
@@ -77,20 +71,86 @@ Holder must know:
 the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT
 
 ```swift
-    let unverifiedSdJwt = "..."
-    let issuerPubKey: ECPublicKey = "..."
+    let unverifiedSdJwtString = "..."
+    let issuersKeyPair: KeyPair!
 
-    let result = SdJwtVerifier(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
+    let result = SDJWTVerifier(parser: CompactParser(serialisedString: unverifiedSdJwtString))
       .verifyIssuance { jws in
-      try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
-    } disclosuresVerifier: { parser in
-      try DisclosuresVerifier(parser: parser)
+        SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+    } disclosuresVerifier: { signedSdJwt in
+        DisclosuresVerifier(signedSDJWT: signedSdJwt)
     }
 
 ```
 ## Presentation Verification
+###In simple (not enveloped) format
 
+In this case, the SD-JWT is expected to be in Combined Presentation format. Verifier should know the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT. Also, if verification includes Key Binding, the Verifier must also know a how the public key of the Holder was included in the SD-JWT and which algorithm the Holder used to sign the Key Binding JWT
+```swift
+    // Issue a SDJWT to passed to a holder from an issuer
+    // Including Holders Public key
+    let issuerSignedSDJWT = try SDJWTIssuer
+        .issue(issuersPrivateKey: issuersKeyPair.private,
+               header: .init(algorithm: .ES256)) {
+      // Claims disclosed or plain
+      ...
+      // add holders public key in the payload
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("x", "EOid5YEjFXpCzaqyEqckcA5TBGxWEVYCiKz05qO5r_c")
+          PlainClaim("y", "7TTgK6fW5oxaN8m22f_HPVJ9Ny3KBKIvLcBIpUpk-7A")
+          PlainClaim("crv", "P-256")
+        }
+      }
+    }
+
+    // Issue a SDJWT for presentation to a verifier
+    // Expect a verifier Challenge in json format to sign
+    // And prove identity
+    let holderSDJWTRepresentation = try SDJWTIssuer
+      .presentation(holdersPrivateKey: holdersKeyPair.private,
+                    signedSDJWT: issuerSignedSDJWT,
+                    disclosuresToPresent: issuerSignedSDJWT.disclosures.filter({_ in true }),
+                    keyBindingJWT: KBJWT(header: .init(algorithm: .ES256),
+                                         kbJwtPayload: VerifiersChallenge.json)
+
+    //let verifier = SDJWTVerifier(parser: CompactParser(serialisedString: serialisedSDJwt))
+    let verifier = SDJWTVerifier(sdJwt: holderSDJWTRepresentation)
+    .verifyPresentation { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+    } disclosuresVerifier: { signedSDJWT in
+      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
+    } keyBindingVerifier: { jws, holdersPublicKey in
+      try KeyBindingVerifier(challenge: jws, extractedKey: holdersPublicKey)
+    }                                                           
+```
+###In enveloped format
+
+***WIP***
 ## Recreate original claims
+
+## DSL Examples
+
+All examples assume that we have the following claim set
+
+```json
+{
+  "sub": "6c5c0a49-b589-431d-bae7-219122a9ec2c",
+  "address": {
+    "street_address": "Schulstr. 12",
+    "locality": "Schulpforta",
+    "region": "Sachsen-Anhalt",
+    "country": "DE"
+  }
+}
+```
+
+- [Option 1: Flat SD-JWT](docs/examples/option1-flat-sd-jwt.md)
+- [Option 2: Structured SD-JWT](docs/examples/option2-structured-sd-jwt.md)
+- [Option 3: SD-JWT with Recursive Disclosures](docs/examples/option3-recursive-sd-jwt.md)
+- [Example 2a: Handling Structured Claims](docs/examples/example2a-handling-structure-claims.md)
+- [Example 3: Complex Structured SD-JWT](docs/examples/example3-complex-structured.md)
 
 ## How to contribute
 

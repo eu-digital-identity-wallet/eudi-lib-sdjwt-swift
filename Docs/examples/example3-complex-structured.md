@@ -112,56 +112,57 @@ Description of the example in the [specification Example 3: Complex Structured S
 JSON Value of sdjwt
 ==============================
 {
-  "exp" : 1693477311,
+  "exp" : 1694616876,
   "iss" : "https:\/\/example.com\/issuer",
-  "_sd_alg" : "sha-256",
   "verified_claims" : {
     "claims" : {
       "_sd" : [
-        "D9D5ldd666CVuxC7vyWSQHJEo31ZsK8Cns6dlqDPpUY",
-        "4PeAg-yUb-_XRD4FVhuFhi2xUgAAUxUUj_CV7t8vBs8",
-        "R22loaJH3C0ZFxYS-Qe7wmcStVc6qWwjlrRvdjMZtN0",
-        "6GX41M83BjwE0x0Sb7QdkVC5-V56AyxzHWH2Qyr34Qk",
-        "y7NsdXEN7F19b5msr9fsOeFM5rOO7Y4xZiKheCdmsRo",
-        "NIZVocHwnLyZyIuILtzpSeuGKpfgh_9du2AfjioKrpo"
+        "ziKmQIPbGTt1x8Q3wbia7r-Zvm6dmuTxQZ0J5NbxpuE",
+        "VOFWFwzrQtfuWArkXfOWE6DDBr0nznkZ7lCw9BaczlA",
+        "iNxcbxgciL2UOhQIvMyU609ykxKRNYfYdz9xZaVJtAQ",
+        "XoR-qXFiRqyNPtHkydYKxNDxWgOETbzS2lHC2knxYLg",
+        "Ex_ubtfg2HDx-j_ujHfgIhI77ZQQyMn3U_a3mPOKLx8",
+        "3w8ueFwDsyUWovV44TrAPsA2wye8HqsEe7yLM9dN818"
       ]
     },
     "verification" : {
       "_sd" : [
-        "xbqjAvqZtReHAU6-aLtdj30OkKUJcgdtEoMggaiFk08",
-        "T2L1vmdI4FiBKFdLGePY7jZpn7DCFKBeRx-3Rz5GC04"
+        "SP0gLtOZCJHxGsfDuIxh0LEOARZb8LrMrX9Fnr88CnQ",
+        "dMRmBDM58YkD9zuFuPnwfnRzM3rxjnl8aUkcIxSQrnA"
       ],
       "trust_framework" : "de_aml",
       "evidence" : [
         {
-          "..." : "6hhIPr_K4X2CTGiWhWBW8JUx9ibM3h0G9cKZYrTRtoI"
+          "..." : "ByYJee1teZA705kii69vLI67nmr2QK9LWHlyIKJYWgs"
         }
       ]
     }
   },
   "_sd" : [
-    "fT0cytB4jAEXfGmjINXO_2giBC4GVo-E3hq5poC013g",
-    "3_qtX3_E3XcM_OV_TrA-nDaQBjOYvWcIvNP7GPjchmM",
-    "62Vfag5nsHC66LdeEDlsHacTsstkDb6Qo3Yuhjgmkac"
+    "3q3cn0A0yF4AsNue8LZZfRx5-2ptZkDtmcSSv6GkWyk",
+    "h5egrlhq1ahMMHqC7KS01zlHwJzK1U3bkIAk35Wpa6o",
+    "D81Xni2Fr-sNsRztSjGC6vrUl3YECgSE5OF3r83ubfw"
   ],
-  "iat" : 1693473711
+  "_sd_alg" : "sha-256",
+  "iat" : 1694613276
 }
 ==============================
 With Disclosures
 ==============================
-["PLSWuFPPd7EYXG4BBP1Rqw","msisdn","49123456789"]
-["QVuXF0zd4nyBr8CaqzByEw","place_of_birth",{"locality":"Þykkvabæjarklaustur","country":"IS"}]
-["TwskWIIs51XJ3-gsCkmuXQ","given_name","Max"]
-["w7fja-OpJgndtFHhBE-GUA","nationalities",["DE"]]
-["HrGCNG0CFKmWJG9U-1L7tQ","family_name","Müller"]
-["FfpVmyDQOQIpVyOB3uXXFw","birthdate","1956-01-28"]
-["YfO8E3mhaUhHc8OWA1ytWQ","address",{"country":"DE","street_address":"Weidenstraße 22","locality":"Maxstadt","postal_code":"12344"}]
-["E-Ia-sPmuOMslR9kywLYLA","verification_process","f24c6f-6d3f-4ec5-973e-b0d8506f3bc7"]
-["AH_9zowEJlF4pfkMKyoN9w","time","2012-04-23T18:25Z"]
-
-["w1iOVocFVPPrzinmRprrww",{"date_of_issuance":"2010-03-23","type":"document","method":"pipp","document":{"type":"idcard","issuer":{"country":"DE","name":"Stadt Augsburg"}},"time":"2012-04-22T11:30Z","date_of_expiry":"2020-03-22","number":"53554554"}]
-
-["Al9TAw8odPtkWDg6yMerGQ","birth_middle_name","Timotheus"]
-["9aj-PjSm-aFmUr1dJ-T6bw","salutation","Dr."]
-==============================
+["6wlBeHpYNWtycPrdTTNHEQ","time","2012-04-23T18:25Z"]
+["OVVl_43krbwsRYyARawPSQ","verification_process","f24c6f-6d3f-4ec5-973e-b0d8506f3bc7"]
+["LvqL5qMyV1OwVCv-CgBfBw","document",{"issuer":{"country":"DE","name":"Stadt Augsburg"},"number":"53554554","type":"idcard","date_of_issuance":"2010-03-23","date_of_expiry":"2020-03-22"}]
+["YjFGa5Eh75bT2LufTuVjoQ","time","2012-04-22T11:30Z"]
+["8YUOCAETbgiovtP70DaxLw","method","pipp"]
+["EUFIy-NgCNqVd57jsQbSAA","type","document"]
+["f8uDlw7IVwv7h00orDlNnw",{"_sd":["VUGrwGNkcddZ52h9BfL6rDrIp-9Td0u2cpiVBITt-4E","ZkzAOYd7X4MBtpaoVSnJadzDzl_4X0S_JYwfrYkXb28","egOBomjun1tPcvECKX8Kf1Cq7Z3vYbW917cyi46LiLY","GCfaM7xOU2R2IUI8coleEn7BS-lhOxpqT8a2xeee3tA"]}]
+["WDkvrQl1LppGB0Ggc_EQ8Q","address",{"locality":"Maxstadt","street_address":"Weidenstraße 22","postal_code":"12344","country":"DE"}]
+["49g88l4NGB2xfL_K6gBmjQ","family_name","Müller"]
+["WTJXaTT3OWteMKEbg8Uscw","given_name","Max"]
+["8HQ9CT6KieyIJEjIbko_wA","nationalities",["DE"]]
+["9veIh90MR9VUw8Mz4dH-jQ","birthdate","1956-01-28"]
+["3NwGv8WPLuhQ883w_r2CUg","place_of_birth",{"country":"IS","locality":"Þykkvabæjarklaustur"}]
+["QCRB3icAzmuoXqe5lS3Jhw","birth_middle_name","Timotheus"]
+["ux6WeDTtf4czdFVlpl3bmg","salutation","Dr."]
+["GfcGwDjbbn4r869bM7OD1g","msisdn","49123456789"]
 ```

@@ -46,7 +46,7 @@ class ClaimsVerifier: VerifierProtocol {
   }
 
   // MARK: - Methods
-
+  @discardableResult
   func verify() throws -> Bool {
     if let iat,
        let iatValidWindow,

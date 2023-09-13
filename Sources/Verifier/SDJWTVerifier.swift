@@ -18,13 +18,15 @@ import JOSESwift
 
 protocol VerifierProtocol {
   associatedtype ReturnType
+
+  @discardableResult
   func verify() throws -> ReturnType
 }
 
 enum SDJWTVerifierError: Error {
   case parsingError
   case invalidJwt
-  case keyBidningFailed(desription: String)
+  case keyBindingFailed(description: String)
   case invalidDisclosure(disclosures: [Disclosure])
   case missingOrUnknownHashingAlgorithm
   case nonUniqueDisclosures
@@ -60,66 +62,47 @@ class SDJWTVerifier {
     }
   }
 
-  func verifyIssuance<KeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<KeyType>,
-                               disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
-                               claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) -> Result<SignedSDJWT, Error> {
+  func verifyIssuance(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+                      disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
+                      claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) rethrows -> Result<SignedSDJWT, Error> {
     Result {
       try self.verify(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier).get()
     }
   }
 
-  func verifyPresentation<IssuersKeyType, HoldersKeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<IssuersKeyType>,
-                                                          disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
-                                                          claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
-                                                          keyBindingVerifier: ((JWS, HoldersKeyType) throws -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<SignedSDJWT, Error> {
+  func verifyPresentation(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+                          disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
+                          claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
+                          keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier)? = nil) -> Result<SignedSDJWT, Error> {
     Result {
       let commonVerifyResult = self.verify(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier)
+
       if let keyBindingVerifier {
         let sdjwt = try commonVerifyResult.get()
         guard let kbJwt = sdjwt.kbJwt else {
-          throw SDJWTVerifierError.keyBidningFailed(desription: "No KB provided")
+          throw SDJWTVerifierError.keyBindingFailed(description: "No KB provided")
         }
-
         let extractedKey = try sdjwt.extractHoldersPublicKey()
-
-        switch extractedKey.keyType {
-        case .EC:
-          guard let secKey = try? (extractedKey as? ECPublicKey)?.converted(to: SecKey.self) as? HoldersKeyType else {
-            throw SDJWTVerifierError.keyBidningFailed(desription: "Key Type Missmatch")
-          }
-          try keyBindingVerifier(kbJwt, secKey).verify()
-        case .RSA:
-          guard let secKey = try? (extractedKey as? RSAPublicKey)?.converted(to: SecKey.self) as? HoldersKeyType else {
-            throw SDJWTVerifierError.keyBidningFailed(desription: "Key Type Missmatch")
-          }
-          try keyBindingVerifier(kbJwt, secKey).verify()
-        case .OCT:
-          guard let secKey = try? (extractedKey as? SymmetricKey)?.converted(to: Data.self) as? HoldersKeyType else {
-            throw SDJWTVerifierError.keyBidningFailed(desription: "Key Type Missmatch")
-          }
-          try keyBindingVerifier(kbJwt, secKey).verify()
-        }
-
+        try keyBindingVerifier(kbJwt, extractedKey).verify()
       }
-
       return try commonVerifyResult.get()
     }
   }
 
-  private func verify<KeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<KeyType>,
-                               disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
-                               claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) -> Result<SignedSDJWT, Error> {
+  private func verify(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+                      disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
+                      claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) -> Result<SignedSDJWT, Error> {
     Result {
       _ = try issuersSignatureVerifier(sdJwt.jwt).verify()
       // The recreated json, and the disclosures
       let output = try disclosuresVerifier(sdJwt).verify()
-      let isValid = try claimVerifier?(output.recreatedClaims[Keys.nbf.rawValue].int, output.recreatedClaims[Keys.exp.rawValue].int).verify()
+      try claimVerifier?(output.recreatedClaims[Keys.nbf.rawValue].int, output.recreatedClaims[Keys.exp.rawValue].int).verify()
       return sdJwt
     }
   }
 
   func with(verifierProtocol: () -> any VerifierProtocol) throws -> Self {
-    let result = try verifierProtocol().verify()
+    try verifierProtocol().verify()
     return self
   }
 

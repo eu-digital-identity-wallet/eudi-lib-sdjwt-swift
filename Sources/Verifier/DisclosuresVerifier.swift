@@ -76,7 +76,7 @@ class DisclosuresVerifier: VerifierProtocol {
   }
 
   // MARK: - Methods
-
+  @discardableResult
   func verify() throws -> DisclosuresVerifierOutput {
     // Create the digest for the enveloped disclosures
     // Convert the base64 string to the hash, Digests we got passed

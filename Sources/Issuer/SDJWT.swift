@@ -129,14 +129,18 @@ struct SignedSDJWT {
     let payloadJson = try self.jwt.payloadJSON()
     let jwk = payloadJson[Keys.cnf]["jwk"]
 
+    guard jwk.exists() else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "Failled to find holders public key")
+    }
+
     guard let keyType = JWKKeyType(rawValue: jwk["kty"].stringValue) else {
-      throw SDJWTVerifierError.keyBidningFailed(desription: "failled to extract key type")
+      throw SDJWTVerifierError.keyBindingFailed(description: "failled to extract key type")
     }
 
     switch keyType {
     case .EC:
       guard let crvType = ECCurveType(rawValue: jwk["crv"].stringValue) else {
-        throw SDJWTVerifierError.keyBidningFailed(desription: "failled to extract curve type")
+        throw SDJWTVerifierError.keyBindingFailed(description: "failled to extract curve type")
       }
       return ECPublicKey(crv: crvType, x: jwk["x"].stringValue, y: jwk["y"].stringValue)
     case .RSA:

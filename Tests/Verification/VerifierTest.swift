@@ -61,7 +61,7 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    var result = try SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
+    let result = try SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
       .verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
       } disclosuresVerifier: { signedSDJWT in
@@ -225,7 +225,7 @@ final class VerifierTest: XCTestCase {
     }
 
     for sdjwt in [iatJwt, expSdJwt, nbfSdJwt, nbfAndExpSdJwt] {
-      let result = SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
+      let result = try SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
       } disclosuresVerifier: { signedJwt in
         try DisclosuresVerifier(signedSDJWT: signedJwt)
@@ -246,10 +246,24 @@ final class VerifierTest: XCTestCase {
     let ecpubKey = try ECPublicKey(publicKey: holdersJWK)
     let json = JSON(parseJSON: ecpubKey.jsonString()!)
 
-    let issuerSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
-                                            header: .init(algorithm: .ES256)) {
-      FlatDisclosedClaim("disclosed", "claim")
-      PlainClaim("plain", "claim")
+    let issuerSignedSDJWT = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                                  header: .init(algorithm: .ES256)) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      FlatDisclosedClaim("sub", "6c5c0a49-b589-431d-bae7-219122a9ec2c")
+      FlatDisclosedClaim("given_name", "太郎")
+      FlatDisclosedClaim("family_name", "山田")
+      FlatDisclosedClaim("email", "\"unusual email address\"@example.jp")
+      FlatDisclosedClaim("phone_number", "+81-80-1234-5678")
+      ObjectClaim("address") {
+        FlatDisclosedClaim("street_address", "東京都港区芝公園４丁目２−８")
+        FlatDisclosedClaim("locality", "東京都")
+        FlatDisclosedClaim("region", "港区")
+        FlatDisclosedClaim("country", "JP")
+      }
+      FlatDisclosedClaim("birthdate", "1940-01-01")
+
       ObjectClaim("cnf") {
         ObjectClaim("jwk") {
           PlainClaim("kty", "EC")
@@ -260,11 +274,15 @@ final class VerifierTest: XCTestCase {
       }
     }
 
-    let holder = try SDJWTIssuer.presentation(holdersPrivateKey: holdersKeyPair.private,
-                                              signedSDJWT: issuerSdJwt,
-                                              disclosuresToPresent: issuerSdJwt.disclosures,
-                                              keyBindingJWT: KBJWT(header: .init(algorithm: .ES256),
-                                                                   kbJwtPayload: JWTBody(nonce: "", aud: "", iat: 123).json))
+    SDJWTVerifier(parser: CompactParser(serialisedString: serialisedJwt))
+    let holder = try SDJWTIssuer
+      .presentation(holdersPrivateKey: holdersKeyPair.private,
+                    signedSDJWT: issuerSignedSDJWT,
+                    disclosuresToPresent: issuerSignedSDJWT.disclosures.filter({_ in true }),
+                    keyBindingJWT: KBJWT(header: .init(algorithm: .ES256),
+                                         kbJwtPayload: JWTBody(nonce: "123456789",
+                                                               aud: "example.com",
+                                                               iat: 1694600000).json))
 
     let verifier = SDJWTVerifier(sdJwt: holder).verifyPresentation { jws in
       try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
@@ -273,7 +291,7 @@ final class VerifierTest: XCTestCase {
     } claimVerifier: { _, _ in
       try ClaimsVerifier()
     } keyBindingVerifier: { jws, holdersPublicKey in
-      try SignatureVerifier(signedJWT: jws, publicKey: holdersPublicKey as SecKey)
+      try KeyBindingVerifier(challenge: jws, extractedKey: holdersPublicKey)
     }
 
     XCTAssertNoThrow(try verifier.get())

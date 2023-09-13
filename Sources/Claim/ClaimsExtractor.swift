@@ -23,13 +23,13 @@ class ClaimExtractor {
 
   // MARK: - Lifecycle
 
-  init(digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]) {
+  public init(digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]) {
     self.digestsOfDisclosuresDict = digestsOfDisclosuresDict
   }
 
   // MARK: - Methods
 
-  func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
+  public func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
     var json = json
     json.dictionaryObject?.removeValue(forKey: Keys.sdAlg.rawValue)
     var foundDigests: [DigestType] = []

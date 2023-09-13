@@ -46,23 +46,17 @@ class SDJWTVerifier {
 
   // MARK: - Lifecycle
 
-  init(parser: ParserProtocol) throws {
+  public  init(parser: ParserProtocol) throws {
     self.sdJwt = try parser.getSignedSdJwt()
   }
 
-  init(sdJwt: SignedSDJWT) {
+  public  init(sdJwt: SignedSDJWT) {
     self.sdJwt = sdJwt
   }
 
   // MARK: - Methods
 
-  func unsingedVerify(disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier) -> Result<Void, Error> {
-    Result {
-      _ = try disclosuresVerifier(sdJwt).verify()
-    }
-  }
-
-  func verifyIssuance(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+  public  func verifyIssuance(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
                       disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
                       claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) rethrows -> Result<SignedSDJWT, Error> {
     Result {
@@ -70,7 +64,7 @@ class SDJWTVerifier {
     }
   }
 
-  func verifyPresentation(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+  public func verifyPresentation(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
                           disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
                           claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
                           keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier)? = nil) -> Result<SignedSDJWT, Error> {
@@ -106,7 +100,10 @@ class SDJWTVerifier {
     return self
   }
 
-  func verifyIat(iat: Int, dateCollision: Date) throws {
-
+  func unsingedVerify(disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier) -> Result<Void, Error> {
+    Result {
+      _ = try disclosuresVerifier(sdJwt).verify()
+    }
   }
+
 }

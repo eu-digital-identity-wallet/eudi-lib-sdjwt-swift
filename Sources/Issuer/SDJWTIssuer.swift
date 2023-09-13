@@ -46,7 +46,7 @@ class SDJWTIssuer {
   /// - Returns: The signed SDJWT.
   /// - Throws: An error if there's an issue with JWT creation or signing.
   ///
-  static func issue<KeyType>(issuersPrivateKey: KeyType,
+  public static func issue<KeyType>(issuersPrivateKey: KeyType,
                              header: JWSHeader,
                              decoys: Int = 0,
                              @SDJWTBuilder buildSDJWT: () throws -> SdElement) throws -> SignedSDJWT {
@@ -65,7 +65,7 @@ class SDJWTIssuer {
   ///   - disclosuresToPresent: The disclosures to include in the presentation.
   ///   - keyBindingJWT: An optional KBJWT for key binding.
   ///
-  static func presentation<KeyType>(holdersPrivateKey: KeyType,
+  public static func presentation<KeyType>(holdersPrivateKey: KeyType,
                                     signedSDJWT: SignedSDJWT,
                                     disclosuresToPresent: [Disclosure],
                                     keyBindingJWT: KBJWT?) throws -> SignedSDJWT {
@@ -79,7 +79,7 @@ class SDJWTIssuer {
   ///   - signedSDJWT: The signed SDJWT to present.
   ///   - disclosuresToPresent: The disclosures to include in the presentation.
   ///
-  static func presentation(signedSDJWT: SignedSDJWT,
+  public static func presentation(signedSDJWT: SignedSDJWT,
                            disclosuresToPresent: [Disclosure]) throws -> SignedSDJWT {
     return try createSDJWT(purpose: .presentation(signedSDJWT, disclosuresToPresent, nil), signingKey: Void.self)
 

@@ -21,6 +21,10 @@ class KeyBindingVerifier: VerifierProtocol {
   let signatureVerifier: SignatureVerifier
 
   init(challenge: JWS, extractedKey: JWK) throws {
+    guard challenge.header.typ == "kb+jwt" else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ")
+    }
+
     switch extractedKey.keyType {
     case .EC:
       guard let secKey = try? (extractedKey as? ECPublicKey)?.converted(to: SecKey.self) else {

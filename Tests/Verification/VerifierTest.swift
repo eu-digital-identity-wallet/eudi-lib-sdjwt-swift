@@ -274,7 +274,6 @@ final class VerifierTest: XCTestCase {
       }
     }
 
-    SDJWTVerifier(parser: CompactParser(serialisedString: serialisedJwt))
     let holder = try SDJWTIssuer
       .presentation(holdersPrivateKey: holdersKeyPair.private,
                     signedSDJWT: issuerSignedSDJWT,

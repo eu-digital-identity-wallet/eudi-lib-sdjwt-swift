@@ -51,7 +51,7 @@ final class SerialiserTest: XCTestCase {
       try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
     } disclosuresVerifier: { signedSDJWT in
       try DisclosuresVerifier(signedSDJWT: signedSDJWT)
-    } claimVerifier: {
+    } claimVerifier: { nbf,exp in 
       ClaimsVerifier()
     }.get()
 

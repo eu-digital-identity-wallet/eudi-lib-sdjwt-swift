@@ -26,12 +26,10 @@ final class IssuerTest: XCTestCase {
   func testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey() throws -> SignedSDJWT {
     let signedSDJWT = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
                                        header: .init(algorithm: .ES256)) {
-      SDJWTBuilder.build {
         ConstantClaims.iat(time: Date())
         ConstantClaims.sub(subject: "Test Subject")
         PlainClaim("name", "plain name")
         FlatDisclosedClaim("hidden name", "disclosedName")
-      }
     }
 
     return signedSDJWT

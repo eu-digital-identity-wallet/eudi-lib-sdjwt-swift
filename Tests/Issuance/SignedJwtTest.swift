@@ -26,21 +26,17 @@ final class SignedJwtTest: XCTestCase {
 
     let keyPair = generateES256KeyPair()
     let signedJWT = try SDJWTIssuer.issue(issuersPrivateKey: keyPair.private, header: .init(algorithm: .ES256), buildSDJWT: {
-      @SDJWTBuilder
-      var claims: SdElement {
-        ConstantClaims.sub(subject: "6c5c0a49-b589-431d-bae7-219122a9ec2c")
-        ConstantClaims.iss(domain: "https://example.com/issuer")
-        ConstantClaims.iat(time: 1516239022)
-        ConstantClaims.exp(time: 1516239022)
+      ConstantClaims.sub(subject: "6c5c0a49-b589-431d-bae7-219122a9ec2c")
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: 1516239022)
+      ConstantClaims.exp(time: 1516239022)
 
-        ObjectClaim("address") {
-          FlatDisclosedClaim("street_address", "Schulstr. 12")
-          FlatDisclosedClaim("locality", "Schulpforta")
-          FlatDisclosedClaim("region", "Sachsen-Anhalt")
-          FlatDisclosedClaim("country", "DE")
-        }
+      ObjectClaim("address") {
+        FlatDisclosedClaim("street_address", "Schulstr. 12")
+        FlatDisclosedClaim("locality", "Schulpforta")
+        FlatDisclosedClaim("region", "Sachsen-Anhalt")
+        FlatDisclosedClaim("country", "DE")
       }
-      return claims.asObject
     })
     
 
@@ -52,7 +48,7 @@ final class SignedJwtTest: XCTestCase {
       try SignatureVerifier(signedJWT: jws, publicKey: keyPair.public)
     } disclosuresVerifier: { signedSDJWT in
       try DisclosuresVerifier(signedSDJWT: signedSDJWT)
-    } claimVerifier: {
+    } claimVerifier: { nbf,exp in
       ClaimsVerifier()
     }
   }

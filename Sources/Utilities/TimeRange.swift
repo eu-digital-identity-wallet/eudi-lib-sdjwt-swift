@@ -15,36 +15,19 @@
  */
 import Foundation
 
-public typealias KeyPair = (public: SecKey, private: SecKey)
+struct TimeRange {
+    let startTime: Date
+    let endTime: Date
 
-enum SDJWTError: Error {
-  case sdAsKey
-  case nullJSONValue
-  case encodingError
-  case discloseError
-  case serializationError
-  case nonObjectFormat(ofElement: Any)
-  case keyCreation
-  case algorithmMissMatch
-  case noneAsAlgorithm
-  case macAsAlgorithm
-}
+    init?(startTime: Date, endTime: Date) {
+        guard startTime < endTime else {
+            return nil // Ensure that the start time is earlier than the end time
+        }
+        self.startTime = startTime
+        self.endTime = endTime
+    }
 
-/// Static Keys Used by the JWT
-enum Keys: String {
-  case sd = "_sd"
-  case dots = "..."
-  case sdAlg = "_sd_alg"
-  case sdJwt = "_sd_jwt"
-  case iss
-  case iat
-  case sub
-  case exp
-  case jti
-  case nbf
-  case aud
-  case cnf
-  case jwk
-  case nonce
-  case none
+    func contains(date: Date) -> Bool {
+        return date >= startTime && date <= endTime
+    }
 }

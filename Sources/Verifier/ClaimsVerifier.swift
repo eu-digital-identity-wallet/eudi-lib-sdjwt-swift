@@ -17,30 +17,78 @@ import Foundation
 
 class ClaimsVerifier: VerifierProtocol {
 
-  typealias ReturnType = Bool
+  // MARK: - Properties
+  var iat: Date?
+  var iatValidWindow: TimeRange? = nil
 
-  var iat: Int?
-  var nbf: Int?
-  var exp: Int?
+  var nbf: Date?
+  var exp: Date?
 
+  let currentDate: Date
+  // MARK: - Lifecycle
+
+  init(iat: Int? = nil,
+       iatValidWindow: TimeRange? = nil,
+       nbf: Int? = nil,
+       exp: Int? = nil,
+       currentDate: Date = Date()) {
+
+    if let iat {
+      self.iat = Date(timeIntervalSince1970: TimeInterval(iat))
+    }
+    if let nbf {
+      self.nbf = Date(timeIntervalSince1970: TimeInterval(nbf))
+    }
+    if let exp {
+      self.exp = Date(timeIntervalSince1970: TimeInterval(exp))
+    }
+    self.currentDate = currentDate
+  }
+
+  // MARK: - Methods
 
   func verify() throws -> Bool {
-    if let iat {
-      try verifyIatClaim(iat: iat)
+    if let iat,
+       let iatValidWindow,
+       !isDateInTimeRange(dateToCheck: iat, startTime: iatValidWindow.startTime, endTime: iatValidWindow.endTime) {
+      throw SDJWTVerifierError.invalidJwt
     }
 
     if let nbf {
-
+      try self.verifyNotBefore(nbf: nbf)
     }
 
     if let exp {
-      
+      try self.verifyNotExpired(exp: exp)
     }
 
     return true
   }
 
-  func verifyIatClaim(iat: Int) throws {
+  func isDateInTimeRange(dateToCheck: Date, startTime: Date, endTime: Date?) -> Bool {
+    if let endTime {
+      return dateToCheck >= startTime && dateToCheck <= endTime
+    } else {
+      return dateToCheck == startTime
+    }
 
+  }
+
+  private func verifyNotBefore(nbf: Date) throws {
+    switch nbf.compare(currentDate) {
+    case .orderedDescending:
+      throw SDJWTVerifierError.notValidYetJwt
+    case .orderedAscending, .orderedSame:
+      break
+    }
+  }
+
+  private func verifyNotExpired(exp: Date) throws {
+    switch exp.compare(currentDate) {
+    case .orderedAscending, .orderedSame:
+      throw SDJWTVerifierError.expiredJwt
+    case .orderedDescending:
+      break
+    }
   }
 }

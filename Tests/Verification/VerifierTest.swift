@@ -67,7 +67,7 @@ final class VerifierTest: XCTestCase {
         try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
       } disclosuresVerifier: { signedSDJWT in
         try DisclosuresVerifier(signedSDJWT: signedSDJWT)
-      } claimVerifier: {
+      } claimVerifier: { nbf,exp in
         ClaimsVerifier()
       }
 
@@ -193,6 +193,52 @@ final class VerifierTest: XCTestCase {
       default:
         XCTFail("wrong type of error \(error)")
       }
+    }
+  }
+
+
+  func testClaims() throws {
+    let iatJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                       header: .init(algorithm: .ES256), buildSDJWT: {
+      ConstantClaims.iat(time: Date())
+      FlatDisclosedClaim("time", "is created at \(Date())")
+    })
+
+    let expSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                         header: .init(algorithm: .ES256)) {
+      ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
+      FlatDisclosedClaim("time", "time runs out")
+
+    }
+
+    let nbfSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                         header: .init(algorithm: .ES256)) {
+      ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
+      FlatDisclosedClaim("time", "we are ahead of time")
+
+    }
+
+    let nbfAndExpSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                               header: .init(algorithm: .ES256)) {
+      ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
+      ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
+      FlatDisclosedClaim("time", "time runs out or maybe not")
+
+    }
+
+    for sdjwt in [iatJwt, expSdJwt, nbfSdJwt, nbfAndExpSdJwt] {
+      let result = SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
+        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+      } disclosuresVerifier: { signedJwt in
+        try DisclosuresVerifier(signedSDJWT: signedJwt)
+      } claimVerifier: { nbf, exp in
+        ClaimsVerifier(iat: Int(Date().timeIntervalSince1970.rounded()),
+                       iatValidWindow: TimeRange(startTime: Date(), endTime: Date(timeIntervalSinceNow: 10)),
+                       nbf: nbf,
+                       exp: exp)
+      }
+
+      XCTAssertNoThrow(try result.get())
     }
   }
 }

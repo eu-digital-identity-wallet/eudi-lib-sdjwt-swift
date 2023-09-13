@@ -49,10 +49,10 @@ class SDJWTIssuer {
   static func issue<KeyType>(issuersPrivateKey: KeyType,
                              header: JWSHeader,
                              decoys: Int = 0,
-                             buildSDJWT: () -> SDJWTObject?) throws -> SignedSDJWT {
+                             @SDJWTBuilder buildSDJWT: () throws -> SdElement) throws -> SignedSDJWT {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: decoys)
-    let claimSet = try factory.createSDJWTPayload(sdJwtObject: buildSDJWT()).get()
+    let claimSet = try factory.createSDJWTPayload(sdJwtObject: SDJWTBuilder.build(builder: buildSDJWT)).get()
     let signedSDJWT = try self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
     return signedSDJWT
   }

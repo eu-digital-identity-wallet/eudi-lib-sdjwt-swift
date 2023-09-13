@@ -54,6 +54,12 @@ struct ConstantClaims: ClaimRepresentable {
     return ConstantClaims(Keys.exp.rawValue, value: .plain(value: timestamp))
   }
 
+  static func nbf(time: Date) -> ConstantClaims {
+    let timestamp = Int(time.timeIntervalSince1970.rounded())
+
+    return ConstantClaims(Keys.nbf.rawValue, value: .plain(value: timestamp))
+  }
+
   static func iat(time: TimeInterval) -> ConstantClaims {
     return ConstantClaims(Keys.iat.rawValue, value: .plain(value: Int(time.rounded())))
   }
@@ -75,11 +81,8 @@ extension ClaimRepresentable {
 
   // MARK: - helpers
 
-  var flatString: String {
-    guard let string = self.value.jsonString else {
-      return ""
-    }
-    return string
+  var flatString: String? {
+    return self.value.jsonString
   }
 
   @discardableResult
@@ -87,7 +90,7 @@ extension ClaimRepresentable {
     guard
       key != Keys.sd.rawValue,
       key != Keys.dots.rawValue else {
-      /// https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#section-5.1
+      // https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#section-5.1
       return .failure(.sdAsKey)
     }
     return .success(true)

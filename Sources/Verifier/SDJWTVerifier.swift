@@ -69,13 +69,41 @@ class SDJWTVerifier {
   }
 
 
-  func verifyPresentation<IssuersKeyType, HoldersKeyType>(issuersSignatureVerifier: (JWS) -> SignatureVerifier<IssuersKeyType>,
-                                                          disclosuresVerifier: (SignedSDJWT) -> DisclosuresVerifier,
+  func verifyPresentation<IssuersKeyType, HoldersKeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<IssuersKeyType>,
+                                                          disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
                                                           claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
-                                                          keyBindingVerifier: (() -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<SignedSDJWT, Error> {
+                                                          keyBindingVerifier: ((JWS, HoldersKeyType) throws -> SignatureVerifier<HoldersKeyType>)? = nil) -> Result<SignedSDJWT, Error> {
     Result {
       let commonVerifyResult = self.verify(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier)
-      try keyBindingVerifier?().verify()
+      if let keyBindingVerifier {
+        let sdjwt = try commonVerifyResult.get()
+        guard let kbJwt = sdjwt.kbJwt else {
+          throw SDJWTVerifierError.keyBidningFailed(desription: "No KB provided")
+        }
+
+        let extractedKey = try sdjwt.extractHoldersPublicKey()
+
+        switch extractedKey.keyType {
+        case .EC:
+          guard let secKey = try? (extractedKey as? ECPublicKey)?.converted(to: SecKey.self) as? HoldersKeyType else {
+            throw SDJWTVerifierError.keyBidningFailed(desription: "Key Type Missmatch")
+          }
+          try keyBindingVerifier(kbJwt, secKey).verify()
+        case .RSA:
+          guard let secKey = try? (extractedKey as? RSAPublicKey)?.converted(to: SecKey.self) as? HoldersKeyType else {
+            throw SDJWTVerifierError.keyBidningFailed(desription: "Key Type Missmatch")
+          }
+          try keyBindingVerifier(kbJwt, secKey).verify()
+        case .OCT:
+          guard let secKey = try? (extractedKey as? SymmetricKey)?.converted(to: Data.self) as? HoldersKeyType else {
+            throw SDJWTVerifierError.keyBidningFailed(desription: "Key Type Missmatch")
+          }
+          try keyBindingVerifier(kbJwt, secKey).verify()
+        }
+
+
+      }
+
       return try commonVerifyResult.get()
     }
   }

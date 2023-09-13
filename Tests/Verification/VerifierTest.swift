@@ -197,7 +197,7 @@ final class VerifierTest: XCTestCase {
   }
 
 
-  func testClaims() throws {
+  func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() throws {
     let iatJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
                                        header: .init(algorithm: .ES256), buildSDJWT: {
       ConstantClaims.iat(time: Date())

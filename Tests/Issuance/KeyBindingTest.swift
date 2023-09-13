@@ -73,7 +73,7 @@ final class KeyBindingTest: XCTestCase {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-//    let json = JSON(parseJSON: jwk)
+    //    let json = JSON(parseJSON: jwk)
     let holdersECPK = try ECPublicKey(publicKey: holdersKeyPair.public)
     let jwk: JSON = try
     ["jwk": JSON(data: holdersECPK.jsonData()!)]
@@ -99,6 +99,46 @@ final class KeyBindingTest: XCTestCase {
     try SignatureVerifier(signedJWT: presentation.jwt, publicKey: issuersKeyPair.public).verify()
 
     return(issuance, presentation)
+  }
+
+  func testVerifyingKeyBinding() throws {
+    let holdersJWK = try holdersKeyPair.public
+
+    let ecpubKey = try ECPublicKey(publicKey: holdersJWK)
+    let json = JSON(parseJSON: ecpubKey.jsonString()!)
+
+    let issuerSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                            header: .init(algorithm: .ES256)) {
+      FlatDisclosedClaim("disclosed", "claim")
+      PlainClaim("plain", "claim")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", json["y"].stringValue)
+          PlainClaim("x", json["x"].stringValue)
+          PlainClaim("crv",json["crv"].stringValue)
+        }
+      }
+    }
+
+    let holder = try SDJWTIssuer.presentation(holdersPrivateKey: holdersKeyPair.private,
+                                              signedSDJWT: issuerSdJwt,
+                                              disclosuresToPresent: issuerSdJwt.disclosures,
+                                              keyBindingJWT: KBJWT(header: .init(algorithm: .ES256),
+                                                                   kbJwtPayload: JWTBody(nonce: "", aud: "", iat: 123).json))
+    
+
+    let verifier = SDJWTVerifier(sdJwt: holder).verifyPresentation { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+    } disclosuresVerifier: { signedSDJWT in
+      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
+    } claimVerifier: { nbf, exp in
+      try ClaimsVerifier()
+    } keyBindingVerifier: { jws, holdersPublicKey in
+      try SignatureVerifier(signedJWT: jws, publicKey: holdersPublicKey as! SecKey)
+    }
+
+    XCTAssertNoThrow(try verifier.get())
   }
 
   func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerificationInvoke() {

@@ -125,6 +125,27 @@ struct SignedSDJWT {
       kbJWT: nil)
   }
 
+  func extractHoldersPublicKey() throws -> JWK {
+    let payloadJson = try self.jwt.payloadJSON()
+    let jwk = payloadJson[Keys.cnf]["jwk"]
+
+    guard let keyType = JWKKeyType(rawValue: jwk["kty"].stringValue) else {
+      throw SDJWTVerifierError.keyBidningFailed(desription: "failled to extract key type")
+    }
+
+    switch keyType {
+    case .EC:
+      guard let crvType = ECCurveType(rawValue: jwk["crv"].stringValue) else {
+        throw SDJWTVerifierError.keyBidningFailed(desription: "failled to extract curve type")
+      }
+      return ECPublicKey(crv: crvType, x: jwk["x"].stringValue, y: jwk["y"].stringValue)
+    case .RSA:
+      return RSAPublicKey(modulus: jwk["n"].stringValue, exponent: jwk["e"].stringValue)
+    case .OCT:
+      return try SymmetricKey(key: jwk["k"].rawData())
+    }
+
+  }
 }
 
 extension SignedSDJWT {

@@ -16,7 +16,15 @@
 import Foundation
 import JOSESwift
 
-class SignatureVerifier<Key>: VerifierProtocol {
+// To Constraint What can be passed as a key
+// JOSE Supports SecKey for RSA and EC and Data for HMAC
+protocol KeyExpressible {}
+
+extension SecKey: KeyExpressible {}
+extension Data: KeyExpressible {}
+
+
+class SignatureVerifier<Key: KeyExpressible>: VerifierProtocol {
 
   // MARK: - Properties
 

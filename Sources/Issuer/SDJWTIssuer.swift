@@ -80,7 +80,7 @@ class SDJWTIssuer {
   ///   - disclosuresToPresent: The disclosures to include in the presentation.
   ///
   static func presentation(signedSDJWT: SignedSDJWT,
-                           disclosuresToPresent: [Disclosure]) throws -> SignedSDJWT{
+                           disclosuresToPresent: [Disclosure]) throws -> SignedSDJWT {
     return try createSDJWT(purpose: .presentation(signedSDJWT, disclosuresToPresent, nil), signingKey: Void.self)
 
   }

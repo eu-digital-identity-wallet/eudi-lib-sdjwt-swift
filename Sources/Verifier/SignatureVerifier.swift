@@ -23,7 +23,6 @@ protocol KeyExpressible {}
 extension SecKey: KeyExpressible {}
 extension Data: KeyExpressible {}
 
-
 class SignatureVerifier<Key: KeyExpressible>: VerifierProtocol {
 
   // MARK: - Properties

@@ -53,7 +53,7 @@ class SDJWTVerifier {
   }
 
   // MARK: - Methods
-  
+
   func unsingedVerify(disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier) -> Result<Void, Error> {
     Result {
       _ = try disclosuresVerifier(sdJwt).verify()
@@ -67,7 +67,6 @@ class SDJWTVerifier {
       try self.verify(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier).get()
     }
   }
-
 
   func verifyPresentation<IssuersKeyType, HoldersKeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<IssuersKeyType>,
                                                           disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
@@ -101,13 +100,11 @@ class SDJWTVerifier {
           try keyBindingVerifier(kbJwt, secKey).verify()
         }
 
-
       }
 
       return try commonVerifyResult.get()
     }
   }
-
 
   private func verify<KeyType>(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier<KeyType>,
                                disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,

@@ -20,7 +20,7 @@ import SwiftyJSON
 struct JWT: JWTRepresentable {
 
   // MARK: - Properties
-  
+
   var header: JWSHeader
   var payload: JSON
 
@@ -70,7 +70,7 @@ struct JWTBody: Codable {
       Keys.nonce.rawValue: nonce,
       Keys.aud.rawValue: aud,
       Keys.iat.rawValue: iat
-    ] as [String : Any])
+    ] as [String: Any])
   }
 
   var nonce: String

@@ -25,7 +25,6 @@ final class VerifierTest: XCTestCase {
 
   func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
 
-
     let pk = try! ECPublicKey(data: JSON(parseJSON: key).rawData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
     let ComplexStructureSDJWTString =
@@ -67,7 +66,7 @@ final class VerifierTest: XCTestCase {
         try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
       } disclosuresVerifier: { signedSDJWT in
         try DisclosuresVerifier(signedSDJWT: signedSDJWT)
-      } claimVerifier: { nbf,exp in
+      } claimVerifier: { _, _ in
         ClaimsVerifier()
       }
 
@@ -196,7 +195,6 @@ final class VerifierTest: XCTestCase {
     }
   }
 
-
   func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() throws {
     let iatJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
                                        header: .init(algorithm: .ES256), buildSDJWT: {
@@ -241,4 +239,44 @@ final class VerifierTest: XCTestCase {
       XCTAssertNoThrow(try result.get())
     }
   }
+
+  func testVerifyingKeyBinding() throws {
+    let holdersJWK = try holdersKeyPair.public
+
+    let ecpubKey = try ECPublicKey(publicKey: holdersJWK)
+    let json = JSON(parseJSON: ecpubKey.jsonString()!)
+
+    let issuerSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                            header: .init(algorithm: .ES256)) {
+      FlatDisclosedClaim("disclosed", "claim")
+      PlainClaim("plain", "claim")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", json["y"].stringValue)
+          PlainClaim("x", json["x"].stringValue)
+          PlainClaim("crv", json["crv"].stringValue)
+        }
+      }
+    }
+
+    let holder = try SDJWTIssuer.presentation(holdersPrivateKey: holdersKeyPair.private,
+                                              signedSDJWT: issuerSdJwt,
+                                              disclosuresToPresent: issuerSdJwt.disclosures,
+                                              keyBindingJWT: KBJWT(header: .init(algorithm: .ES256),
+                                                                   kbJwtPayload: JWTBody(nonce: "", aud: "", iat: 123).json))
+
+    let verifier = SDJWTVerifier(sdJwt: holder).verifyPresentation { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+    } disclosuresVerifier: { signedSDJWT in
+      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
+    } claimVerifier: { _, _ in
+      try ClaimsVerifier()
+    } keyBindingVerifier: { jws, holdersPublicKey in
+      try SignatureVerifier(signedJWT: jws, publicKey: holdersPublicKey as SecKey)
+    }
+
+    XCTAssertNoThrow(try verifier.get())
+  }
+
 }

@@ -25,7 +25,7 @@ struct DisclosuresVerifierOutput {
 class DisclosuresVerifier: VerifierProtocol {
 
   // MARK: - Properties
-  
+
   let disclosuresReceivedInSDJWT: [Disclosure]
   var digestsFoundOnPayload: [DigestType] = []
   let digestCreator: DigestCreator

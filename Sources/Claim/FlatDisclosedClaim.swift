@@ -15,7 +15,7 @@
  */
 
 struct FlatDisclosedClaim: ClaimRepresentable {
-  
+
   // MARK: - Properties
 
   var key: String

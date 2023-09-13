@@ -19,7 +19,7 @@ class ClaimsVerifier: VerifierProtocol {
 
   // MARK: - Properties
   var iat: Date?
-  var iatValidWindow: TimeRange? = nil
+  var iatValidWindow: TimeRange?
 
   var nbf: Date?
   var exp: Date?

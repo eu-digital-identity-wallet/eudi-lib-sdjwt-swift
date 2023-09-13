@@ -71,7 +71,7 @@ enum DigestType: RawRepresentable, Hashable {
       return disclosureDigest
     }
   }
-  
+
   // MARK: - Lifecycle
 
   init?(rawValue: DisclosureDigest) {

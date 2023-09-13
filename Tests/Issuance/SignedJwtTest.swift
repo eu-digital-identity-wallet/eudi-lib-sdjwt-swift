@@ -38,7 +38,6 @@ final class SignedJwtTest: XCTestCase {
         FlatDisclosedClaim("country", "DE")
       }
     })
-    
 
     let serialised: String = try signedJWT.serialised { jwt in
       CompactSerialiser(signedSDJWT: jwt)
@@ -48,7 +47,7 @@ final class SignedJwtTest: XCTestCase {
       try SignatureVerifier(signedJWT: jws, publicKey: keyPair.public)
     } disclosuresVerifier: { signedSDJWT in
       try DisclosuresVerifier(signedSDJWT: signedSDJWT)
-    } claimVerifier: { nbf,exp in
+    } claimVerifier: { _, _ in
       ClaimsVerifier()
     }
   }

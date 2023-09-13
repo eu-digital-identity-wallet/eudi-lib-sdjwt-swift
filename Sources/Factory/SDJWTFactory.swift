@@ -30,7 +30,7 @@ class SDJWTFactory {
   let decoysLimit: Int
 
   var decoyCounter = 0
-  
+
   // MARK: - LifeCycle
 
   /// Initialises an instance of `SDJWTFactory`.

@@ -26,7 +26,7 @@ protocol ClaimRepresentable: Encodable {
 }
 
 struct ConstantClaims: ClaimRepresentable {
-  
+
   // MARK: - Properties
 
   var key: String

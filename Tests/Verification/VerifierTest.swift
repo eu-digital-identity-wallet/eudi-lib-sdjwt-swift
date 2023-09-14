@@ -290,7 +290,11 @@ final class VerifierTest: XCTestCase {
     } claimVerifier: { _, _ in
       try ClaimsVerifier()
     } keyBindingVerifier: { jws, holdersPublicKey in
-      try KeyBindingVerifier(challenge: jws, extractedKey: holdersPublicKey)
+      try KeyBindingVerifier(iatOffset: .init(startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
+                                              endTime: Date(timeIntervalSince1970: 1694600000))!,
+                             expectedAudience: "example.com",
+                             challenge: jws,
+                             extractedKey: holdersPublicKey)
     }
 
     XCTAssertNoThrow(try verifier.get())

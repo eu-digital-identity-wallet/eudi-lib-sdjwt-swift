@@ -38,36 +38,67 @@ enum SDJWTVerifierError: Error {
   case notValidYetJwt
 }
 
+/// `SDJWTVerifier` is a class for verifying SD JSON Web Tokens (SDJWT) in a Swift application.
+/// This class provides comprehensive methods to validate both cases of Issuance to a holder and presentation to a verifier
+///
 class SDJWTVerifier {
 
   // MARK: - Properties
 
+  /// The signed SDJWT object to be verified.
   let sdJwt: SignedSDJWT
 
   // MARK: - Lifecycle
-
+  /// Initializes the verifier with a parser that throws an error if the SDJWT cannot be obtained.
+  ///
+  /// - Parameters:
+  ///   - parser: A parser conforming to `ParserProtocol`.
+  /// - Throws: An error if the SDJWT cannot be obtained.
+  ///
   public  init(parser: ParserProtocol) throws {
     self.sdJwt = try parser.getSignedSdJwt()
   }
 
+  /// Initializes the verifier with a pre-existing SDJWT.
+  ///
+  /// - Parameters:
+  ///   - sdJwt: A pre-existing `SignedSDJWT` object.
+  ///
   public  init(sdJwt: SignedSDJWT) {
     self.sdJwt = sdJwt
   }
 
   // MARK: - Methods
 
+  /// Verifies the issuance of the SDJWT.
+  ///
+  /// - Parameters:
+  ///   - issuersSignatureVerifier: A closure that verifies the issuer's signature.
+  ///   - disclosuresVerifier: A closure that verifies the disclosures.
+  ///   - claimVerifier: An optional closure to verify claims.
+  /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
+  ///
   public  func verifyIssuance(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                      disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
-                      claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) rethrows -> Result<SignedSDJWT, Error> {
+                              disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
+                              claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) rethrows -> Result<SignedSDJWT, Error> {
     Result {
       try self.verify(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier).get()
     }
   }
 
+  /// Verifies the presentation of the SDJWT, including key binding if provided.
+  ///
+  /// - Parameters:
+  ///   - issuersSignatureVerifier: A closure that verifies the issuer's signature.
+  ///   - disclosuresVerifier: A closure that verifies the disclosures.
+  ///   - claimVerifier: An optional closure to verify claims.
+  ///   - keyBindingVerifier: An optional closure to verify key binding.
+  /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
+  ///
   public func verifyPresentation(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                          disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
-                          claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
-                          keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier)? = nil) -> Result<SignedSDJWT, Error> {
+                                 disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
+                                 claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
+                                 keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier)? = nil) -> Result<SignedSDJWT, Error> {
     Result {
       let commonVerifyResult = self.verify(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier)
 
@@ -83,6 +114,14 @@ class SDJWTVerifier {
     }
   }
 
+  /// Verifies the common fields of the SDJWT for both cases (issuance and presentation).
+  ///
+  /// - Parameters:
+  ///   - issuersSignatureVerifier: A closure that verifies the issuer's signature.
+  ///   - disclosuresVerifier: A closure that verifies the disclosures.
+  ///   - claimVerifier: An optional closure to verify claims.
+  /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
+  ///
   private func verify(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
                       disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
                       claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) -> Result<SignedSDJWT, Error> {
@@ -95,12 +134,24 @@ class SDJWTVerifier {
     }
   }
 
-  func with(verifierProtocol: () -> any VerifierProtocol) throws -> Self {
+  /// Performs verification using a custom verifier protocol.
+  ///
+  /// - Parameter verifierProtocol: A closure that provides a custom verifier conforming to `AnyVerifierProtocol`.
+  /// - Returns: Self after performing the verification.
+  /// - Throws: An error if the verification fails.
+  ///
+  public func with(verifierProtocol: () -> any VerifierProtocol) throws -> Self {
     try verifierProtocol().verify()
     return self
   }
 
-  func unsingedVerify(disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier) -> Result<Void, Error> {
+  /// Performs verification using a custom verifier protocol.
+  ///
+  /// - Parameter verifierProtocol: A closure that provides a custom verifier conforming to `AnyVerifierProtocol`.
+  /// - Returns: Self after performing the verification.
+  /// - Throws: An error if the verification fails.
+  ///
+  internal func unsingedVerify(disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier) -> Result<Void, Error> {
     Result {
       _ = try disclosuresVerifier(sdJwt).verify()
     }

@@ -45,7 +45,7 @@ class EnvelopedParser: ParserProtocol {
 }
 
 struct EnvelopedJwt: Codable {
-    let aud: String
+    let aud: [String]
     let iat: Int
     let nonce: String
     let sdJwt: String

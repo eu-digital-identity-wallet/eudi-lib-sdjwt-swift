@@ -15,14 +15,31 @@
  */
 import Foundation
 import JOSESwift
+import SwiftyJSON
 
 class KeyBindingVerifier: VerifierProtocol {
 
   let signatureVerifier: SignatureVerifier
 
-  init(challenge: JWS, extractedKey: JWK) throws {
+  init(iatOffset: TimeRange,
+       expectedAudience: String,
+       challenge: JWS,
+       extractedKey: JWK) throws {
+
     guard challenge.header.typ == "kb+jwt" else {
-      throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ")
+      throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
+    }
+
+    let challengePayloadJson = try challenge.payloadJSON()
+
+    guard let timeInterval = challengePayloadJson[Keys.iat].int else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "No iat claim Provided")
+    }
+
+    let aud = challengePayloadJson[Keys.aud]
+
+    guard challengePayloadJson[Keys.nonce].exists() else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "No Nonce Provided")
     }
 
     switch extractedKey.keyType {
@@ -42,10 +59,34 @@ class KeyBindingVerifier: VerifierProtocol {
       }
       self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: secKey)
     }
+
+    try checkIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(timeInterval)))
+    try checkAud(aud: aud, expectedAudience: expectedAudience)
   }
 
-  func verify() throws -> SDJWT? {
-    try signatureVerifier.verify()
-    return nil
+  func checkIat(iatOffset: TimeRange, iat: Date) throws {
+    guard iatOffset.contains(date: iat) else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "iat not in valid time window")
+    }
+  }
+
+  func checkAud(aud: JSON, expectedAudience: String) throws {
+    if let array = aud.array {
+      guard array
+        .compactMap({$0.stringValue})
+        .contains(expectedAudience)
+      else {
+        throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
+      }
+    } else if let string = aud.string {
+      guard string.contains(expectedAudience) else {
+        throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
+      }
+    }
+  }
+
+  @discardableResult
+  func verify() throws -> JWS {
+    return try signatureVerifier.verify()
   }
 }

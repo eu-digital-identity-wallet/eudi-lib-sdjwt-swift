@@ -35,7 +35,6 @@ class EnvelopedSerialiser: SerialiserProtocol {
   // MARK: - Lifecycle
 
   init(SDJWT: SignedSDJWT, jwTpayload: Payload, options opt: JSONSerialization.ReadingOptions = []) throws {
-    let kb = SDJWT.kbJwt
     var updatedSDJWT = SDJWT
     updatedSDJWT.kbJwt = nil
 

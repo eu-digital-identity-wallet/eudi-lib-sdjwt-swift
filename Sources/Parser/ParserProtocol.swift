@@ -25,6 +25,6 @@ struct NoParser: ParserProtocol {
   var sdJWT: SignedSDJWT
 
   func getSignedSdJwt() throws -> SignedSDJWT {
-    return try self.sdJWT
+    return self.sdJWT
   }
 }

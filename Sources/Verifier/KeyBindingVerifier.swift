@@ -60,26 +60,26 @@ class KeyBindingVerifier: VerifierProtocol {
       self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: secKey)
     }
 
-    try checkIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(timeInterval)))
-    try checkAud(aud: aud, expectedAudience: expectedAudience)
+    try verifyIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(timeInterval)))
+    try verifyAud(aud: aud, expectedAudience: expectedAudience)
   }
 
-  func checkIat(iatOffset: TimeRange, iat: Date) throws {
+  func verifyIat(iatOffset: TimeRange, iat: Date) throws {
     guard iatOffset.contains(date: iat) else {
       throw SDJWTVerifierError.keyBindingFailed(description: "iat not in valid time window")
     }
   }
 
-  func checkAud(aud: JSON, expectedAudience: String) throws {
+  func verifyAud(aud: JSON, expectedAudience: String) throws {
     if let array = aud.array {
       guard array
         .compactMap({$0.stringValue})
-        .contains(expectedAudience)
+        .contains(where: { $0 == expectedAudience} )
       else {
         throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
       }
     } else if let string = aud.string {
-      guard string.contains(expectedAudience) else {
+      guard string == expectedAudience else {
         throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
       }
     }

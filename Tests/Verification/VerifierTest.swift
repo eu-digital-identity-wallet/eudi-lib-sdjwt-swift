@@ -64,8 +64,6 @@ final class VerifierTest: XCTestCase {
     let result = try SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
       .verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
-      } disclosuresVerifier: { signedSDJWT in
-        try DisclosuresVerifier(signedSDJWT: signedSDJWT)
       } claimVerifier: { _, _ in
         ClaimsVerifier()
       }
@@ -227,8 +225,6 @@ final class VerifierTest: XCTestCase {
     for sdjwt in [iatJwt, expSdJwt, nbfSdJwt, nbfAndExpSdJwt] {
       let result = try SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-      } disclosuresVerifier: { signedJwt in
-        try DisclosuresVerifier(signedSDJWT: signedJwt)
       } claimVerifier: { nbf, exp in
         ClaimsVerifier(iat: Int(Date().timeIntervalSince1970.rounded()),
                        iatValidWindow: TimeRange(startTime: Date(), endTime: Date(timeIntervalSinceNow: 10)),
@@ -240,8 +236,8 @@ final class VerifierTest: XCTestCase {
     }
   }
 
-  func testVerifyingKeyBinding() throws {
-    let holdersJWK = try holdersKeyPair.public
+  func testVerifierWhenProvidingAKeyBindingJWT_WHenProvidedWithAudNonceAndIatClaims_ThenExpectToPassClaimVerificationAndKBVerification () throws {
+    let holdersJWK = holdersKeyPair.public
 
     let ecpubKey = try ECPublicKey(publicKey: holdersJWK)
     let json = JSON(parseJSON: ecpubKey.jsonString()!)
@@ -285,10 +281,8 @@ final class VerifierTest: XCTestCase {
 
     let verifier = SDJWTVerifier(sdJwt: holder).verifyPresentation { jws in
       try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-    } disclosuresVerifier: { signedSDJWT in
-      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
     } claimVerifier: { _, _ in
-      try ClaimsVerifier()
+      ClaimsVerifier()
     } keyBindingVerifier: { jws, holdersPublicKey in
       try KeyBindingVerifier(iatOffset: .init(startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
                                               endTime: Date(timeIntervalSince1970: 1694600000))!,
@@ -298,6 +292,41 @@ final class VerifierTest: XCTestCase {
     }
 
     XCTAssertNoThrow(try verifier.get())
+  }
+
+
+  func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() throws {
+    let serializerTest = SerialiserTest()
+
+    let compactParser = try CompactParser(serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT())
+
+    let envelopeSerializer = try EnvelopedSerialiser(SDJWT: compactParser.getSignedSdJwt(),
+                                                     jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData().payload)
+
+    let signatureVerifier = try SignatureVerifier(signedJWT: .init(header: .init(algorithm: .ES256), payload: envelopeSerializer.data.payload, signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!), publicKey: holdersKeyPair.public)
+
+
+    let jwt = try JWS(header: .init(algorithm: .ES256),
+                      payload: envelopeSerializer.data.payload,
+                      signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!)
+
+    let envelopedJws = try JWS(compactSerialization: jwt.compactSerializedString)
+
+    let verifyEnvelope = try SDJWTVerifier(parser: EnvelopedParser(data: envelopeSerializer.data))
+      .verifyEnvelope(issuedAt: Date(timeIntervalSince1970: 1234),
+                      audience: "sub",
+                      envelope: envelopedJws) { jws in
+        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+      } holdersSignatureVerifier: {
+        try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
+      } claimVerifier: { audClaim, iat in
+        ClaimsVerifier(iat: iat, iatValidWindow: .init(startTime: Date(timeIntervalSince1970: 1234-10),
+                                                       endTime: Date(timeIntervalSince1970: 1234+10)),
+                       audClaim: audClaim,
+                       expectedAud: "sub")
+      }
+
+    XCTAssertNoThrow(try verifyEnvelope.get())
   }
 
 }

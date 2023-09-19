@@ -18,6 +18,7 @@ import Foundation
 class EnvelopedParser: ParserProtocol {
 
   // MARK: - Properties
+
   var sdJwt: SignedSDJWT
 
   // MARK: - Lifecycle
@@ -45,7 +46,7 @@ class EnvelopedParser: ParserProtocol {
 }
 
 struct EnvelopedJwt: Codable {
-    let aud: [String]
+    let aud: String
     let iat: Int
     let nonce: String
     let sdJwt: String

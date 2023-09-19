@@ -16,6 +16,8 @@
 import Foundation
 
 public typealias KeyPair = (public: SecKey, private: SecKey)
+public typealias JWTString = String
+public typealias Nonce = String
 
 enum SDJWTError: Error {
   case sdAsKey

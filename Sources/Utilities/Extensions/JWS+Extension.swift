@@ -21,4 +21,12 @@ extension JWS {
   func payloadJSON() throws -> JSON {
     try JSON(data: self.payload.data())
   }
+
+  func iat() throws -> Int? {
+    return try payloadJSON()[Keys.iat.rawValue].int
+  }
+
+  func aud() throws -> String? {
+    return try payloadJSON()[Keys.aud.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.aud.rawValue].string
+  }
 }

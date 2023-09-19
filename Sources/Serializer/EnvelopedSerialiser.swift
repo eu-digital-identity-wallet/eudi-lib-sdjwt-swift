@@ -25,7 +25,7 @@ class EnvelopedSerialiser: SerialiserProtocol {
   private var serialisationFormat: SerialisationFormat = .envelope
 
   var serialised: String {
-    return payload.description
+    return (try? payload.toJSONString(outputFormatting: [])) ?? ""
   }
 
   var data: Data {

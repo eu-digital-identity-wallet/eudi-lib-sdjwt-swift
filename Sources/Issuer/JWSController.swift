@@ -18,9 +18,6 @@ import JOSESwift
 import CryptoKit
 import Security
 
-public typealias JWTString = String
-public typealias Nonce = String
-
 class JWSController<SecKey> {
 
   // MARK: - Properties

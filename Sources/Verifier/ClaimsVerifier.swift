@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import Foundation
+import SwiftyJSON
 
 class ClaimsVerifier: VerifierProtocol {
 
@@ -24,6 +25,9 @@ class ClaimsVerifier: VerifierProtocol {
   var nbf: Date?
   var exp: Date?
 
+  var audClaim: JSON?
+  var expectedAud: String?
+
   let currentDate: Date
   // MARK: - Lifecycle
 
@@ -31,6 +35,8 @@ class ClaimsVerifier: VerifierProtocol {
        iatValidWindow: TimeRange? = nil,
        nbf: Int? = nil,
        exp: Int? = nil,
+       audClaim: String? = nil,
+       expectedAud: String? = nil,
        currentDate: Date = Date()) {
 
     if let iat {
@@ -42,6 +48,9 @@ class ClaimsVerifier: VerifierProtocol {
     if let exp {
       self.exp = Date(timeIntervalSince1970: TimeInterval(exp))
     }
+
+    self.audClaim = JSON(parseJSON: audClaim ?? "")
+    self.expectedAud = expectedAud
     self.currentDate = currentDate
   }
 
@@ -50,7 +59,7 @@ class ClaimsVerifier: VerifierProtocol {
   func verify() throws -> Bool {
     if let iat,
        let iatValidWindow,
-       !isDateInTimeRange(dateToCheck: iat, startTime: iatValidWindow.startTime, endTime: iatValidWindow.endTime) {
+       iatValidWindow.contains(date: iat) {
       throw SDJWTVerifierError.invalidJwt
     }
 
@@ -62,16 +71,12 @@ class ClaimsVerifier: VerifierProtocol {
       try self.verifyNotExpired(exp: exp)
     }
 
-    return true
-  }
-
-  func isDateInTimeRange(dateToCheck: Date, startTime: Date, endTime: Date?) -> Bool {
-    if let endTime {
-      return dateToCheck >= startTime && dateToCheck <= endTime
-    } else {
-      return dateToCheck == startTime
+    if let expectedAud,
+       let audClaim {
+      try self.verifyAud(aud: audClaim, expectedAudience: expectedAud)
     }
 
+    return true
   }
 
   private func verifyNotBefore(nbf: Date) throws {
@@ -89,6 +94,21 @@ class ClaimsVerifier: VerifierProtocol {
       throw SDJWTVerifierError.expiredJwt
     case .orderedDescending:
       break
+    }
+  }
+
+  func verifyAud(aud: JSON, expectedAudience: String) throws {
+    if let array = aud.array {
+      guard array
+        .compactMap({$0.stringValue})
+        .contains(where: { $0 == expectedAudience} )
+      else {
+        throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
+      }
+    } else if let string = aud.string {
+      guard string == expectedAudience else {
+        throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
+      }
     }
   }
 }

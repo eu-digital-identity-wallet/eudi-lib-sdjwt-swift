@@ -15,6 +15,7 @@
  */
 import Foundation
 import XCTest
+import JOSESwift
 
 @testable import eudi_lib_sdjwt_swift
 
@@ -49,8 +50,6 @@ final class SerialiserTest: XCTestCase {
 
     let verifier = try SDJWTVerifier(parser: parser).verifyIssuance { jws in
       try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-    } disclosuresVerifier: { signedSDJWT in
-      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
     } claimVerifier: { _, _ in
       ClaimsVerifier()
     }.get()

@@ -79,10 +79,9 @@ class SDJWTVerifier {
   /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
   ///
   public  func verifyIssuance(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                              disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
                               claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) rethrows -> Result<SignedSDJWT, Error> {
     Result {
-      try self.verify(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier).get()
+      try self.verify(issuersSignatureVerifier: issuersSignatureVerifier, claimVerifier: claimVerifier).get()
     }
   }
 
@@ -96,21 +95,41 @@ class SDJWTVerifier {
   /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
   ///
   public func verifyPresentation(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                                 disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
                                  claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
                                  keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier)? = nil) -> Result<SignedSDJWT, Error> {
     Result {
-      let commonVerifyResult = self.verify(issuersSignatureVerifier: issuersSignatureVerifier, disclosuresVerifier: disclosuresVerifier, claimVerifier: claimVerifier)
+      let commonVerifyResult = self.verify(issuersSignatureVerifier: issuersSignatureVerifier, claimVerifier: claimVerifier)
+      let sdjwt = try commonVerifyResult.get()
 
       if let keyBindingVerifier {
-        let sdjwt = try commonVerifyResult.get()
         guard let kbJwt = sdjwt.kbJwt else {
           throw SDJWTVerifierError.keyBindingFailed(description: "No KB provided")
         }
         let extractedKey = try sdjwt.extractHoldersPublicKey()
         try keyBindingVerifier(kbJwt, extractedKey).verify()
       }
-      return try commonVerifyResult.get()
+      return sdjwt
+    }
+  }
+
+  public func verifyEnvelope(issuedAt: Date,
+                             audience: String,
+                             envelope: JWS,
+                             issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+                             holdersSignatureVerifier: () throws -> SignatureVerifier,
+                             claimVerifier: (_ audClaim: String, _ iat: Int) -> ClaimsVerifier) -> Result<JWS, Error> {
+    Result {
+      try issuersSignatureVerifier(sdJwt.jwt).verify()
+      try holdersSignatureVerifier().verify()
+      try DisclosuresVerifier(signedSDJWT: sdJwt).verify()
+
+      guard
+        let aud = try envelope.aud(),
+        let iat = try envelope.iat() else {
+        throw SDJWTVerifierError.keyBindingFailed(description: "Envelope miss-formatted")
+      }
+      try claimVerifier(aud, iat).verify()
+      return try holdersSignatureVerifier().verify()
     }
   }
 
@@ -123,12 +142,11 @@ class SDJWTVerifier {
   /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
   ///
   private func verify(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                      disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier,
                       claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) -> Result<SignedSDJWT, Error> {
     Result {
       _ = try issuersSignatureVerifier(sdJwt.jwt).verify()
       // The recreated json, and the disclosures
-      let output = try disclosuresVerifier(sdJwt).verify()
+      let output = try DisclosuresVerifier(signedSDJWT: sdJwt).verify()
       try claimVerifier?(output.recreatedClaims[Keys.nbf.rawValue].int, output.recreatedClaims[Keys.exp.rawValue].int).verify()
       return sdJwt
     }
@@ -151,10 +169,17 @@ class SDJWTVerifier {
   /// - Returns: Self after performing the verification.
   /// - Throws: An error if the verification fails.
   ///
-  internal func unsingedVerify(disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier) -> Result<Void, Error> {
+  internal func unsingedVerify(disclosuresVerifier: (SignedSDJWT) throws -> DisclosuresVerifier) -> Result<SignedSDJWT, Error> {
     Result {
-      _ = try disclosuresVerifier(sdJwt).verify()
+      try disclosuresVerifier(sdJwt).verify()
+      return sdJwt
     }
   }
 
+}
+
+extension SDJWTVerifier {
+  static func verifyEnvelop() {
+
+  }
 }

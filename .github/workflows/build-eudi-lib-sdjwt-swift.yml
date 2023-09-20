@@ -11,8 +11,8 @@
       runs-on: macos-latest
       strategy:
         matrix:
-          os: [ubuntu-latest, macos-latest]
-          swift: ["5.8.0", "5.8"]
+          os: [macos-latest]
+          swift: ["5.8"]
       steps:
         - uses: swift-actions/setup-swift@v1
           with:

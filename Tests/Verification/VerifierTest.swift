@@ -199,10 +199,6 @@ final class VerifierTest: XCTestCase {
         XCTFail("wrong type of error \(error)")
       }
     }
-
-    let c = CompactParser(serialisedString: "").getSignedSdJwt()
-    c.recreateClaims().digestsFoundOnPayload
-    c.recreateClaims().recreatedClaims
   }
 
   func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() throws {

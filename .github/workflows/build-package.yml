@@ -1,0 +1,15 @@
+---
+    name: build-lib-sdjwt-swift
+    on:
+      pull_request:
+        types: [opened, reopened]
+      push:
+        branches: ['main']
+        tags: [ v* ]
+    jobs:
+      build:
+        runs-on: macos-latest
+        steps:
+          - uses: actions/checkout@v4
+          - run:
+              fastlane tests

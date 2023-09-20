@@ -32,7 +32,7 @@ enum SDJWTBuilder {
   static func buildBlock(_ elements: ClaimRepresentable?...) -> SdElement {
     self.buildBlock(elements.compactMap({$0}))
   }
-  
+
   static func build(@SDJWTBuilder builder: () throws -> SdElement) rethrows -> SDJWTObject {
     return try builder().asObject ?? {
       throw SDJWTError.encodingError

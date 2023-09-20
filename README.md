@@ -70,16 +70,17 @@ Holder must know:
 the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT
 
 ```swift
-    let unverifiedSdJwtString = "..."
-    let issuersKeyPair: KeyPair!
+let unverifiedSdJwtString = "..."
+let issuersKeyPair: KeyPair!
 
-    let result = SDJWTVerifier(parser: CompactParser(serialisedString: unverifiedSdJwtString))
-      .verifyIssuance { jws in
-        SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-    }
+SDJWTVerifier(parser: CompactParser(serialisedString: unverifiedSdJwtString))
+  .verifyIssuance { jws in
+    SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+}
 ```
 ## Presentation Verification
-###In simple (not enveloped) format
+
+**In simple (not enveloped) format**
 
 In this case, the SD-JWT is expected to be in Combined Presentation format. Verifier should know the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT. Also, if verification includes Key Binding, the Verifier must also know a how the public key of the Holder was included in the SD-JWT and which algorithm the Holder used to sign the Key Binding JWT
 ```swift
@@ -111,22 +112,20 @@ let holderSDJWTRepresentation = try SDJWTIssuer
                 disclosuresToPresent: issuerSignedSDJWT.disclosures.filter({ _ in true }),
                 keyBindingJWT: KBJWT(header: .init(algorithm: .ES256),
                                      kbJwtPayload: VerifiersChallenge.json)
-//let verifier = SDJWTVerifier(parser: CompactParser(serialisedString: serialisedSDJwt))
-let verifier = SDJWTVerifier(sdJwt: holderSDJWTRepresentation)
+
+SDJWTVerifier(sdJwt: holderSDJWTRepresentation)
 .verifyPresentation { jws in
-  try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-} keyBindingVerifier: { jws, holdersPublicKey in
-  try KeyBindingVerifier(challenge: jws, extractedKey: holdersPublicKey)
+    try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+  } keyBindingVerifier: { jws, holdersPublicKey in
+    try KeyBindingVerifier(challenge: jws, extractedKey: holdersPublicKey)
 }                                                           
 ```
-###In enveloped format
+**In enveloped format**
 
-In enveloped format
-
-In this case, the SD-JWT is expected to be in envelope format. Verifier should know
-
-the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT.
-the public key and the signing algorithm used by the Holder to sign the envelope JWT, since the envelope acts like a proof of possession (replacing the key binding JWT)
+In this case, the SD-JWT is expected to be in envelope format. 
+Verifier should know:
+* the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT.
+* the public key and the signing algorithm used by the Holder to sign the envelope JWT, since the envelope acts like a proof of possession (replacing the key binding JWT)
 
 ```swift
 let sdjwtOnPayload = "...."
@@ -160,11 +159,13 @@ and a subset of claims we can recreate the initial JSON of the SD-JWT.
 ```
 
 ```swift
-let example3SDJWTString = "..."
-let sdjwt = CompactParser(serialisedString: example3SDJWTString).getSignedSdJwt()
+let example3SDJWTSerialisedFormat = "..."
+let sdjwt = CompactParser(serialisedString: example3SDJWTSerialisedFormat).getSignedSdJwt()
 
-sdjwt.recreateClaims().digestsFoundOnPayload // array of digests of disclosures found on payload for collision checking
-sdjwt.recreateClaims().recreatedClaims // the recreated JSON
+// array of digests of disclosures found on payload for collision 
+sdjwt.recreateClaims().digestsFoundOnPayload checking
+// the recreated JSON
+sdjwt.recreateClaims().recreatedClaims 
 ```
 The recreated JSON output 
 ```json

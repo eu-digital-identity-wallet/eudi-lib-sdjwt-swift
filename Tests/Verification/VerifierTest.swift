@@ -302,7 +302,6 @@ final class VerifierTest: XCTestCase {
     XCTAssertNoThrow(try verifier.get())
   }
 
-
   func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() throws {
     let serializerTest = SerialiserTest()
 
@@ -312,7 +311,6 @@ final class VerifierTest: XCTestCase {
                                                      jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData().payload)
 
     let signatureVerifier = try SignatureVerifier(signedJWT: .init(header: .init(algorithm: .ES256), payload: envelopeSerializer.data.payload, signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!), publicKey: holdersKeyPair.public)
-
 
     let jwt = try JWS(header: .init(algorithm: .ES256),
                       payload: envelopeSerializer.data.payload,

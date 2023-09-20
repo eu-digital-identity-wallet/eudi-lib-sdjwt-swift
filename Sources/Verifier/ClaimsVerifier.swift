@@ -101,7 +101,7 @@ class ClaimsVerifier: VerifierProtocol {
     if let array = aud.array {
       guard array
         .compactMap({$0.stringValue})
-        .contains(where: { $0 == expectedAudience} )
+        .contains(where: { $0 == expectedAudience})
       else {
         throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
       }

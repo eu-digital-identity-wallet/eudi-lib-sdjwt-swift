@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import Foundation
 
-import JOSESwift
-import SwiftyJSON
-
-extension JWS {
-  func payloadJSON() throws -> JSON {
-    try JSON(data: self.payload.data())
+let key =
+  """
+  {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "b28d4MwZMjw8-00CG4xfnn9SLMVMM19SlqZpVb_uNtQ",
+    "y": "Xv5zWwuoaTgdS6hV43yI6gBwTnjukmFQQnJ_kCxzqk8"
   }
+  """
+  .clean()
+// Key Pairs Used in the examples
+let holdersKeyPair = generateES256KeyPair()
 
-  func iat() throws -> Int? {
-    return try payloadJSON()[Keys.iat.rawValue].int
-  }
-
-  func aud() throws -> String? {
-    return try payloadJSON()[Keys.aud.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.aud.rawValue].string
-  }
-}
+let issuersKeyPair = generateES256KeyPair()

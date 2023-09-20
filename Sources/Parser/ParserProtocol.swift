@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import Foundation
 
-import JOSESwift
-import SwiftyJSON
+protocol ParserProtocol {
 
-extension JWS {
-  func payloadJSON() throws -> JSON {
-    try JSON(data: self.payload.data())
-  }
+  func getSignedSdJwt() throws -> SignedSDJWT
 
-  func iat() throws -> Int? {
-    return try payloadJSON()[Keys.iat.rawValue].int
-  }
+}
 
-  func aud() throws -> String? {
-    return try payloadJSON()[Keys.aud.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.aud.rawValue].string
+struct NoParser: ParserProtocol {
+  var sdJWT: SignedSDJWT
+
+  func getSignedSdJwt() throws -> SignedSDJWT {
+    return self.sdJWT
   }
 }

@@ -44,13 +44,15 @@ final class SpecExamples: XCTestCase {
       FlatDisclosedClaim("birthdate", "1940-01-01")
     }
     XCTAssert(structuredSDJWT.expectedDigests == 10)
-    let output = factory.createJWT(sdJwtObject: structuredSDJWT.asObject)
-    let digestCount = try! output.get().value.findDigestCount()
+    let output = factory.createSDJWTPayload(sdJwtObject: structuredSDJWT.asObject)
+
     let keyPair = generateES256KeyPair()
 
     let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), output.get()), signingKey: keyPair.private)
 
-    let disclosureVerifierOut = try DisclosuresVerifier(parser: Parser(serialisedString: SDJWTIssuer.serialised(serialiser: .init(signedSDJWT: sdjwt, serialisationFormat: .serialised)), serialisationFormat: .serialised)).verify()
+    let string = CompactSerialiser(signedSDJWT: sdjwt).serialised
+
+    let disclosureVerifierOut = try DisclosuresVerifier(parser: CompactParser(serialisedString: string)).verify()
 
     validateObjectResults(factoryResult: output,
                           expectedDigests: disclosureVerifierOut.digestsFoundOnPayload.count,
@@ -116,7 +118,7 @@ final class SpecExamples: XCTestCase {
       FlatDisclosedClaim("msisdn", "49123456789")
     }
 
-    let output = factory.createJWT(sdJwtObject: complex.asObject)
+    let output = factory.createSDJWTPayload(sdJwtObject: complex.asObject)
     let digestCount = try XCTUnwrap(try? output.get().value.findDigestCount())
     validateObjectResults(factoryResult: output, expectedDigests: 16)
 

@@ -1,6 +1,6 @@
 # Example 2a: Handling Structured Claims
 
-Description of the example in the [specification Example 2a: Handling Structured Claims](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-2-handling-structur)
+Description of the example in the [specification Example 2a: Handling Structured  Claims](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-2-handling-structur)
 
 ```json
 {

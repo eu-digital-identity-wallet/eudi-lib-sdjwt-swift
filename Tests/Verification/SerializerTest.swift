@@ -15,6 +15,7 @@
  */
 import Foundation
 import XCTest
+import JOSESwift
 
 @testable import eudi_lib_sdjwt_swift
 
@@ -23,10 +24,10 @@ final class SerialiserTest: XCTestCase {
     let keyBindingTest = KeyBindingTest()
     let (issuersSDJWT, holdersSDJWT) = try keyBindingTest.testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification()
 
-    let issuersSerialisedFormat = Serialiser(signedSDJWT: issuersSDJWT, serialisationFormat: .serialised).serialised
+    let issuersSerialisedFormat = CompactSerialiser(signedSDJWT: issuersSDJWT).serialised
     XCTAssert(issuersSerialisedFormat.components(separatedBy: "~").count >= 2)
 
-    let holdersSerialisedFormat = Serialiser(signedSDJWT: holdersSDJWT, serialisationFormat: .serialised).serialised
+    let holdersSerialisedFormat = CompactSerialiser(signedSDJWT: holdersSDJWT).serialised
     XCTAssert(holdersSerialisedFormat.components(separatedBy: "~").count >= 3)
 
     return holdersSerialisedFormat
@@ -34,9 +35,26 @@ final class SerialiserTest: XCTestCase {
 
   func testPareserWhenReceivingASerialisedFormatJWT_ThenConstructUnsignedSDJWT() throws {
     let serialisedString = try testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
-    let parser = Parser(serialisedString: serialisedString, serialisationFormat: .serialised)
+    let parser = CompactParser(serialisedString: serialisedString)
     let jwt = try parser.getSignedSdJwt().toSDJWT()
     print(jwt.disclosures)
+  }
+
+  func testSerialiseWhenChosingEnvelopeFormat_AppylingNoKeyBinding_ThenExpectACorrectJWT() throws {
+    let compactParser = try CompactParser(serialisedString: testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT())
+
+    let envelopeSerializer = try EnvelopedSerialiser(SDJWT: compactParser.getSignedSdJwt(),
+                                                 jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData().payload)
+
+    let parser = try EnvelopedParser(serialiserProtocol: envelopeSerializer)
+
+    let verifier = try SDJWTVerifier(parser: parser).verifyIssuance { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+    } claimVerifier: { _, _ in
+      ClaimsVerifier()
+    }.get()
+
+    print(verifier)
   }
 
 }

@@ -18,12 +18,10 @@ import JOSESwift
 import CryptoKit
 import Security
 
-public typealias JWTString = String
-public typealias Nonce = String
-
 class JWSController<SecKey> {
 
   // MARK: - Properties
+
   var signatureAlgorithm: SignatureAlgorithm
   // SecKey Should be Data (HMAC) Or SecKey (RSA, EC)
   let signer: Signer<SecKey>

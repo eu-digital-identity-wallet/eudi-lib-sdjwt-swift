@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import Foundation
 
-import JOSESwift
-import SwiftyJSON
+protocol SerialiserProtocol {
+  var serialised: String { get }
+  var data: Data { get }
 
-extension JWS {
-  func payloadJSON() throws -> JSON {
-    try JSON(data: self.payload.data())
-  }
-
-  func iat() throws -> Int? {
-    return try payloadJSON()[Keys.iat.rawValue].int
-  }
-
-  func aud() throws -> String? {
-    return try payloadJSON()[Keys.aud.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.aud.rawValue].string
-  }
 }

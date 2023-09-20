@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import Foundation
 
-import JOSESwift
-import SwiftyJSON
+struct TimeRange {
+    let startTime: Date
+    let endTime: Date
 
-extension JWS {
-  func payloadJSON() throws -> JSON {
-    try JSON(data: self.payload.data())
-  }
+    init?(startTime: Date, endTime: Date) {
+        guard startTime < endTime else {
+            return nil // Ensure that the start time is earlier than the end time
+        }
+        self.startTime = startTime
+        self.endTime = endTime
+    }
 
-  func iat() throws -> Int? {
-    return try payloadJSON()[Keys.iat.rawValue].int
-  }
-
-  func aud() throws -> String? {
-    return try payloadJSON()[Keys.aud.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.aud.rawValue].string
-  }
+    func contains(date: Date) -> Bool {
+        return date >= startTime && date <= endTime
+    }
 }

@@ -24,20 +24,10 @@ import XCTest
 final class VerifierTest: XCTestCase {
 
   func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
-    let key =
-      """
-      {
-        "kty": "EC",
-        "crv": "P-256",
-        "x": "b28d4MwZMjw8-00CG4xfnn9SLMVMM19SlqZpVb_uNtQ",
-        "y": "Xv5zWwuoaTgdS6hV43yI6gBwTnjukmFQQnJ_kCxzqk8"
-      }
-      """
-      .clean()
 
     let pk = try! ECPublicKey(data: JSON(parseJSON: key).rawData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
-    let ComplexStructureSDJWTString =
+    let complexStructureSDJWTString =
                 """
                 eyJhbGciOiAiRVMyNTYifQ.eyJfc2QiOiBbIi1hU3puSWQ5bVdNOG9jdVFvbENsbHN4V
                 mdncTEtdkhXNE90bmhVdFZtV3ciLCAiSUticllObjN2QTdXRUZyeXN2YmRCSmpERFVfR
@@ -71,14 +61,22 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    var result = SDJWTVerifier(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
+    let result = try SDJWTVerifier(parser: CompactParser(serialisedString: complexStructureSDJWTString))
       .verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
-      } disclosuresVerifier: { parser in
-        try DisclosuresVerifier(parser: parser)
+      } claimVerifier: { _, _ in
+        ClaimsVerifier()
       }
 
     XCTAssertNoThrow(try result.get())
+
+    let recreatedClaimsResult = try CompactParser(serialisedString: complexStructureSDJWTString)
+      .getSignedSdJwt()
+      .recreateClaims()
+
+    XCTAssertTrue(recreatedClaimsResult.recreatedClaims.exists())
+    XCTAssertTrue(recreatedClaimsResult.digestsFoundOnPayload.count == 6)
+
   }
 
   func testVerifierBehaviour_WhenPassedNoSignature_ThenExpectToPassAllCriterias() throws {
@@ -140,11 +138,10 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    let result = SDJWTVerifier(serialisedString: ComplexStructureSDJWTString, serialisationFormat: .serialised)
-      .unsingedVerify { parser in
-        try DisclosuresVerifier(parser: parser)
+    let result = try SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
+      .unsingedVerify { signedSDJWT in
+        try DisclosuresVerifier(signedSDJWT: signedSDJWT)
       }
-
 
     XCTAssertNoThrow(try result.get())
   }
@@ -187,9 +184,9 @@ final class VerifierTest: XCTestCase {
       .clean()
 
     let disclosureForDigestDict = [
-      "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k":element,
-      "9wpjVPWuD7PK0nsQDL8B06lmdgV3LVybhHydQpTNyLI":enclosedInDisclosure,
-      "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ":duplicateSD
+      "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k": element,
+      "9wpjVPWuD7PK0nsQDL8B06lmdgV3LVybhHydQpTNyLI": enclosedInDisclosure,
+      "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ": duplicateSD
     ]
 
     let claimExtractor = ClaimExtractor(digestsOfDisclosuresDict: disclosureForDigestDict)
@@ -203,4 +200,142 @@ final class VerifierTest: XCTestCase {
       }
     }
   }
+
+  func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() throws {
+    let iatJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                       header: .init(algorithm: .ES256), buildSDJWT: {
+      ConstantClaims.iat(time: Date())
+      FlatDisclosedClaim("time", "is created at \(Date())")
+    })
+
+    let expSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                         header: .init(algorithm: .ES256)) {
+      ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
+      FlatDisclosedClaim("time", "time runs out")
+
+    }
+
+    let nbfSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                         header: .init(algorithm: .ES256)) {
+      ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
+      FlatDisclosedClaim("time", "we are ahead of time")
+
+    }
+
+    let nbfAndExpSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                               header: .init(algorithm: .ES256)) {
+      ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
+      ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
+      FlatDisclosedClaim("time", "time runs out or maybe not")
+
+    }
+
+    for sdjwt in [iatJwt, expSdJwt, nbfSdJwt, nbfAndExpSdJwt] {
+      let result = try SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
+        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+      } claimVerifier: { nbf, exp in
+        ClaimsVerifier(iat: Int(Date().timeIntervalSince1970.rounded()),
+                       iatValidWindow: TimeRange(startTime: Date(), endTime: Date(timeIntervalSinceNow: 10)),
+                       nbf: nbf,
+                       exp: exp)
+      }
+
+      XCTAssertNoThrow(try result.get())
+    }
+  }
+
+  func testVerifierWhenProvidingAKeyBindingJWT_WHenProvidedWithAudNonceAndIatClaims_ThenExpectToPassClaimVerificationAndKBVerification () throws {
+    let holdersJWK = holdersKeyPair.public
+
+    let ecpubKey = try ECPublicKey(publicKey: holdersJWK)
+    let json = JSON(parseJSON: ecpubKey.jsonString()!)
+
+    let issuerSignedSDJWT = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+                                                  header: .init(algorithm: .ES256)) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      FlatDisclosedClaim("sub", "6c5c0a49-b589-431d-bae7-219122a9ec2c")
+      FlatDisclosedClaim("given_name", "太郎")
+      FlatDisclosedClaim("family_name", "山田")
+      FlatDisclosedClaim("email", "\"unusual email address\"@example.jp")
+      FlatDisclosedClaim("phone_number", "+81-80-1234-5678")
+      ObjectClaim("address") {
+        FlatDisclosedClaim("street_address", "東京都港区芝公園４丁目２−８")
+        FlatDisclosedClaim("locality", "東京都")
+        FlatDisclosedClaim("region", "港区")
+        FlatDisclosedClaim("country", "JP")
+      }
+      FlatDisclosedClaim("birthdate", "1940-01-01")
+
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", json["y"].stringValue)
+          PlainClaim("x", json["x"].stringValue)
+          PlainClaim("crv", json["crv"].stringValue)
+        }
+      }
+    }
+
+    let holder = try SDJWTIssuer
+      .presentation(holdersPrivateKey: holdersKeyPair.private,
+                    signedSDJWT: issuerSignedSDJWT,
+                    disclosuresToPresent: issuerSignedSDJWT.disclosures.filter({_ in true }),
+                    keyBindingJWT: KBJWT(header: .init(algorithm: .ES256),
+                                         kbJwtPayload: JWTBody(nonce: "123456789",
+                                                               aud: "example.com",
+                                                               iat: 1694600000).json))
+
+    let verifier = SDJWTVerifier(sdJwt: holder).verifyPresentation { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+    } claimVerifier: { _, _ in
+      ClaimsVerifier()
+    } keyBindingVerifier: { jws, holdersPublicKey in
+      try KeyBindingVerifier(iatOffset: .init(startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
+                                              endTime: Date(timeIntervalSince1970: 1694600000))!,
+                             expectedAudience: "example.com",
+                             challenge: jws,
+                             extractedKey: holdersPublicKey)
+    }
+
+    XCTAssertNoThrow(try verifier.get())
+  }
+
+  func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() throws {
+    let serializerTest = SerialiserTest()
+
+    let compactParser = try CompactParser(serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT())
+
+    let envelopeSerializer = try EnvelopedSerialiser(SDJWT: compactParser.getSignedSdJwt(),
+                                                     jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData().payload)
+
+    let signatureVerifier = try SignatureVerifier(signedJWT: .init(header: .init(algorithm: .ES256), payload: envelopeSerializer.data.payload, signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!), publicKey: holdersKeyPair.public)
+
+    let jwt = try JWS(header: .init(algorithm: .ES256),
+                      payload: envelopeSerializer.data.payload,
+                      signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!)
+
+    let envelopedJws = try JWS(compactSerialization: jwt.compactSerializedString)
+
+    let verifyEnvelope =
+    try SDJWTVerifier(parser: EnvelopedParser(data: envelopeSerializer.data))
+      .verifyEnvelope(envelope: envelopedJws) { jws in
+
+        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+      } holdersSignatureVerifier: {
+
+        try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
+      } claimVerifier: { audClaim, iat in
+
+        ClaimsVerifier(iat: iat,
+                       iatValidWindow: .init(startTime: Date(timeIntervalSince1970: 1234-10),
+                                             endTime: Date(timeIntervalSince1970: 1234+10)),
+                       audClaim: audClaim,
+                       expectedAud: "sub")
+      }
+
+    XCTAssertNoThrow(try verifyEnvelope.get())
+  }
+
 }

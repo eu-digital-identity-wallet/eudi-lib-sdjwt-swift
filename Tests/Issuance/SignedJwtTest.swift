@@ -21,54 +21,33 @@ import XCTest
 @testable import eudi_lib_sdjwt_swift
 
 final class SignedJwtTest: XCTestCase {
-  @SDJWTBuilder
-  var claims: SdElement {
-    ConstantClaims.sub(subject: "6c5c0a49-b589-431d-bae7-219122a9ec2c")
-    ConstantClaims.iss(domain: "https://example.com/issuer")
-    ConstantClaims.iat(time: 1516239022)
-    ConstantClaims.exp(time: 1516239022)
-
-    ObjectClaim("address") {
-      FlatDisclosedClaim("street_address", "Schulstr. 12")
-      FlatDisclosedClaim("locality", "Schulpforta")
-      FlatDisclosedClaim("region", "Sachsen-Anhalt")
-      FlatDisclosedClaim("country", "DE")
-    }
-  }
-  let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
   func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheSDJW_WithNoKeyBidning() throws {
-    let claimSet = validateObjectResults(factoryResult: factory.createJWT(sdJwtObject: claims.asObject), expectedDigests: claims.expectedDigests)
 
     let keyPair = generateES256KeyPair()
-    let signedJWT = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claimSet),
-                                            signingKey: keyPair.private)
+    let signedJWT = try SDJWTIssuer.issue(issuersPrivateKey: keyPair.private, header: .init(algorithm: .ES256), buildSDJWT: {
+      ConstantClaims.sub(subject: "6c5c0a49-b589-431d-bae7-219122a9ec2c")
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: 1516239022)
+      ConstantClaims.exp(time: 1516239022)
 
-    let verifier = try SignatureVerifier(signedJWT: signedJWT.jwt, publicKey: keyPair.public)
-    XCTAssertNoThrow(try verifier.verify())
+      ObjectClaim("address") {
+        FlatDisclosedClaim("street_address", "Schulstr. 12")
+        FlatDisclosedClaim("locality", "Schulpforta")
+        FlatDisclosedClaim("region", "Sachsen-Anhalt")
+        FlatDisclosedClaim("country", "DE")
+      }
+    })
 
+    let serialised: String = try signedJWT.serialised { jwt in
+      CompactSerialiser(signedSDJWT: jwt)
+    }
+
+    let verifier = try SDJWTVerifier(parser: CompactParser(serialisedString: serialised)).verifyIssuance { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: keyPair.public)
+    } claimVerifier: { _, _ in
+      ClaimsVerifier()
+    }
   }
 
-  func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheJWTComponentOfTheSDJWTAndVerify() throws {
-
-    let keyPair = generateES256KeyPair()
-
-    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
-    let claimSetResult = factory.createJWT(sdJwtObject: claims.asObject)
-    let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claimSetResult.get()), signingKey: keyPair.private)
-
-    let disclosureVerifier = try DisclosuresVerifier(parser: Parser(serialisedString: SDJWTIssuer.serialised(serialiser: .init(signedSDJWT: sdjwt, serialisationFormat: .serialised)), serialisationFormat: .serialised))
-
-    let digestCount = disclosureVerifier.digestsOfDisclosuresDict.count
-
-    validateObjectResults(factoryResult: claimSetResult, expectedDigests: digestCount)
-
-    let claimSet = try claimSetResult.get()
-
-    let signedJWT = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claimSet),
-                                            signingKey: keyPair.private)
-
-    let verifier = try SignatureVerifier(signedJWT: signedJWT.jwt, publicKey: keyPair.public)
-    XCTAssertNoThrow(try verifier.verify())
-  }
 }

@@ -16,37 +16,36 @@
 import Foundation
 import JOSESwift
 
-class Serialiser {
+class CompactSerialiser: SerialiserProtocol {
+
+  // MARK: - Properties
+
+  var data: Data {
+    self.serialised.data(using: .utf8) ?? Data()
+  }
 
   var serialised: String {
-    self.serialisationFormat.serialize(signedSDJWT: signedSDJWT)
+    self.serialisationFormat.serialise(signedSDJWT: signedSDJWT)
   }
 
   private var signedSDJWT: SignedSDJWT
-  private var serialisationFormat: SerialisationFormat
+  private var serialisationFormat: SerialisationFormat = .serialised
 
-  init(signedSDJWT: SignedSDJWT, serialisationFormat: SerialisationFormat) {
+  // MARK: - Lifecycle
+
+  init(signedSDJWT: SignedSDJWT) {
     self.signedSDJWT = signedSDJWT
-    self.serialisationFormat = serialisationFormat
   }
 }
 
 extension SerialisationFormat {
-  func serialize(signedSDJWT: SignedSDJWT) -> String {
-    switch self {
-    case .serialised:
-      return serialised(signedSDJWT: signedSDJWT)
-    }
-
-    func serialised(signedSDJWT: SignedSDJWT) -> String {
-      var output = ""
-      output += signedSDJWT.jwt.compactSerializedString
-      output += signedSDJWT.disclosures.reduce(into: "~", { partialResult, disclosure in
-        partialResult += disclosure + "~"
-      })
-      output += signedSDJWT.kbJwt?.compactSerializedString ?? ""
-      return output
-    }
-
+  func serialise(signedSDJWT: SignedSDJWT) -> String {
+    var output = ""
+    output += signedSDJWT.jwt.compactSerializedString
+    output += signedSDJWT.disclosures.reduce(into: "~", { partialResult, disclosure in
+      partialResult += disclosure + "~"
+    })
+    output += signedSDJWT.kbJwt?.compactSerializedString ?? ""
+    return output
   }
 }

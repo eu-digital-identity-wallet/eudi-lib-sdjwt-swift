@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import JOSESwift
-import SwiftyJSON
+import Foundation
 
-extension JWS {
-  func payloadJSON() throws -> JSON {
-    try JSON(data: self.payload.data())
-  }
-
-  func iat() throws -> Int? {
-    return try payloadJSON()[Keys.iat.rawValue].int
-  }
-
-  func aud() throws -> String? {
-    return try payloadJSON()[Keys.aud.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.aud.rawValue].string
+extension Data {
+  var payload: Payload {
+    Payload(self)
   }
 }

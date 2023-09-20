@@ -15,16 +15,25 @@
  */
 import SwiftyJSON
 
+typealias ClaimExtractorResult = (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON)
+
 class ClaimExtractor {
+
+  // MARK: - Properties
 
   var digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]
 
-  init(digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]) {
+  // MARK: - Lifecycle
+
+  public init(digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]) {
     self.digestsOfDisclosuresDict = digestsOfDisclosuresDict
   }
 
-  func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
+  // MARK: - Methods
+
+  public func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> ClaimExtractorResult {
     var json = json
+    json.dictionaryObject?.removeValue(forKey: Keys.sdAlg.rawValue)
     var foundDigests: [DigestType] = []
 
     // try to find sd keys on the top level
@@ -62,8 +71,7 @@ class ClaimExtractor {
       } else if !subJson.arrayValue.isEmpty {
         for (index, object) in subJson.arrayValue.enumerated() {
           if object[Keys.dots.rawValue].exists() {
-            if let foundDisclosedArrayElement = digestsOfDisclosuresDict[object[Keys.dots]
-              .stringValue]?
+            if let foundDisclosedArrayElement = digestsOfDisclosuresDict[object[Keys.dots].stringValue]?
               .base64URLDecode()?
               .arrayProperty {
 

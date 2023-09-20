@@ -23,7 +23,9 @@ struct DisclosuresVerifierOutput {
 }
 
 class DisclosuresVerifier: VerifierProtocol {
+
   // MARK: - Properties
+
   let disclosuresReceivedInSDJWT: [Disclosure]
   var digestsFoundOnPayload: [DigestType] = []
   let digestCreator: DigestCreator
@@ -34,23 +36,11 @@ class DisclosuresVerifier: VerifierProtocol {
 
   // MARK: - Lifecycle
 
-  init(parser: Parser) throws {
-    // Get the header and payload values
-    // Ignore signatures
-    // It is the signatures verifier job to confirm that
-    sdJwt = try parser.getSignedSdJwt().toSDJWT()
+  init(signedSDJWT: SignedSDJWT) throws {
+    self.sdJwt = try signedSDJWT.toSDJWT()
 
     // Retrieve hashing algorithm from payload
-    if sdJwt.jwt.payload[Keys.sdAlg.rawValue].exists() {
-      let stringValue = sdJwt.jwt.payload[Keys.sdAlg.rawValue].stringValue
-      let algorithIdentifier = HashingAlgorithmIdentifier.allCases.first(where: {$0.rawValue == stringValue})
-      guard let algorithIdentifier else {
-        throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
-      }
-      digestCreator = DigestCreator(hashingAlgorithm: algorithIdentifier.hashingAlgorithm())
-    } else {
-      throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
-    }
+    digestCreator = try self.sdJwt.extractDigestCreator()
 
     self.disclosuresReceivedInSDJWT = sdJwt.disclosures
 
@@ -72,8 +62,12 @@ class DisclosuresVerifier: VerifierProtocol {
     recreatedClaims = claimExtractor.recreatedClaims
   }
 
-  // MARK: - Methods
+  convenience init(parser: ParserProtocol) throws {
+    try self.init(signedSDJWT: try parser.getSignedSdJwt())
+  }
 
+  // MARK: - Methods
+  @discardableResult
   func verify() throws -> DisclosuresVerifierOutput {
     // Create the digest for the enveloped disclosures
     // Convert the base64 string to the hash, Digests we got passed

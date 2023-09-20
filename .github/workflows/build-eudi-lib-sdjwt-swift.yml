@@ -1,11 +1,15 @@
 ---
-name: build-eudi-lib-sdjwt-swift
-on:
-  - push
-jobs:
-  build:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v2
-      - run:
-          echo "Placeholder action"
+  name: build-lib-sdjwt-swift
+  on:
+    pull_request:
+      types: [opened, reopened]
+    push:
+      branches: ['*']
+      tags: [ v* ]
+  jobs:
+    build:
+      runs-on: macos-latest
+      steps:
+        - uses: actions/checkout@v4
+        - run:
+            fastlane tests

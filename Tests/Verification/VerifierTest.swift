@@ -27,7 +27,7 @@ final class VerifierTest: XCTestCase {
 
     let pk = try! ECPublicKey(data: JSON(parseJSON: key).rawData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
-    let ComplexStructureSDJWTString =
+    let complexStructureSDJWTString =
                 """
                 eyJhbGciOiAiRVMyNTYifQ.eyJfc2QiOiBbIi1hU3puSWQ5bVdNOG9jdVFvbENsbHN4V
                 mdncTEtdkhXNE90bmhVdFZtV3ciLCAiSUticllObjN2QTdXRUZyeXN2YmRCSmpERFVfR
@@ -61,7 +61,7 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    let result = try SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
+    let result = try SDJWTVerifier(parser: CompactParser(serialisedString: complexStructureSDJWTString))
       .verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
       } claimVerifier: { _, _ in
@@ -69,6 +69,14 @@ final class VerifierTest: XCTestCase {
       }
 
     XCTAssertNoThrow(try result.get())
+
+    let recreatedClaimsResult = try CompactParser(serialisedString: complexStructureSDJWTString)
+      .getSignedSdJwt()
+      .recreateClaims()
+
+    XCTAssertTrue(recreatedClaimsResult.recreatedClaims.exists())
+    XCTAssertTrue(recreatedClaimsResult.digestsFoundOnPayload.count == 6)
+
   }
 
   func testVerifierBehaviour_WhenPassedNoSignature_ThenExpectToPassAllCriterias() throws {
@@ -191,6 +199,10 @@ final class VerifierTest: XCTestCase {
         XCTFail("wrong type of error \(error)")
       }
     }
+
+    let c = CompactParser(serialisedString: "").getSignedSdJwt()
+    c.recreateClaims().digestsFoundOnPayload
+    c.recreateClaims().recreatedClaims
   }
 
   func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() throws {
@@ -312,16 +324,19 @@ final class VerifierTest: XCTestCase {
 
     let envelopedJws = try JWS(compactSerialization: jwt.compactSerializedString)
 
-    let verifyEnvelope = try SDJWTVerifier(parser: EnvelopedParser(data: envelopeSerializer.data))
-      .verifyEnvelope(issuedAt: Date(timeIntervalSince1970: 1234),
-                      audience: "sub",
-                      envelope: envelopedJws) { jws in
+    let verifyEnvelope =
+    try SDJWTVerifier(parser: EnvelopedParser(data: envelopeSerializer.data))
+      .verifyEnvelope(envelope: envelopedJws) { jws in
+
         try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
       } holdersSignatureVerifier: {
+
         try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
       } claimVerifier: { audClaim, iat in
-        ClaimsVerifier(iat: iat, iatValidWindow: .init(startTime: Date(timeIntervalSince1970: 1234-10),
-                                                       endTime: Date(timeIntervalSince1970: 1234+10)),
+
+        ClaimsVerifier(iat: iat,
+                       iatValidWindow: .init(startTime: Date(timeIntervalSince1970: 1234-10),
+                                             endTime: Date(timeIntervalSince1970: 1234+10)),
                        audClaim: audClaim,
                        expectedAud: "sub")
       }

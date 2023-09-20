@@ -15,6 +15,8 @@
  */
 import SwiftyJSON
 
+typealias ClaimExtractorResult = (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON)
+
 class ClaimExtractor {
 
   // MARK: - Properties
@@ -29,7 +31,7 @@ class ClaimExtractor {
 
   // MARK: - Methods
 
-  public func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON) {
+  public func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> ClaimExtractorResult {
     var json = json
     json.dictionaryObject?.removeValue(forKey: Keys.sdAlg.rawValue)
     var foundDigests: [DigestType] = []

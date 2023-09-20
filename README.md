@@ -19,11 +19,11 @@ is implemented in Swift.
 
 ## Use cases supported
 
-- [Issuance](#issuance): As an Issuer use the library to issue a SD-JWT (in Combined Issuance Format) ✅︎
+- [Issuance](#issuance): As an Issuer use the library to issue a SD-JWT (in Combined Issuance Format)
 - [Holder Verification](#holder-verification): As Holder verify a SD-JWT (in Combined Issuance Format) issued by an
-  Issuer ✅︎
-- [Presentation Verification](#presentation-verification): As a Verifier verify SD-JWT in Combined Presentation Format ✅︎ or in Envelope Format 
-- [Recreate initial claims](#recreate-original-claims): Given a SD-JWT recreate the original claims ✅︎
+  Issuer
+- [Presentation Verification](#presentation-verification): As a Verifier verify SD-JWT in Combined Presentation Format or in Envelope Format 
+- [Recreate initial claims](#recreate-original-claims): Given a SD-JWT recreate the original claims
 
 ## Issuance
 
@@ -77,10 +77,7 @@ the public key of the Issuer and the algorithm used by the Issuer to sign the SD
     let result = SDJWTVerifier(parser: CompactParser(serialisedString: unverifiedSdJwtString))
       .verifyIssuance { jws in
         SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-    } disclosuresVerifier: { signedSdJwt in
-        DisclosuresVerifier(signedSDJWT: signedSdJwt)
     }
-
 ```
 ## Presentation Verification
 ###In simple (not enveloped) format
@@ -119,17 +116,86 @@ In this case, the SD-JWT is expected to be in Combined Presentation format. Veri
     let verifier = SDJWTVerifier(sdJwt: holderSDJWTRepresentation)
     .verifyPresentation { jws in
       try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-    } disclosuresVerifier: { signedSDJWT in
-      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
     } keyBindingVerifier: { jws, holdersPublicKey in
       try KeyBindingVerifier(challenge: jws, extractedKey: holdersPublicKey)
     }                                                           
 ```
 ###In enveloped format
 
-***WIP***
-## Recreate original claims
+In enveloped format
 
+In this case, the SD-JWT is expected to be in envelope format. Verifier should know
+
+the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT.
+the public key and the signing algorithm used by the Holder to sign the envelope JWT, since the envelope acts like a proof of possession (replacing the key binding JWT)
+
+```swift
+    let sdjwtOnPayload = "...."
+
+    try SDJWTVerifier(parser: CompactParser(serialisedString: sdjwtOnPayload))
+      .verifyEnvelope(envelope: envelopedJws) { jws in
+        // to verify the enveloped sdjwt
+        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+      } holdersSignatureVerifier: {
+        // to verify the container jwt
+        try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
+      } claimVerifier: { audClaim, iat in
+        ClaimsVerifier(iat: iat,
+                       iatValidWindow: .init(startTime: Date(),
+                                             endTime: Date()),
+                       audClaim: audClaim,
+                       expectedAud: "clientId")
+      }
+```
+## Recreate original claims
+Given a complex structure as per [Example 3: Complex Structured SD-JWT](docs/examples/example3-complex-structured.md)
+and a subset of claims we can recreate the initial JSON of the SD-JWT.
+
+```
+["2GLC42sKQveCfGfryNRN9w", "time", "2012-04-23T18:25Z"]
+["Pc33JM2LchcU_lHggv_ufQ", {"_sd": ["9wpjVPWuD7PK0nsQDL8B06lmdgV3LVybhHydQpTNyLI", "G5EnhOAOoU9X_6QMNvzFXjpEA_Rc-AEtm1bG_wcaKIk", "IhwFrWUB63RcZq9yvgZ0XPc7Gowh3O2kqXeBIswg1B4", "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ"]}]
+["eI8ZWm9QnKPpNPeNenHdhQ", "method", "pipp"]
+["G02NSrQfjFXQ7Io09syajA", "given_name", "Max"]
+["lklxF5jMYlGTPUovMNIvCA", "family_name", "M\u00fcller"]
+["y1sVU5wdfJahVdgwPgS7RQ", "address", {"locality": "Maxstadt", "postal_code": "12344", "country": "DE", "street_address": "Weidenstra\u00dfe 22"}]
+```
+
+```swift
+let example3SDJWTString = "..."
+let sdjwt = CompactParser(serialisedString: example3SDJWTString).getSignedSdJwt()
+
+sdjwt.recreateClaims().digestsFoundOnPayload // array of digests of disclosures found on payload for collision checking
+sdjwt.recreateClaims().recreatedClaims // the recreated JSON
+```
+The recreated JSON output 
+```json
+▿ {
+  "iat" : 1683000000,
+  "verified_claims" : {
+    "claims" : {
+      "given_name" : "Max",
+      "family_name" : "Müller",
+      "address" : {
+        "country" : "DE",
+        "locality" : "Maxstadt",
+        "street_address" : "Weidenstraße 22",
+        "postal_code" : "12344"
+      }
+    },
+    "verification" : {
+      "trust_framework" : "de_aml",
+      "time" : "2012-04-23T18:25Z",
+      "evidence" : [
+        {
+          "method" : "pipp"
+        }
+      ]
+    }
+  },
+  "iss" : "https://example.com/issuer",
+  "exp" : 1883000000
+}
+```
 ## DSL Examples
 
 All examples assume that we have the following claim set
@@ -146,11 +212,11 @@ All examples assume that we have the following claim set
 }
 ```
 
-- [Option 1: Flat SD-JWT](docs/examples/option1-flat-sd-jwt.md)
-- [Option 2: Structured SD-JWT](docs/examples/option2-structured-sd-jwt.md)
-- [Option 3: SD-JWT with Recursive Disclosures](docs/examples/option3-recursive-sd-jwt.md)
-- [Example 2a: Handling Structured Claims](docs/examples/example2a-handling-structure-claims.md)
-- [Example 3: Complex Structured SD-JWT](docs/examples/example3-complex-structured.md)
+- [Option 1: Flat SD-JWT](Docs/examples/option1-flat-sd-jwt.md)
+- [Option 2: Structured SD-JWT](Docs/examples/option2-structured-sd-jwt.md)
+- [Option 3: SD-JWT with Recursive Disclosures](Docs/examples/option3-recursive-sd-jwt.md)
+- [Example 2a: Handling Structured Claims](Docs/examples/example2a-handling-structure-claims.md)
+- [Example 3: Complex Structured SD-JWT](Docs/examples/example3-complex-structured.md)
 
 ## How to contribute
 

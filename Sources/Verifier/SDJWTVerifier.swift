@@ -112,9 +112,7 @@ class SDJWTVerifier {
     }
   }
 
-  public func verifyEnvelope(issuedAt: Date,
-                             audience: String,
-                             envelope: JWS,
+  public func verifyEnvelope(envelope: JWS,
                              issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
                              holdersSignatureVerifier: () throws -> SignatureVerifier,
                              claimVerifier: (_ audClaim: String, _ iat: Int) -> ClaimsVerifier) -> Result<JWS, Error> {
@@ -158,8 +156,8 @@ class SDJWTVerifier {
   /// - Returns: Self after performing the verification.
   /// - Throws: An error if the verification fails.
   ///
-  public func with(verifierProtocol: () -> any VerifierProtocol) throws -> Self {
-    try verifierProtocol().verify()
+  public func with(verifierProtocol: (SignedSDJWT) -> any VerifierProtocol) throws -> Self {
+    try verifierProtocol(self.sdJwt).verify()
     return self
   }
 

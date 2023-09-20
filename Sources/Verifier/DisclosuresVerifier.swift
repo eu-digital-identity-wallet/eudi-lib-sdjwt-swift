@@ -40,16 +40,7 @@ class DisclosuresVerifier: VerifierProtocol {
     self.sdJwt = try signedSDJWT.toSDJWT()
 
     // Retrieve hashing algorithm from payload
-    if sdJwt.jwt.payload[Keys.sdAlg.rawValue].exists() {
-      let stringValue = sdJwt.jwt.payload[Keys.sdAlg.rawValue].stringValue
-      let algorithIdentifier = HashingAlgorithmIdentifier.allCases.first(where: {$0.rawValue == stringValue})
-      guard let algorithIdentifier else {
-        throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
-      }
-      digestCreator = DigestCreator(hashingAlgorithm: algorithIdentifier.hashingAlgorithm())
-    } else {
-      throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
-    }
+    digestCreator = try self.sdJwt.extractDigestCreator()
 
     self.disclosuresReceivedInSDJWT = sdJwt.disclosures
 

@@ -8,16 +8,8 @@
       tags: [ v* ]
   jobs:
     build:
-      name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
-      strategy:
-        matrix:
-          os: [macos-latest]
-          swift: ["5.8"]
-      runs-on: ${{ matrix.os }}
+      runs-on: "macos-latest"
       steps:
-        - uses: swift-actions/setup-swift@v1
-          with:
-            swift-version: ${{ matrix.swift }}
         - uses: actions/checkout@v4
         - run:
             fastlane tests

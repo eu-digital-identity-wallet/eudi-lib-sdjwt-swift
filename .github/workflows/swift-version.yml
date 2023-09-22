@@ -20,3 +20,6 @@
                 swift-version: ${{ matrix.swift }}
             - name: Get swift version
               run: swift --version
+            - uses: actions/checkout@v4
+            - run:
+                fastlane tests

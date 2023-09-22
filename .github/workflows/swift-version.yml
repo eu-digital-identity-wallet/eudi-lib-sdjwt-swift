@@ -1,0 +1,22 @@
+---
+    name: swift-version
+    on:
+      pull_request:
+        types: [opened, reopened]
+      push:
+        branches: ['*']
+        tags: [ v* ]
+    jobs:
+      build:
+        name: Swift ${{ matrix.swift }} on ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+          matrix:
+            os: [macos-latest]
+            swift: ["5.8.0"]
+        steps:
+            - uses: swift-actions/setup-swift@v1
+              with:
+                swift-version: ${{ matrix.swift }}
+            - name: Get swift version
+              run: swift --version

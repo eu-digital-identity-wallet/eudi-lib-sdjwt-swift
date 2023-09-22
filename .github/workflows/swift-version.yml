@@ -21,7 +21,5 @@
             - name: Get swift version
               run: swift --version
             - uses: actions/checkout@v4
-            - run: >
-                fastlane swift
-                
+            - run:
                 fastlane tests

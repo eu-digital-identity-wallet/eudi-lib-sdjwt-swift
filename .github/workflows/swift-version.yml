@@ -22,7 +22,7 @@
               run: swift --version
             - uses: maxim-lobanov/setup-xcode@v1
               with:
-                xcode-version: '15.0'
+                xcode-version: '14.3'
             - uses: actions/checkout@v4
             - run:
                 fastlane tests

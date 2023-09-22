@@ -4,7 +4,7 @@ Check [specification Option 1: Flat SD-JWT](https://www.ietf.org/archive/id/draf
 
 The example bellow demonstrates the usage of the library mixed with the Kotlinx Serialization DSL
 to produce a SD-JWT which contains claim `sub` plain and `address` is selectively disclosed as a whole.
-Also, standard JWT claims have been added plain (`iss`, `iat`, `exp`)
+Also, standard JWT claims have been added plain (`iss`, `iat`, `exp`) 
 
 ```swift
     @SDJWTBuilder

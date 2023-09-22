@@ -15,23 +15,8 @@
  */
 import Foundation
 
-extension Encodable {
-  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = outputFormatting
+protocol SerialiserProtocol {
+  var serialised: String { get }
+  var data: Data { get }
 
-    let jsonData = try encoder.encode(self)
-
-    if let jsonString = String(data: jsonData, encoding: .utf8) {
-      return jsonString
-    } else {
-      throw SDJWTError.serializationError
-    }
-  }
-
-  func toJSONData() throws -> Data {
-    let encoder = JSONEncoder()
-    let jsonData = try encoder.encode(self)
-    return jsonData
-  }
 }

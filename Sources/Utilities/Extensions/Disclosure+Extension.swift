@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 import Foundation
+import SwiftyJSON
 
-extension Encodable {
-  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = outputFormatting
-
-    let jsonData = try encoder.encode(self)
-
-    if let jsonString = String(data: jsonData, encoding: .utf8) {
-      return jsonString
-    } else {
-      throw SDJWTError.serializationError
-    }
+extension Disclosure {
+  var objectProperty: (key: String, value: JSON) {
+    let json = JSON(parseJSON: self)
+    return (json.arrayValue[1].stringValue, json.arrayValue[2])
   }
 
-  func toJSONData() throws -> Data {
-    let encoder = JSONEncoder()
-    let jsonData = try encoder.encode(self)
-    return jsonData
+  var arrayProperty: JSON {
+    let json = JSON(parseJSON: self)
+    return (json.arrayValue[1])
   }
 }

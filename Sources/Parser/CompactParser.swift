@@ -19,54 +19,40 @@ import SwiftyJSON
 
 enum SerialisationFormat {
   case serialised
+  case envelope
 }
 
-class Parser {
+class CompactParser: ParserProtocol {
+
   // MARK: - Properties
 
   var serialisedString: String
-  var serialisationFormat: SerialisationFormat
+  var serialisationFormat: SerialisationFormat = .serialised
   // MARK: - Lifecycle
 
-  init(serialisedString: String, serialisationFormat: SerialisationFormat) {
-    self.serialisedString = serialisedString
-    self.serialisationFormat = serialisationFormat
+  required init(serialiserProtocol: SerialiserProtocol) {
+    self.serialisedString = serialiserProtocol.serialised
   }
+
+  init(serialisedString: String) {
+    self.serialisedString = serialisedString
+  }
+
   // MARK: - Methods
 
   func getSignedSdJwt() throws -> SignedSDJWT {
-    let (serialisedJWT, dislosuresInBase64, serialisedKBJWT) = self.parseCombined()
-    return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: dislosuresInBase64, serializedKbJwt: serialisedKBJWT)
+    let (serialisedJWT, disclosuresInBase64, serialisedKBJWT) = try self.parseCombined()
+    return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: disclosuresInBase64, serializedKbJwt: serialisedKBJWT)
   }
 
-  private func parseSDJWT(serialisedJWT: String, dislosuresInBase64: [Disclosure], serialisedKBJWT: String?) throws -> SDJWT {
-    let jws = try JWS(compactSerialization: serialisedJWT)
-
-    let disclosures = dislosuresInBase64
-      .compactMap({$0.base64URLDecode()})
-
-    let jwt = try JWT(header: jws.header, payload: jws.payloadJSON())
-
-    guard let serialisedKBJWT, let kbJWS = try? JWS(compactSerialization: serialisedKBJWT) else {
-      return try SDJWT(jwt: jwt, disclosures: disclosures, kbJWT: nil)
-    }
-
-    let kbJWT = try JWT(header: kbJWS.header, kbJwtPayload: kbJWS.payloadJSON())
-
-    return try SDJWT(jwt: jwt, disclosures: disclosures, kbJWT: kbJWT)
-  }
-
-  private func parseCombined() -> (String, [Disclosure], String?) {
+  private func parseCombined() throws -> (String, [Disclosure], String?) {
     let parts = self.serialisedString
       .split(separator: "~")
-      .map({String($0)})
+      .map {String($0)}
     guard parts.count > 1 else {
-      return ("", [], nil)
+      throw SDJWTVerifierError.parsingError
     }
     let jwt = String(parts[0])
-
-    switch self.serialisationFormat {
-    case .serialised:
       if serialisedString.hasSuffix("~") == true {
         // means no key binding is present
         let disclosures = parts[safe: 1..<parts.count]?.compactMap({String($0)})
@@ -78,8 +64,6 @@ class Parser {
         let kbJwt = String(parts[parts.count - 1])
         return (jwt, disclosures ?? [], kbJwt)
       }
-
-    }
 
   }
 }

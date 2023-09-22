@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import Foundation
 
-extension Encodable {
-  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = outputFormatting
+import JOSESwift
+import SwiftyJSON
 
-    let jsonData = try encoder.encode(self)
-
-    if let jsonString = String(data: jsonData, encoding: .utf8) {
-      return jsonString
-    } else {
-      throw SDJWTError.serializationError
-    }
+extension JWS {
+  func payloadJSON() throws -> JSON {
+    try JSON(data: self.payload.data())
   }
 
-  func toJSONData() throws -> Data {
-    let encoder = JSONEncoder()
-    let jsonData = try encoder.encode(self)
-    return jsonData
+  func iat() throws -> Int? {
+    return try payloadJSON()[Keys.iat.rawValue].int
+  }
+
+  func aud() throws -> String? {
+    return try payloadJSON()[Keys.aud.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.aud.rawValue].string
   }
 }

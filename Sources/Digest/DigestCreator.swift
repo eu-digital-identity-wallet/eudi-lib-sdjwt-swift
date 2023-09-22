@@ -22,6 +22,7 @@ class DigestCreator {
   var hashingAlgorithm: HashingAlgorithm
 
   let saltProvider = DefaultSaltProvider()
+
   // MARK: - LifeCycle
 
   init(hashingAlgorithm: HashingAlgorithm = SHA256Hashing()) {
@@ -54,6 +55,7 @@ enum DigestType: RawRepresentable, Hashable {
   case object(DisclosureDigest)
 
   // MARK: - Properties
+
   var components: Int {
     switch self {
     case .array:
@@ -69,6 +71,7 @@ enum DigestType: RawRepresentable, Hashable {
       return disclosureDigest
     }
   }
+
   // MARK: - Lifecycle
 
   init?(rawValue: DisclosureDigest) {
@@ -76,7 +79,7 @@ enum DigestType: RawRepresentable, Hashable {
       .replacingOccurrences(of: "\"", with: "")
       .replacingOccurrences(of: "[", with: "")
       .replacingOccurrences(of: "]", with: "")
-    let components = rawValue.components(separatedBy: ",")
+    let components = cleanRawValue.components(separatedBy: ",")
 
     switch components.count {
     case 2:

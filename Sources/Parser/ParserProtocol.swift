@@ -15,29 +15,16 @@
  */
 import Foundation
 
-typealias Disclosure = String
-typealias DisclosureDigest = String
+protocol ParserProtocol {
 
-protocol HashingAlgorithm {
-  var identifier: String { get }
+  func getSignedSdJwt() throws -> SignedSDJWT
 
-  func hash(disclosure: Disclosure) -> Data?
 }
 
-enum HashingAlgorithmIdentifier: String, CaseIterable {
-  case SHA256 = "sha-256"
-  case SHA384 = "sha-384"
-  case SHA512 = "sha-512"
+struct NoParser: ParserProtocol {
+  var sdJWT: SignedSDJWT
 
-  func hashingAlgorithm() -> HashingAlgorithm {
-
-    switch self {
-    case .SHA256:
-      return SHA256Hashing()
-    case .SHA384:
-      return SHA256Hashing()
-    case .SHA512:
-      return SHA512Hashing()
-    }
+  func getSignedSdJwt() throws -> SignedSDJWT {
+    return self.sdJWT
   }
 }

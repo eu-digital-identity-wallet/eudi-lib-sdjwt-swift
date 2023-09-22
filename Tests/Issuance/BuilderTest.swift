@@ -51,7 +51,7 @@ final class BuilderTest: XCTestCase {
       }
     }
 
-    let unsignedJwt = factory.createJWT(sdJwtObject: sdObject.asObject)
+    let unsignedJwt = factory.createSDJWTPayload(sdJwtObject: sdObject.asObject)
 
     switch unsignedJwt {
     case .success((let json, let disclosures)):
@@ -72,7 +72,7 @@ final class BuilderTest: XCTestCase {
       FlatDisclosedClaim("name", "nikos")
     }
 
-    let unsignedJwt = factory.createJWT(sdJwtObject: jwt.asObject)
+    let unsignedJwt = factory.createSDJWTPayload(sdJwtObject: jwt.asObject)
     validateObjectResults(factoryResult: unsignedJwt, expectedDigests: jwt.expectedDigests)
   }
 
@@ -95,9 +95,9 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let unsignedPlain = jwtFactory.createJWT(sdJwtObject: plainJWT.asObject)
+    let unsignedPlain = jwtFactory.createSDJWTPayload(sdJwtObject: plainJWT.asObject)
 
-    let objectPlain = jwtFactory.createJWT(sdJwtObject: objects.asObject)
+    let objectPlain = jwtFactory.createSDJWTPayload(sdJwtObject: objects.asObject)
 
     validateObjectResults(factoryResult: unsignedPlain, expectedDigests: 0)
     validateObjectResults(factoryResult: objectPlain, expectedDigests: 1)
@@ -121,9 +121,9 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let unsignedPlain = jwtFactory.createJWT(sdJwtObject: plainJWT.asObject)
+    let unsignedPlain = jwtFactory.createSDJWTPayload(sdJwtObject: plainJWT.asObject)
 
-    let objectPlain = jwtFactory.createJWT(sdJwtObject: objects.asObject)
+    let objectPlain = jwtFactory.createSDJWTPayload(sdJwtObject: objects.asObject)
 
     validateObjectResults(factoryResult: unsignedPlain, expectedDigests: 4)
     validateObjectResults(factoryResult: objectPlain, expectedDigests: 1)
@@ -146,7 +146,7 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let recursiveObject = jwtFactory.createJWT(sdJwtObject: objects.asObject)
+    let recursiveObject = jwtFactory.createSDJWTPayload(sdJwtObject: objects.asObject)
 
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: objects.expectedDigests)
   }
@@ -158,7 +158,8 @@ final class BuilderTest: XCTestCase {
         FlatDisclosedClaim("street_address", "Schulstr. 12")
         FlatDisclosedClaim("locality", "Schulpforta")
         FlatDisclosedClaim("region", "Sachs,n-Anhalt")
-        PlainClaim("country", "DE")
+        let string = "123"
+        PlainClaim("country", string)
         RecursiveObject("deep object embeded") {
           PlainClaim("deep", "deeep value")
           FlatDisclosedClaim("deep_disclosed", "deep disclosed claim")
@@ -168,7 +169,7 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let recursiveObject = jwtFactory.createJWT(sdJwtObject: objects.asObject)
+    let recursiveObject = jwtFactory.createSDJWTPayload(sdJwtObject: objects.asObject)
 
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: 5)
   }
@@ -184,9 +185,36 @@ final class BuilderTest: XCTestCase {
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let recursiveObject = jwtFactory.createJWT(sdJwtObject: array.asObject)
+    let recursiveObject = jwtFactory.createSDJWTPayload(sdJwtObject: array.asObject)
 
     validateObjectResults(factoryResult: recursiveObject, expectedDigests: array.expectedDigests)
   }
 
+  func testNestedArrays() {
+    @SDJWTBuilder
+    var nestedArrays: SdElement {
+      SdArrayClaim("array", array: [
+        .array([
+          .plain(1),
+          .flat(2),
+          .object({
+            FlatDisclosedClaim("nested object in array key", "nested object in array value")
+          })
+        ]),
+        .plain(value: "other value")
+      ])
+    }
+
+    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+
+    validateObjectResults(factoryResult: factory.createSDJWTPayload(sdJwtObject: nestedArrays.asObject), expectedDigests: 3)
+  }
+
+  func testKeyValidity_WhenPassedBindedKeysAsKey_ExpectToFail() {
+    let claim = FlatDisclosedClaim(Keys.sd.rawValue, "value")
+    let dotsClaim = FlatDisclosedClaim(Keys.dots.rawValue, "value")
+
+    XCTAssertNil(claim)
+    XCTAssertNil(dotsClaim)
+  }
 }

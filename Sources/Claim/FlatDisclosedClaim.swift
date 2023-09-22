@@ -15,6 +15,7 @@
  */
 
 struct FlatDisclosedClaim: ClaimRepresentable {
+
   // MARK: - Properties
 
   var key: String
@@ -41,6 +42,14 @@ struct FlatDisclosedClaim: ClaimRepresentable {
   init?(_ key: String, _ flat: [String: Encodable]) {
     self.key = key
     self.value = SdElement.flat(value: flat)
+    guard case Result.success(true) = checkKeyValidity() else {
+      return nil
+    }
+  }
+
+  init?(_ key: String, @SDJWTBuilder _ flat: () -> SdElement) {
+    self.key = key
+    self.value = SdElement.flat(value: flat().asJSON)
     guard case Result.success(true) = checkKeyValidity() else {
       return nil
     }

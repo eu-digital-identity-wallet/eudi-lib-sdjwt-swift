@@ -15,23 +15,19 @@
  */
 import Foundation
 
-extension Encodable {
-  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = outputFormatting
+struct TimeRange {
+    let startTime: Date
+    let endTime: Date
 
-    let jsonData = try encoder.encode(self)
-
-    if let jsonString = String(data: jsonData, encoding: .utf8) {
-      return jsonString
-    } else {
-      throw SDJWTError.serializationError
+    init?(startTime: Date, endTime: Date) {
+        guard startTime < endTime else {
+            return nil // Ensure that the start time is earlier than the end time
+        }
+        self.startTime = startTime
+        self.endTime = endTime
     }
-  }
 
-  func toJSONData() throws -> Data {
-    let encoder = JSONEncoder()
-    let jsonData = try encoder.encode(self)
-    return jsonData
-  }
+    func contains(date: Date) -> Bool {
+        return date >= startTime && date <= endTime
+    }
 }

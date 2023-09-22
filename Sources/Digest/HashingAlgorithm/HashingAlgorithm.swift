@@ -15,23 +15,29 @@
  */
 import Foundation
 
-extension Encodable {
-  func toJSONString(outputFormatting: JSONEncoder.OutputFormatting = .prettyPrinted) throws -> String {
-    let encoder = JSONEncoder()
-    encoder.outputFormatting = outputFormatting
+typealias Disclosure = String
+typealias DisclosureDigest = String
 
-    let jsonData = try encoder.encode(self)
+protocol HashingAlgorithm {
+  var identifier: String { get }
 
-    if let jsonString = String(data: jsonData, encoding: .utf8) {
-      return jsonString
-    } else {
-      throw SDJWTError.serializationError
+  func hash(disclosure: Disclosure) -> Data?
+}
+
+enum HashingAlgorithmIdentifier: String, CaseIterable {
+  case SHA256 = "sha-256"
+  case SHA384 = "sha-384"
+  case SHA512 = "sha-512"
+
+  func hashingAlgorithm() -> HashingAlgorithm {
+
+    switch self {
+    case .SHA256:
+      return SHA256Hashing()
+    case .SHA384:
+      return SHA384Hashing()
+    case .SHA512:
+      return SHA512Hashing()
     }
-  }
-
-  func toJSONData() throws -> Data {
-    let encoder = JSONEncoder()
-    let jsonData = try encoder.encode(self)
-    return jsonData
   }
 }

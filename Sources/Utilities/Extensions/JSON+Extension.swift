@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import SwiftyJSON
-import JOSESwift
 
 extension JSON {
   subscript(key: Keys) -> JSON {
@@ -26,10 +25,6 @@ extension Keys: JSONSubscriptType {
   var jsonKey: SwiftyJSON.JSONKey {
     return .key(self.rawValue)
   }
-}
-
-extension JSON {
-  static let empty = JSON()
 }
 
 extension JSON {
@@ -54,35 +49,8 @@ extension JSON {
 
     return foundValues
   }
-
-  func findDigests() -> [DigestType] {
-    var foundDigests: [DigestType] = []
-
-    if !self[Keys.sd.rawValue].arrayValue.isEmpty {
-      foundDigests += self[Keys.sd.rawValue].arrayValue
-        .compactMap({$0.string})
-        .map({.object($0)})
-    }
-
-    // Loop through the JSON data
-    for (_, subJson): (String, JSON) in self {
-      if !subJson.dictionaryValue.isEmpty {
-        foundDigests += subJson.findDigests()
-      } else if !subJson.arrayValue.isEmpty {
-        for object in subJson.arrayValue {
-          if object[Keys.dots.rawValue].exists() {
-            foundDigests.appendOptional(.array(object[Keys.dots].stringValue))
-          }
-        }
-      }
-    }
-
-    return foundDigests
-  }
 }
 
-extension JWS {
-  func payloadJSON() throws -> JSON {
-    try JSON(data: self.payload.data())
-  }
+extension JSON {
+  static let empty = JSON()
 }

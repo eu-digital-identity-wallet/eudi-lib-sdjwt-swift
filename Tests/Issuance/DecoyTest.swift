@@ -34,7 +34,7 @@ final class DecoyTest: XCTestCase {
     }
 
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: decoysLimit)
-    let unsignedJwt = jwtFactory.createJWT(sdJwtObject: sdObject.asObject)
+    let unsignedJwt = jwtFactory.createSDJWTPayload(sdJwtObject: sdObject.asObject)
 
     validateObjectResults(factoryResult: unsignedJwt, expectedDigests: sdObject.expectedDigests, numberOfDecoys: jwtFactory.decoyCounter, decoysLimit: decoysLimit)
   }
@@ -50,7 +50,7 @@ final class DecoyTest: XCTestCase {
       }
     }
     let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: 0)
-    let payload = try! jwtFactory.createJWT(sdJwtObject: sdObject.asObject).get()
+    let payload = try! jwtFactory.createSDJWTPayload(sdJwtObject: sdObject.asObject).get()
 
     let digestsCount = payload.value.findDigestCount()
   }

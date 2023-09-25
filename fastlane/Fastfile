@@ -5,7 +5,7 @@ platform :ios do
   lane :tests do
 
     sh("ls /Applications/")
-    xcode_select("/Applications/Xcode_15.0.app")
+    xcode_select("/Applications/Xcode.app")
 
     params = {
       package_path: '.',

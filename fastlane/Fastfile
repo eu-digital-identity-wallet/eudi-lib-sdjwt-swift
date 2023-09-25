@@ -4,6 +4,7 @@ platform :ios do
   desc "Runs unit tests"
   lane :tests do
 
+    sh("ls /Applications/")
     xcode_select("/Applications/Xcode_15.0.app")
 
     params = {

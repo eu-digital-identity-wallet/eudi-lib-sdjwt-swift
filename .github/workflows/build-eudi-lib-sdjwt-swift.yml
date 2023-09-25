@@ -4,7 +4,7 @@
     pull_request:
       types: [opened, reopened]
     push:
-      branches: ['*']
+      branches: ['main']
       tags: [ v* ]
   jobs:
     build:

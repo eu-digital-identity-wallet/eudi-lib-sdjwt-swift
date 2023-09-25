@@ -4,9 +4,6 @@ platform :ios do
   desc "Runs unit tests"
   lane :tests do
 
-    sh("ls /Applications/")
-    xcode_select("/Applications/Xcode.app")
-
     params = {
       package_path: '.',
       scheme: 'eudi-lib-sdjwt-swift',

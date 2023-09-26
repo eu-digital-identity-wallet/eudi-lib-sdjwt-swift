@@ -17,24 +17,24 @@ import Foundation
 import SwiftyJSON
 import JOSESwift
 
-class EnvelopedSerialiser: SerialiserProtocol {
+public class EnvelopedSerialiser: SerialiserProtocol {
 
   // MARK: - Properties
 
   private var payload: JSON
   private var serialisationFormat: SerialisationFormat = .envelope
 
-  var serialised: String {
+  public var serialised: String {
     return (try? payload.toJSONString(outputFormatting: [])) ?? ""
   }
 
-  var data: Data {
+  public var data: Data {
     return (try? payload.rawData()) ?? Data()
   }
 
   // MARK: - Lifecycle
 
-  init(SDJWT: SignedSDJWT, jwTpayload: Payload, options opt: JSONSerialization.ReadingOptions = []) throws {
+  public init(SDJWT: SignedSDJWT, jwTpayload: Payload, options opt: JSONSerialization.ReadingOptions = []) throws {
     var updatedSDJWT = SDJWT
     updatedSDJWT.kbJwt = nil
 

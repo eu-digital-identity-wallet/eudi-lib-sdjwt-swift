@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-struct SdArrayClaim: ClaimRepresentable {
+public struct SdArrayClaim: ClaimRepresentable {
 
   // MARK: - Properties
 
-  var key: String
-  var value: SdElement
+  public var key: String
+  public var value: SdElement
 
   // MARK: - Lifecycle
 
-  init?(_ key: String, array: [SdElement]) {
+  public init?(_ key: String, array: [SdElement]) {
     self.key = key
     self.value = .array(array)
     guard case Result.success(true) = checkKeyValidity() else {
@@ -31,7 +31,7 @@ struct SdArrayClaim: ClaimRepresentable {
     }
   }
 
-  init?(_ key: String, @SDJWTArrayBuilder builder: () -> [SdElement]) {
+  public init?(_ key: String, @SDJWTArrayBuilder builder: () -> [SdElement]) {
     self.key = key
     self.value = .array(builder())
     guard case Result.success(true) = checkKeyValidity() else {
@@ -40,16 +40,16 @@ struct SdArrayClaim: ClaimRepresentable {
   }
 }
 
-struct RecursiveSdArrayClaim: ClaimRepresentable {
+public struct RecursiveSdArrayClaim: ClaimRepresentable {
 
   // MARK: - Properties
 
-  var key: String
-  var value: SdElement
+  public var key: String
+  public var value: SdElement
 
   // MARK: - Lifecycle
 
-  init?(_ key: String, array: [SdElement]) {
+  public init?(_ key: String, array: [SdElement]) {
     self.key = key
     self.value = .recursiveArray(array)
 
@@ -58,7 +58,7 @@ struct RecursiveSdArrayClaim: ClaimRepresentable {
     }
   }
 
-  init?(_ key: String, @SDJWTArrayBuilder builder: () -> [SdElement]) {
+  public init?(_ key: String, @SDJWTArrayBuilder builder: () -> [SdElement]) {
     self.key = key
     self.value = .recursiveArray(builder())
 

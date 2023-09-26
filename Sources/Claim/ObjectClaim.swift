@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-struct ObjectClaim: ClaimRepresentable {
+public struct ObjectClaim: ClaimRepresentable {
 
   // MARK: - Properties
 
-  var key: String
-  var value: SdElement
+  public var key: String
+  public var value: SdElement
 
   // MARK: - Lifecycle
 
-  init?(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
+  public init?(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
     self.key = key
     guard let object = builder().asObject else {
       return nil
@@ -34,7 +34,7 @@ struct ObjectClaim: ClaimRepresentable {
     }
   }
 
-  init?(_ key: String, value: SdElement) {
+  public init?(_ key: String, value: SdElement) {
     self.key = key
     self.value = value
     guard case Result.success(true) = checkKeyValidity() else {
@@ -43,16 +43,16 @@ struct ObjectClaim: ClaimRepresentable {
   }
 }
 
-struct RecursiveObject: ClaimRepresentable {
+public struct RecursiveObject: ClaimRepresentable {
 
   // MARK: - Properties
 
-  var key: String
-  var value: SdElement
+  public var key: String
+  public var value: SdElement
 
   // MARK: - Lifecycle
 
-  init?(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
+  public init?(_ key: String, @SDJWTBuilder builder: () -> SdElement) {
     self.key = key
     guard let object = builder().asObject else {
       return nil

@@ -15,7 +15,7 @@
  */
 import Foundation
 
-protocol SerialiserProtocol {
+public protocol SerialiserProtocol {
   var serialised: String { get }
   var data: Data { get }
 

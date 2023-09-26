@@ -15,7 +15,7 @@
  */
 import Foundation
 
-class EnvelopedParser: ParserProtocol {
+public class EnvelopedParser: ParserProtocol {
 
   // MARK: - Properties
 
@@ -23,14 +23,14 @@ class EnvelopedParser: ParserProtocol {
 
   // MARK: - Lifecycle
 
-  init(serialiserProtocol: SerialiserProtocol) throws {
+  public init(serialiserProtocol: SerialiserProtocol) throws {
     let jsonDecoder = JSONDecoder()
     let envelopedJwt = try jsonDecoder.decode(EnvelopedJwt.self, from: serialiserProtocol.data)
     let compactParser = CompactParser(serialisedString: envelopedJwt.sdJwt)
     self.sdJwt = try compactParser.getSignedSdJwt()
   }
 
-  init(data: Data) throws {
+  public init(data: Data) throws {
     let jsonDecoder = JSONDecoder()
     let envelopedJwt = try jsonDecoder.decode(EnvelopedJwt.self, from: data)
     let compactParser = CompactParser(serialisedString: envelopedJwt.sdJwt)
@@ -39,13 +39,13 @@ class EnvelopedParser: ParserProtocol {
 
   // MARK: - Methods
 
-  func getSignedSdJwt() throws -> SignedSDJWT {
+  public func getSignedSdJwt() throws -> SignedSDJWT {
     return sdJwt
   }
 
 }
 
-struct EnvelopedJwt: Codable {
+public struct EnvelopedJwt: Codable {
     let aud: String
     let iat: Int
     let nonce: String

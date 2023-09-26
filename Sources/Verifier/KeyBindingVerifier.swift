@@ -17,11 +17,11 @@ import Foundation
 import JOSESwift
 import SwiftyJSON
 
-class KeyBindingVerifier: VerifierProtocol {
+public class KeyBindingVerifier: VerifierProtocol {
 
   let signatureVerifier: SignatureVerifier
 
-  init(iatOffset: TimeRange,
+  public init(iatOffset: TimeRange,
        expectedAudience: String,
        challenge: JWS,
        extractedKey: JWK) throws {
@@ -86,7 +86,7 @@ class KeyBindingVerifier: VerifierProtocol {
   }
 
   @discardableResult
-  func verify() throws -> JWS {
+  public func verify() throws -> JWS {
     return try signatureVerifier.verify()
   }
 }

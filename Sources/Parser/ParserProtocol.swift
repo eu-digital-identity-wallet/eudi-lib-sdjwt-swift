@@ -15,7 +15,7 @@
  */
 import Foundation
 
-protocol ParserProtocol {
+public protocol ParserProtocol {
 
   func getSignedSdJwt() throws -> SignedSDJWT
 

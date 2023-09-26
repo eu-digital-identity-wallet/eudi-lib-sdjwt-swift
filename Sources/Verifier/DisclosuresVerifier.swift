@@ -16,13 +16,13 @@
 import Foundation
 import SwiftyJSON
 
-struct DisclosuresVerifierOutput {
+public struct DisclosuresVerifierOutput {
   var digestsFoundOnPayload: [DigestType]
   var disclosedSDJWT: SDJWT
   var recreatedClaims: JSON
 }
 
-class DisclosuresVerifier: VerifierProtocol {
+public class DisclosuresVerifier: VerifierProtocol {
 
   // MARK: - Properties
 
@@ -36,7 +36,7 @@ class DisclosuresVerifier: VerifierProtocol {
 
   // MARK: - Lifecycle
 
-  init(signedSDJWT: SignedSDJWT) throws {
+  public init(signedSDJWT: SignedSDJWT) throws {
     self.sdJwt = try signedSDJWT.toSDJWT()
 
     // Retrieve hashing algorithm from payload
@@ -68,7 +68,7 @@ class DisclosuresVerifier: VerifierProtocol {
 
   // MARK: - Methods
   @discardableResult
-  func verify() throws -> DisclosuresVerifierOutput {
+  public func verify() throws -> DisclosuresVerifierOutput {
     // Create the digest for the enveloped disclosures
     // Convert the base64 string to the hash, Digests we got passed
     // Base64 [salt, key, value]

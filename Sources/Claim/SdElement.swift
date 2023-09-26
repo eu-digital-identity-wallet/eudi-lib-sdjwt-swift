@@ -16,9 +16,9 @@
 import Foundation
 import SwiftyJSON
 
-typealias SDJWTObject = [String: SdElement]
+public typealias SDJWTObject = [String: SdElement]
 
-enum SdElement: Encodable {
+public enum SdElement: Encodable {
   // Basic Building Blocks
   case object([String: SdElement])
   case plain(JSON)
@@ -55,7 +55,7 @@ enum SdElement: Encodable {
 
   // MARK: - Encodable
 
-  func encode(to encoder: Encoder) {
+  public func encode(to encoder: Encoder) {
     switch self {
     case .object(let object), .recursiveObject(let object):
       try? object.encode(to: encoder)

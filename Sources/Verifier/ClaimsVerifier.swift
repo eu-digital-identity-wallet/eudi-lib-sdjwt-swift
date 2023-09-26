@@ -16,7 +16,7 @@
 import Foundation
 import SwiftyJSON
 
-class ClaimsVerifier: VerifierProtocol {
+public class ClaimsVerifier: VerifierProtocol {
 
   // MARK: - Properties
   var iat: Date?
@@ -31,7 +31,7 @@ class ClaimsVerifier: VerifierProtocol {
   let currentDate: Date
   // MARK: - Lifecycle
 
-  init(iat: Int? = nil,
+  public init(iat: Int? = nil,
        iatValidWindow: TimeRange? = nil,
        nbf: Int? = nil,
        exp: Int? = nil,
@@ -56,7 +56,7 @@ class ClaimsVerifier: VerifierProtocol {
 
   // MARK: - Methods
   @discardableResult
-  func verify() throws -> Bool {
+  public func verify() throws -> Bool {
     if let iat,
        let iatValidWindow,
        iatValidWindow.contains(date: iat) {

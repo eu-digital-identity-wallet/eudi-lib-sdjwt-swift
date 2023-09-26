@@ -16,14 +16,14 @@
 import Foundation
 import JOSESwift
 
-protocol VerifierProtocol {
+public protocol VerifierProtocol {
   associatedtype ReturnType
 
   @discardableResult
   func verify() throws -> ReturnType
 }
 
-enum SDJWTVerifierError: Error {
+public enum SDJWTVerifierError: Error {
   case parsingError
   case invalidJwt
   case keyBindingFailed(description: String)
@@ -41,7 +41,7 @@ enum SDJWTVerifierError: Error {
 /// `SDJWTVerifier` is a class for verifying SD JSON Web Tokens (SDJWT) in a Swift application.
 /// This class provides comprehensive methods to validate both cases of Issuance to a holder and presentation to a verifier
 ///
-class SDJWTVerifier {
+public class SDJWTVerifier {
 
   // MARK: - Properties
 

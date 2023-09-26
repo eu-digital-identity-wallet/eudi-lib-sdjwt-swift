@@ -18,12 +18,12 @@ import JOSESwift
 
 // To Constraint What can be passed as a key
 // JOSE Supports SecKey for RSA and EC and Data for HMAC
-protocol KeyExpressible {}
+public protocol KeyExpressible {}
 
 extension SecKey: KeyExpressible {}
 extension Data: KeyExpressible {}
 
-class SignatureVerifier: VerifierProtocol {
+public class SignatureVerifier: VerifierProtocol {
 
   // MARK: - Properties
 
@@ -32,7 +32,7 @@ class SignatureVerifier: VerifierProtocol {
 
   // MARK: - Lifecycle
 
-  init<Key: KeyExpressible>(signedJWT: JWS, publicKey: Key) throws {
+  public init<Key: KeyExpressible>(signedJWT: JWS, publicKey: Key) throws {
     guard let algorithm = signedJWT.header.algorithm else {
       throw SDJWTVerifierError.noAlgorithmProvided
     }
@@ -47,7 +47,7 @@ class SignatureVerifier: VerifierProtocol {
 
   // MARK: - Methods
   @discardableResult
-  func verify() throws -> JWS {
+  public func verify() throws -> JWS {
     let verifiedJws = try jws.validate(using: verifier)
     return verifiedJws
   }

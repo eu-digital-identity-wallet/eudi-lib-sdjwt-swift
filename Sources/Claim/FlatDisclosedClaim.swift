@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-struct FlatDisclosedClaim: ClaimRepresentable {
+public struct FlatDisclosedClaim: ClaimRepresentable {
 
   // MARK: - Properties
 
-  var key: String
-  var value: SdElement
+  public var key: String
+  public var value: SdElement
 
   // MARK: - Lifecycle
 
-  init?(_ key: String, _ flat: Encodable) {
+  public init?(_ key: String, _ flat: Encodable) {
     self.key = key
     self.value = SdElement.flat(value: flat)
     guard case Result.success(true) = checkKeyValidity() else {
@@ -31,7 +31,7 @@ struct FlatDisclosedClaim: ClaimRepresentable {
     }
   }
 
-  init?(_ key: String, _ flat: [Encodable]) {
+  public init?(_ key: String, _ flat: [Encodable]) {
     self.key = key
     self.value = SdElement.flat(value: flat)
     guard case Result.success(true) = checkKeyValidity() else {
@@ -39,7 +39,7 @@ struct FlatDisclosedClaim: ClaimRepresentable {
     }
   }
 
-  init?(_ key: String, _ flat: [String: Encodable]) {
+  public init?(_ key: String, _ flat: [String: Encodable]) {
     self.key = key
     self.value = SdElement.flat(value: flat)
     guard case Result.success(true) = checkKeyValidity() else {
@@ -47,7 +47,7 @@ struct FlatDisclosedClaim: ClaimRepresentable {
     }
   }
 
-  init?(_ key: String, @SDJWTBuilder _ flat: () -> SdElement) {
+  public init?(_ key: String, @SDJWTBuilder _ flat: () -> SdElement) {
     self.key = key
     self.value = SdElement.flat(value: flat().asJSON)
     guard case Result.success(true) = checkKeyValidity() else {

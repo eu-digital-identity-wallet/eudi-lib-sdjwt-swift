@@ -15,8 +15,8 @@
  */
 import Foundation
 
-typealias Disclosure = String
-typealias DisclosureDigest = String
+public typealias Disclosure = String
+public typealias DisclosureDigest = String
 
 protocol HashingAlgorithm {
   var identifier: String { get }

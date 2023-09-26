@@ -16,8 +16,8 @@
 import Foundation
 
 @resultBuilder
-enum SDJWTArrayBuilder {
-  static func buildBlock(_ elements: SdElement...) -> [SdElement] {
+public enum SDJWTArrayBuilder {
+  public static func buildBlock(_ elements: SdElement...) -> [SdElement] {
     elements.map({$0})
   }
 }

@@ -15,9 +15,9 @@
  */
 import SwiftyJSON
 
-typealias ClaimExtractorResult = (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON)
+public typealias ClaimExtractorResult = (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON)
 
-class ClaimExtractor {
+public class ClaimExtractor {
 
   // MARK: - Properties
 

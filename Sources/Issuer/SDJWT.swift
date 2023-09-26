@@ -17,7 +17,7 @@ import Foundation
 import SwiftyJSON
 import JOSESwift
 
-typealias KBJWT = JWT
+public typealias KBJWT = JWT
 
 struct SDJWT {
 
@@ -65,7 +65,7 @@ struct SDJWT {
   }
 }
 
-struct SignedSDJWT {
+public struct SignedSDJWT {
 
   // MARK: - Properties
 

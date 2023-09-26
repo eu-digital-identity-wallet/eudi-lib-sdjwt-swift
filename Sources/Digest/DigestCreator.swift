@@ -47,9 +47,9 @@ class DigestCreator {
 
 }
 
-enum DigestType: RawRepresentable, Hashable {
+public enum DigestType: RawRepresentable, Hashable {
 
-  typealias RawValue = DisclosureDigest
+  public typealias RawValue = DisclosureDigest
 
   case array(DisclosureDigest)
   case object(DisclosureDigest)
@@ -65,7 +65,7 @@ enum DigestType: RawRepresentable, Hashable {
     }
   }
 
-  var rawValue: DisclosureDigest {
+  public var rawValue: DisclosureDigest {
     switch self {
     case .array(let disclosureDigest), .object(let disclosureDigest):
       return disclosureDigest
@@ -74,7 +74,7 @@ enum DigestType: RawRepresentable, Hashable {
 
   // MARK: - Lifecycle
 
-  init?(rawValue: DisclosureDigest) {
+  public init?(rawValue: DisclosureDigest) {
     let cleanRawValue = rawValue
       .replacingOccurrences(of: "\"", with: "")
       .replacingOccurrences(of: "[", with: "")

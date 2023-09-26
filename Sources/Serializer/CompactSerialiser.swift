@@ -16,15 +16,15 @@
 import Foundation
 import JOSESwift
 
-class CompactSerialiser: SerialiserProtocol {
+public class CompactSerialiser: SerialiserProtocol {
 
   // MARK: - Properties
 
-  var data: Data {
+  public var data: Data {
     self.serialised.data(using: .utf8) ?? Data()
   }
 
-  var serialised: String {
+  public var serialised: String {
     self.serialisationFormat.serialise(signedSDJWT: signedSDJWT)
   }
 
@@ -33,12 +33,12 @@ class CompactSerialiser: SerialiserProtocol {
 
   // MARK: - Lifecycle
 
-  init(signedSDJWT: SignedSDJWT) {
+  public init(signedSDJWT: SignedSDJWT) {
     self.signedSDJWT = signedSDJWT
   }
 }
 
-extension SerialisationFormat {
+public extension SerialisationFormat {
   func serialise(signedSDJWT: SignedSDJWT) -> String {
     var output = ""
     output += signedSDJWT.jwt.compactSerializedString

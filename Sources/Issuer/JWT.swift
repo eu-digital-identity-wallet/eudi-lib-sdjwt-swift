@@ -17,7 +17,7 @@ import Foundation
 import JOSESwift
 import SwiftyJSON
 
-struct JWT: JWTRepresentable {
+public struct JWT: JWTRepresentable {
 
   // MARK: - Properties
 

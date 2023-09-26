@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-struct PlainClaim: ClaimRepresentable {
+public struct PlainClaim: ClaimRepresentable {
 
   // MARK: - Properties
 
-  var key: String
-  var value: SdElement
+  public var key: String
+  public var value: SdElement
 
   // MARK: - Lifecycle
 
-  init?(_ key: String, _ plain: Encodable) {
+  public init?(_ key: String, _ plain: Encodable) {
     self.key = key
     self.value = SdElement.plain(value: plain)
     guard case Result.success(true) = checkKeyValidity() else {
@@ -31,7 +31,7 @@ struct PlainClaim: ClaimRepresentable {
     }
   }
 
-  init?(_ key: String, _ plain: [Encodable]) {
+  public init?(_ key: String, _ plain: [Encodable]) {
     self.key = key
     self.value = SdElement.plain(value: plain)
     guard case Result.success(true) = checkKeyValidity() else {
@@ -39,7 +39,7 @@ struct PlainClaim: ClaimRepresentable {
     }
   }
 
-  init?(_ key: String, _ plain: [String: Encodable]) {
+  public init?(_ key: String, _ plain: [String: Encodable]) {
     self.key = key
     self.value = SdElement.plain(value: plain)
     guard case Result.success(true) = checkKeyValidity() else {

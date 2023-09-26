@@ -17,9 +17,7 @@ import Foundation
 import JOSESwift
 import SwiftyJSON
 
-/// `SDJWTIssuer` is a class for issuing and presenting signed SD JSON Web Tokens (SDJWTs).
-///
-class SDJWTIssuer {
+public class SDJWTIssuer {
 
   /// Enum to represent the purpose of the JWT.
   enum Purpose {

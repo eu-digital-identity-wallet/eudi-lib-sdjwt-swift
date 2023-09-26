@@ -17,7 +17,7 @@ import Foundation
 import SwiftyJSON
 
 /// Building block for the SD-JWT
-protocol ClaimRepresentable: Encodable {
+public protocol ClaimRepresentable: Encodable {
 
   var key: String { get set }
   var value: SdElement { get set }
@@ -25,16 +25,16 @@ protocol ClaimRepresentable: Encodable {
   func checkKeyValidity() -> Result<Bool, SDJWTError>
 }
 
-struct ConstantClaims: ClaimRepresentable {
+public struct ConstantClaims: ClaimRepresentable {
 
   // MARK: - Properties
 
-  var key: String
-  var value: SdElement
+  public var key: String
+  public var value: SdElement
 
   // MARK: - Lifecycle
 
-  private init(_ key: String, value: SdElement) {
+  public init(_ key: String, value: SdElement) {
     self.key = key
     self.value = value
   }
@@ -86,7 +86,7 @@ extension ClaimRepresentable {
   }
 
   @discardableResult
-  func checkKeyValidity() -> Result<Bool, SDJWTError> {
+  public func checkKeyValidity() -> Result<Bool, SDJWTError> {
     guard
       key != Keys.sd.rawValue,
       key != Keys.dots.rawValue else {
@@ -97,7 +97,7 @@ extension ClaimRepresentable {
   }
   // MARK: - Encodable
 
-  func encode(to encoder: Encoder) throws {
+  public func encode(to encoder: Encoder) throws {
     var container = encoder.container(keyedBy: RawCodingKey.self)
     try container.encode(self.value, forKey: .init(string: self.key))
   }

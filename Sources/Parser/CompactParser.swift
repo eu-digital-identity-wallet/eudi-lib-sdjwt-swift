@@ -17,12 +17,12 @@ import Foundation
 import JOSESwift
 import SwiftyJSON
 
-enum SerialisationFormat {
+public enum SerialisationFormat {
   case serialised
   case envelope
 }
 
-class CompactParser: ParserProtocol {
+public class CompactParser: ParserProtocol {
 
   // MARK: - Properties
 
@@ -30,17 +30,17 @@ class CompactParser: ParserProtocol {
   var serialisationFormat: SerialisationFormat = .serialised
   // MARK: - Lifecycle
 
-  required init(serialiserProtocol: SerialiserProtocol) {
+  public required init(serialiserProtocol: SerialiserProtocol) {
     self.serialisedString = serialiserProtocol.serialised
   }
 
-  init(serialisedString: String) {
+  public init(serialisedString: String) {
     self.serialisedString = serialisedString
   }
 
   // MARK: - Methods
 
-  func getSignedSdJwt() throws -> SignedSDJWT {
+  public func getSignedSdJwt() throws -> SignedSDJWT {
     let (serialisedJWT, disclosuresInBase64, serialisedKBJWT) = try self.parseCombined()
     return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: disclosuresInBase64, serializedKbJwt: serialisedKBJWT)
   }

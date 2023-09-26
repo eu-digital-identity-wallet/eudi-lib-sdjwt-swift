@@ -19,7 +19,7 @@ public typealias KeyPair = (public: SecKey, private: SecKey)
 public typealias JWTString = String
 public typealias Nonce = String
 
-enum SDJWTError: Error {
+public enum SDJWTError: Error {
   case sdAsKey
   case nullJSONValue
   case encodingError

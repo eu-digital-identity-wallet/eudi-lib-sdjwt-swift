@@ -40,7 +40,11 @@ class SDJWTFactory {
   ///   - digestCreator: An instance of `DigestCreator` for creating digests and hashes.
   ///   - decoysLimit: If decoys are requesed, defaults to 0
   ///
-  init(digestCreator: DigestCreator = DigestCreator(), saltProvider: SaltProvider, decoysLimit: Int = 0) {
+  init(
+    digestCreator: DigestCreator = DigestCreator(),
+    saltProvider: SaltProvider = DefaultSaltProvider(),
+    decoysLimit: Int = 0
+  ) {
     self.digestCreator = digestCreator
     self.saltProvider = saltProvider
     self.decoysLimit = decoysLimit

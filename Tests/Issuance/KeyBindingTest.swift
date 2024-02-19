@@ -72,7 +72,6 @@ final class KeyBindingTest: XCTestCase {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    //    let json = JSON(parseJSON: jwk)
     let holdersECPK = try ECPublicKey(publicKey: holdersKeyPair.public)
     let jwk: JSON = try
     ["jwk": JSON(data: holdersECPK.jsonData()!)]
@@ -82,21 +81,37 @@ final class KeyBindingTest: XCTestCase {
     let issuance = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claims),
                                                signingKey: issuersKeyPair.private)
 
+    let compactSerializer = CompactSerialiser(signedSDJWT: issuance)
+    let jwtString = compactSerializer.serialised
+    
+    let digestCreator = DigestCreator()
+    let out = digestCreator.hashAndBase64Encode(input: jwtString) ?? ""
+    
     let kbjwtPayload: ClaimSet = (JSON(
       [
         Keys.aud.rawValue: "https://example.com/verifier",
         Keys.iat.rawValue: Date().timeIntervalSince1970,
-        "nonce": "1234567890"] as [String: Any]
+        Keys.nonce.rawValue: "1234567890",
+        Keys.sdHash.rawValue: out
+      ] as [String: Any]
     ), [])
 
-    let presentation = try SDJWTIssuer.createSDJWT(purpose: .presentation(issuance, issuance.disclosures, KBJWT(header: .init(algorithm: .ES256), payload: kbjwtPayload.value)),
-                                                   signingKey: holdersKeyPair.private)
+    let presentation = try SDJWTIssuer.createSDJWT(
+      purpose: .presentation(
+        issuance, 
+        issuance.disclosures,
+        KBJWT(
+          header: .init(algorithm: .ES256),
+          payload: kbjwtPayload.value
+        )
+      ),
+      signingKey: holdersKeyPair.private
+    )
 
     try SignatureVerifier(signedJWT: issuance.jwt, publicKey: issuersKeyPair.public).verify()
-
     try SignatureVerifier(signedJWT: presentation.kbJwt!, publicKey: holdersKeyPair.public).verify()
     try SignatureVerifier(signedJWT: presentation.jwt, publicKey: issuersKeyPair.public).verify()
-
+    
     return(issuance, presentation)
   }
 

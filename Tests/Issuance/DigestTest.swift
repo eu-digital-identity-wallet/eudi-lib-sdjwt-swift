@@ -23,16 +23,16 @@ final class DigestTest: XCTestCase {
 
     let parts = ["6qMQvRL5haj", "family_name", "Möbius"]
     let salt = parts[0]
-    let key = parts[1]
+    _ = parts[1]
     let value = parts [2]
 
     let factory = SDJWTFactory(saltProvider: MockSaltProvider(saltString: salt))
 
     let disclose = factory.createSDJWTPayload(sdJwtObject: ["family_name": .flat(value: value)])
     switch disclose {
-    case .success((let json, let disclosures)):
+    case .success((_, let disclosures)):
       XCTAssertEqual(disclosures.first, "WyI2cU1RdlJMNWhhaiIsImZhbWlseV9uYW1lIiwiTcO2Yml1cyJd")
-    case .failure(let err):
+    case .failure:
       XCTFail("Failed to Create SDJWT")
     }
 
@@ -50,10 +50,10 @@ final class DigestTest: XCTestCase {
 
   func testDigestCreationg_GivenAfixedInputWithoutSpacesAfterEachElement_ThenExpectTheHashedOutputToMatch() {
     // this is the case where we remove the extra space after each object
-    let base64String = "WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgInN0cmVldF9hZGRyZXNzIiwgIlNjaHVsc3RyLiAxMiJd"
+    let base64String = "WyI2cU1RdlJMNWhhaiIsICJmYW1pbHlfbmFtZSIsICJNw7ZiaXVzIl0"
     let signer = DigestCreator()
     let out = signer.hashAndBase64Encode(input: base64String)
-    let output = "9gjVuXtdFROCgRrtNcGUXmF65rdezi_6Er_j76kmYyM"
+    let output = "uutlBuYeMDyjLLTpf6Jxi7yNkEF35jdyWMn9U7b_RYY"
 
     XCTAssertEqual(out, output)
   }

@@ -94,7 +94,7 @@ final class SpecExamples: XCTestCase {
           PlainClaim("trust_framework", "de_aml")
           FlatDisclosedClaim("time", "2012-04-23T18:25Z")
           FlatDisclosedClaim("verification_process", "f24c6f-6d3f-4ec5-973e-b0d8506f3bc7")
-          SdArrayClaim("evidence", array: [
+          ArrayClaim("evidence", array: [
             evidenceObject
           ])
 

@@ -14,10 +14,14 @@ Also, standard JWT claims have been added plain (`iss`, `iat`, `exp`)
       ConstantClaims.iss(domain: "https://example.com/issuer")
       ConstantClaims.sub(subject: "6c5c0a49-b589-431d-bae7-219122a9ec2c")
 
-      FlatDisclosedClaim("adress", ["street_address" : "Schulstr. 12",
-                                    "locality": "Schulpforta",
-                                    "region": "Sachsen-Anhalt",
-                                    "country": "DE"])
+      FlatDisclosedClaim(
+        "address", [
+          "street_address": "Schulstr. 12",
+          "locality": "Schulpforta",
+          "region": "Sachsen-Anhalt",
+          "country": "DE"
+        ]
+      )
     }
 ```
 

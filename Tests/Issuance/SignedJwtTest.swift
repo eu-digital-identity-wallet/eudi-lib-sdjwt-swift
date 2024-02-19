@@ -25,7 +25,12 @@ final class SignedJwtTest: XCTestCase {
   func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheSDJW_WithNoKeyBidning() throws {
 
     let keyPair = generateES256KeyPair()
-    let signedJWT = try SDJWTIssuer.issue(issuersPrivateKey: keyPair.private, header: .init(algorithm: .ES256), buildSDJWT: {
+    let signedJWT = try SDJWTIssuer.issue(
+      issuersPrivateKey: keyPair.private,
+      header: .init(
+        algorithm: .ES256
+      )
+    ) {
       ConstantClaims.sub(subject: "6c5c0a49-b589-431d-bae7-219122a9ec2c")
       ConstantClaims.iss(domain: "https://example.com/issuer")
       ConstantClaims.iat(time: 1516239022)
@@ -37,7 +42,7 @@ final class SignedJwtTest: XCTestCase {
         FlatDisclosedClaim("region", "Sachsen-Anhalt")
         FlatDisclosedClaim("country", "DE")
       }
-    })
+    }
 
     let serialised: String = try signedJWT.serialised { jwt in
       CompactSerialiser(signedSDJWT: jwt)

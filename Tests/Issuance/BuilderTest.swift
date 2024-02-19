@@ -23,7 +23,7 @@ final class BuilderTest: XCTestCase {
     @SDJWTBuilder
     var sdObject: SdElement {
       PlainClaim("name", "Edmun")
-      SdArrayClaim("Nationalites", array: [.flat(value: "DE"), .flat(value: 123)])
+      ArrayClaim("Nationalites", array: [.flat(value: "DE"), .flat(value: 123)])
       ObjectClaim("adress") {
         PlainClaim("locality", "gr")
         FlatDisclosedClaim("adress", "Al. Mich")
@@ -89,11 +89,11 @@ final class BuilderTest: XCTestCase {
     var objects: SdElement {
       ObjectClaim("Object", value: plainJWT)
       ObjectClaim("ArrayObject") {
-        SdArrayClaim("Array", array: [plainJWT])
+        ArrayClaim("Array", array: [plainJWT])
       }
     }
 
-    let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+    let jwtFactory = SDJWTFactory()
 
     let unsignedPlain = jwtFactory.createSDJWTPayload(sdJwtObject: plainJWT.asObject)
 
@@ -119,7 +119,7 @@ final class BuilderTest: XCTestCase {
       FlatDisclosedClaim("Flat Object", plainJWT.asJSON)
     }
 
-    let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+    let jwtFactory = SDJWTFactory()
 
     let unsignedPlain = jwtFactory.createSDJWTPayload(sdJwtObject: plainJWT.asObject)
 
@@ -144,7 +144,7 @@ final class BuilderTest: XCTestCase {
       }
     }
 
-    let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+    let jwtFactory = SDJWTFactory()
 
     let recursiveObject = jwtFactory.createSDJWTPayload(sdJwtObject: objects.asObject)
 
@@ -167,7 +167,7 @@ final class BuilderTest: XCTestCase {
       }
     }
 
-    let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+    let jwtFactory = SDJWTFactory()
 
     let recursiveObject = jwtFactory.createSDJWTPayload(sdJwtObject: objects.asObject)
 
@@ -177,13 +177,13 @@ final class BuilderTest: XCTestCase {
   func testDisclosedObjects_GivenArrayElementsToBeDisclosed_ThenExpectedDigestsMatchesTheProducedDigests() {
     @SDJWTBuilder
     var array: SdElement {
-      RecursiveSdArrayClaim("nationalities") {
+      RecursiveArrayClaim("nationalities") {
         SdElement.flat("DE")
         SdElement.plain("GR")
       }
     }
 
-    let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+    let jwtFactory = SDJWTFactory()
 
     let recursiveObject = jwtFactory.createSDJWTPayload(sdJwtObject: array.asObject)
 
@@ -193,7 +193,7 @@ final class BuilderTest: XCTestCase {
   func testNestedArrays() {
     @SDJWTBuilder
     var nestedArrays: SdElement {
-      SdArrayClaim("array", array: [
+      ArrayClaim("array", array: [
         .array([
           .plain(1),
           .flat(2),
@@ -205,7 +205,7 @@ final class BuilderTest: XCTestCase {
       ])
     }
 
-    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+    let factory = SDJWTFactory()
 
     validateObjectResults(factoryResult: factory.createSDJWTPayload(sdJwtObject: nestedArrays.asObject), expectedDigests: 3)
   }

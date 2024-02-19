@@ -49,7 +49,7 @@ public class SDJWTIssuer {
                              decoys: Int = 0,
                              @SDJWTBuilder buildSDJWT: () throws -> SdElement) throws -> SignedSDJWT {
 
-    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: decoys)
+    let factory = SDJWTFactory(decoysLimit: decoys)
     let claimSet = try factory.createSDJWTPayload(sdJwtObject: SDJWTBuilder.build(builder: buildSDJWT)).get()
     let signedSDJWT = try self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
     return signedSDJWT
@@ -63,12 +63,20 @@ public class SDJWTIssuer {
   ///   - disclosuresToPresent: The disclosures to include in the presentation.
   ///   - keyBindingJWT: An optional KBJWT for key binding.
   ///
-  public static func presentation<KeyType>(holdersPrivateKey: KeyType,
-                                    signedSDJWT: SignedSDJWT,
-                                    disclosuresToPresent: [Disclosure],
-                                    keyBindingJWT: KBJWT?) throws -> SignedSDJWT {
-    return try createSDJWT(purpose: .presentation(signedSDJWT, disclosuresToPresent, keyBindingJWT), signingKey: holdersPrivateKey)
-
+  public static func presentation<KeyType>(
+    holdersPrivateKey: KeyType,
+    signedSDJWT: SignedSDJWT,
+    disclosuresToPresent: [Disclosure],
+    keyBindingJWT: KBJWT?
+  ) throws -> SignedSDJWT {
+    try createSDJWT(
+      purpose: .presentation(
+        signedSDJWT, 
+        disclosuresToPresent,
+        keyBindingJWT
+      ),
+      signingKey: holdersPrivateKey
+    )
   }
 
   /// Present a signed SDJWT.

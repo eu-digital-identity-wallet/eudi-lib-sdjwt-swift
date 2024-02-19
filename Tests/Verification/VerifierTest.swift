@@ -58,8 +58,7 @@ final class VerifierTest: XCTestCase {
                 dTN1JRIiwgImFkZHJlc3MiLCB7ImxvY2FsaXR5IjogIk1heHN0YWR0IiwgInBvc3RhbF
                 9jb2RlIjogIjEyMzQ0IiwgImNvdW50cnkiOiAiREUiLCAic3RyZWV0X2FkZHJlc3MiOi
                 AiV2VpZGVuc3RyYVx1MDBkZmUgMjIifV0~
-                """
-      .clean()
+                """.clean()
 
     let result = try SDJWTVerifier(parser: CompactParser(serialisedString: complexStructureSDJWTString))
       .verifyIssuance { jws in
@@ -196,7 +195,7 @@ final class VerifierTest: XCTestCase {
       case .nonUniqueDisclosures:
         XCTAssert(true)
       default:
-        XCTFail("wrong type of error \(error)")
+        XCTFail("wrong type of error \(error?.localizedDescription ?? "")")
       }
     }
   }
@@ -208,36 +207,42 @@ final class VerifierTest: XCTestCase {
       FlatDisclosedClaim("time", "is created at \(Date())")
     })
 
-    let expSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
-                                         header: .init(algorithm: .ES256)) {
-      ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
-      FlatDisclosedClaim("time", "time runs out")
-
+    let expSdJwt = try SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: .init(algorithm: .ES256)) {
+        ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
+        FlatDisclosedClaim("time", "time runs out")
     }
 
-    let nbfSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
-                                         header: .init(algorithm: .ES256)) {
-      ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
-      FlatDisclosedClaim("time", "we are ahead of time")
-
+    let nbfSdJwt = try SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: .init(algorithm: .ES256)) {
+        ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
+        FlatDisclosedClaim("time", "we are ahead of time")
     }
 
-    let nbfAndExpSdJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
-                                               header: .init(algorithm: .ES256)) {
+    let nbfAndExpSdJwt = try SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: .init(algorithm: .ES256)
+    ) {
       ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
       ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
       FlatDisclosedClaim("time", "time runs out or maybe not")
-
     }
 
     for sdjwt in [iatJwt, expSdJwt, nbfSdJwt, nbfAndExpSdJwt] {
       let result = try SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
       } claimVerifier: { nbf, exp in
-        ClaimsVerifier(iat: Int(Date().timeIntervalSince1970.rounded()),
-                       iatValidWindow: TimeRange(startTime: Date(), endTime: Date(timeIntervalSinceNow: 10)),
-                       nbf: nbf,
-                       exp: exp)
+        ClaimsVerifier(
+          iat: Int(Date().timeIntervalSince1970.rounded()),
+          iatValidWindow: TimeRange(
+            startTime: Date(),
+            endTime: Date(timeIntervalSinceNow: 10)
+          ),
+          nbf: nbf,
+          exp: exp
+        )
       }
 
       XCTAssertNoThrow(try result.get())
@@ -278,27 +283,53 @@ final class VerifierTest: XCTestCase {
       }
     }
 
-    let holder = try SDJWTIssuer
-      .presentation(holdersPrivateKey: holdersKeyPair.private,
-                    signedSDJWT: issuerSignedSDJWT,
-                    disclosuresToPresent: issuerSignedSDJWT.disclosures.filter({_ in true }),
-                    keyBindingJWT: KBJWT(header: .init(algorithm: .ES256),
-                                         kbJwtPayload: JWTBody(nonce: "123456789",
-                                                               aud: "example.com",
-                                                               iat: 1694600000).json))
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(
+          signedSDJWT: issuerSignedSDJWT
+        ).serialised
+      ) ?? ""
 
-    let verifier = SDJWTVerifier(sdJwt: holder).verifyPresentation { jws in
-      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+    let holder = try SDJWTIssuer
+      .presentation(
+        holdersPrivateKey: holdersKeyPair.private,
+        signedSDJWT: issuerSignedSDJWT,
+        disclosuresToPresent: issuerSignedSDJWT.disclosures,
+        keyBindingJWT: KBJWT(
+          header: .init(algorithm: .ES256),
+          kbJwtPayload: .init([
+            Keys.nonce.rawValue: "123456789",
+            Keys.aud.rawValue: "example.com",
+            Keys.iat.rawValue: 1694600000,
+            Keys.sdHash.rawValue: sdHash
+          ])
+        )
+      )
+
+    let verifier = SDJWTVerifier(
+      sdJwt: holder
+    ).verifyPresentation { jws in
+      try SignatureVerifier(
+        signedJWT: jws,
+        publicKey: issuersKeyPair.public
+      )
+      
     } claimVerifier: { _, _ in
       ClaimsVerifier()
+      
     } keyBindingVerifier: { jws, holdersPublicKey in
-      try KeyBindingVerifier(iatOffset: .init(startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
-                                              endTime: Date(timeIntervalSince1970: 1694600000))!,
-                             expectedAudience: "example.com",
-                             challenge: jws,
-                             extractedKey: holdersPublicKey)
+      try KeyBindingVerifier(
+        iatOffset: .init(
+          startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
+          endTime: Date(timeIntervalSince1970: 1694600000)
+        )!,
+        expectedAudience: "example.com",
+        challenge: jws,
+        extractedKey: holdersPublicKey
+      )
     }
 
+    XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
     XCTAssertNoThrow(try verifier.get())
   }
 
@@ -310,11 +341,16 @@ final class VerifierTest: XCTestCase {
     let envelopeSerializer = try EnvelopedSerialiser(SDJWT: compactParser.getSignedSdJwt(),
                                                      jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData().payload)
 
-    let signatureVerifier = try SignatureVerifier(signedJWT: .init(header: .init(algorithm: .ES256), payload: envelopeSerializer.data.payload, signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!), publicKey: holdersKeyPair.public)
+    _ = try SignatureVerifier(signedJWT: .init(header: .init(algorithm: .ES256), payload: envelopeSerializer.data.payload, signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!), publicKey: holdersKeyPair.public)
 
-    let jwt = try JWS(header: .init(algorithm: .ES256),
-                      payload: envelopeSerializer.data.payload,
-                      signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!)
+    let jwt = try JWS(
+      header: .init(algorithm: .ES256),
+      payload: envelopeSerializer.data.payload,
+      signer: .init(
+        signingAlgorithm: .ES256,
+        key: holdersKeyPair.private
+      )!
+    )
 
     let envelopedJws = try JWS(compactSerialization: jwt.compactSerializedString)
 
@@ -327,15 +363,16 @@ final class VerifierTest: XCTestCase {
 
         try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
       } claimVerifier: { audClaim, iat in
-
-        ClaimsVerifier(iat: iat,
-                       iatValidWindow: .init(startTime: Date(timeIntervalSince1970: 1234-10),
-                                             endTime: Date(timeIntervalSince1970: 1234+10)),
-                       audClaim: audClaim,
-                       expectedAud: "sub")
+        ClaimsVerifier(
+          iat: iat,
+          iatValidWindow: .init(
+            startTime: Date(timeIntervalSince1970: 1234-10),
+            endTime: Date(timeIntervalSince1970: 1234+10)
+          ),
+          audClaim: audClaim,
+          expectedAud: "sub"
+        )
       }
-
     XCTAssertNoThrow(try verifyEnvelope.get())
   }
-
 }

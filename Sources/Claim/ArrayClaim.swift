@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-public struct SdArrayClaim: ClaimRepresentable {
+public struct ArrayClaim: ClaimRepresentable {
 
   // MARK: - Properties
 
@@ -40,7 +40,7 @@ public struct SdArrayClaim: ClaimRepresentable {
   }
 }
 
-public struct RecursiveSdArrayClaim: ClaimRepresentable {
+public struct RecursiveArrayClaim: ClaimRepresentable {
 
   // MARK: - Properties
 

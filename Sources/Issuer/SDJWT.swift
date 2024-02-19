@@ -69,15 +69,26 @@ public struct SignedSDJWT {
 
   // MARK: - Properties
 
-  var jwt: JWS
+  let jwt: JWS
   var disclosures: [Disclosure]
   var kbJwt: JWS?
 
+  var delineatedCompactSerialisation: String {
+    let separator = "~"
+    let input = ([jwt.compactSerializedString] + disclosures).reduce("") { $0.isEmpty ? $1 : $0 + separator + $1 } + separator
+    return DigestCreator()
+      .hashAndBase64Encode(
+        input: input
+    ) ?? ""
+  }
+  
   // MARK: - Lifecycle
 
-  init(serializedJwt: String,
-       disclosures: [Disclosure],
-       serializedKbJwt: String?) throws {
+  init(
+    serializedJwt: String,
+    disclosures: [Disclosure],
+    serializedKbJwt: String?
+  ) throws {
     self.jwt = try JWS(compactSerialization: serializedJwt)
     self.disclosures = disclosures
     self.kbJwt = try? JWS(compactSerialization: serializedKbJwt ?? "")

@@ -26,14 +26,31 @@ final class DecoyTest: XCTestCase {
     @SDJWTBuilder
     var sdObject: SdElement {
       PlainClaim("name", "Edmun")
-      SdArrayClaim("Nationalites", array: [.flat(value: "DE"), .flat(value: 123)])
+      ArrayClaim("Nationalites", array: [.flat(value: "DE"), .flat(value: 123)])
       ObjectClaim("adress") {
         PlainClaim("locality", "gr")
         FlatDisclosedClaim("adress", "Al. Mich")
       }
     }
 
-    let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: decoysLimit)
+    @SDJWTBuilder
+    var alrtSdObject: SdElement {
+      PlainClaim("name", "Edmun")
+      ArrayClaim("Nationalites", array: [.flat(value: "DE"), .flat(value: 123)])
+      ObjectClaim("adress") {
+        PlainClaim("locality", "gr")
+        FlatDisclosedClaim("adress", "Al. Mich")
+        ObjectClaim("embedded_adress") {
+          PlainClaim("embedded_locality", "gr")
+          FlatDisclosedClaim("embedded_adress", "Al. Mich")
+        }
+      }
+    }
+    
+    let asJSON = alrtSdObject.asJSON
+    let asObject = alrtSdObject.asObject
+    
+    let jwtFactory = SDJWTFactory(decoysLimit: decoysLimit)
     let unsignedJwt = jwtFactory.createSDJWTPayload(sdJwtObject: sdObject.asObject)
 
     validateObjectResults(factoryResult: unsignedJwt, expectedDigests: sdObject.expectedDigests, numberOfDecoys: jwtFactory.decoyCounter, decoysLimit: decoysLimit)
@@ -43,13 +60,19 @@ final class DecoyTest: XCTestCase {
     @SDJWTBuilder
     var sdObject: SdElement {
       PlainClaim("name", "Edmun")
-      SdArrayClaim("Nationalites", array: [.flat(value: "DE"), .flat(value: 123)])
+      ArrayClaim("Nationalites", array: [.flat(value: "DE"), .flat(value: 123)])
+      RecursiveObject("recursice_adress") {
+        FlatDisclosedClaim("recursice_adress", "Al. Mich")
+      }
       ObjectClaim("adress") {
         PlainClaim("locality", "gr")
         FlatDisclosedClaim("adress", "Al. Mich")
       }
     }
-    let jwtFactory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: 0)
+    
+    let asJSON = sdObject.asObject
+    
+    let jwtFactory = SDJWTFactory()
     let payload = try! jwtFactory.createSDJWTPayload(sdJwtObject: sdObject.asObject).get()
 
     let digestsCount = payload.value.findDigestCount()

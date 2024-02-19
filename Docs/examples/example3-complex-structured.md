@@ -66,7 +66,7 @@ Description of the example in the [specification Example 3: Complex Structured S
           PlainClaim("trust_framework", "de_aml")
           FlatDisclosedClaim("time", "2012-04-23T18:25Z")
           FlatDisclosedClaim("verification_process", "f24c6f-6d3f-4ec5-973e-b0d8506f3bc7")
-          SdArrayClaim("evidence") {
+          ArrayClaim("evidence") {
             evidenceObject
           }
         }

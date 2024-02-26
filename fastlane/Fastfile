@@ -50,4 +50,9 @@ platform :ios do
       sh 'open ../xcov_output/index.html'
     end
   end
+
+  before_all do
+    FileUtils.remove_dir '../xcov_output', true
+  end
+  
 end

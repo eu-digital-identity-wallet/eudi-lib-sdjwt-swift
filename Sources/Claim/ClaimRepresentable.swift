@@ -41,38 +41,38 @@ public struct ConstantClaims: ClaimRepresentable {
 
   // MARK: - Methods
 
-  static func iat(time: Date) -> ConstantClaims {
+  public static func iat(time: Date) -> ConstantClaims {
     let currentDate = Date()
     let timestamp = Int(currentDate.timeIntervalSince1970.rounded())
 
     return ConstantClaims(Keys.iat.rawValue, value: .plain(value: timestamp))
   }
 
-  static func exp(time: Date) -> ConstantClaims {
+  public static func exp(time: Date) -> ConstantClaims {
     let timestamp = Int(time.timeIntervalSince1970.rounded())
 
     return ConstantClaims(Keys.exp.rawValue, value: .plain(value: timestamp))
   }
 
-  static func nbf(time: Date) -> ConstantClaims {
+  public static func nbf(time: Date) -> ConstantClaims {
     let timestamp = Int(time.timeIntervalSince1970.rounded())
 
     return ConstantClaims(Keys.nbf.rawValue, value: .plain(value: timestamp))
   }
 
-  static func iat(time: TimeInterval) -> ConstantClaims {
+  public static func iat(time: TimeInterval) -> ConstantClaims {
     return ConstantClaims(Keys.iat.rawValue, value: .plain(value: Int(time.rounded())))
   }
 
-  static func exp(time: TimeInterval) -> ConstantClaims {
+  public static func exp(time: TimeInterval) -> ConstantClaims {
     return ConstantClaims(Keys.exp.rawValue, value: .plain(value: Int(time.rounded())))
   }
 
-  static func iss(domain: String) -> ConstantClaims {
+  public static func iss(domain: String) -> ConstantClaims {
     return ConstantClaims(Keys.iss.rawValue, value: .plain(value: domain))
   }
 
-  static func sub(subject: String) -> ConstantClaims {
+  public static func sub(subject: String) -> ConstantClaims {
     return ConstantClaims(Keys.sub.rawValue, value: .plain(value: subject))
   }
 }

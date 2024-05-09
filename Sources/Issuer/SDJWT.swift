@@ -200,9 +200,10 @@ extension SignedSDJWT {
   func serialised(serialiser: (SignedSDJWT) -> (SerialiserProtocol)) throws -> String {
     serialiser(self).serialised
   }
+}
 
-  func recreateClaims() throws -> ClaimExtractorResult {
+extension SignedSDJWT {
+  public func recreateClaims() throws -> ClaimExtractorResult {
     return try self.toSDJWT().recreateClaims()
   }
-
 }

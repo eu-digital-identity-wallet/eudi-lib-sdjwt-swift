@@ -23,9 +23,9 @@ struct SDJWT {
 
   // MARK: - Properties
 
-  var jwt: JWT
-  var disclosures: [Disclosure]
-  var kbJwt: JWT?
+  public var jwt: JWT
+  public var disclosures: [Disclosure]
+  public var kbJwt: JWT?
 
   // MARK: - Lifecycle
 

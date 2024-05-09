@@ -69,9 +69,9 @@ public struct SignedSDJWT {
 
   // MARK: - Properties
 
-  let jwt: JWS
-  var disclosures: [Disclosure]
-  var kbJwt: JWS?
+  public let jwt: JWS
+  public var disclosures: [Disclosure]
+  public var kbJwt: JWS?
 
   var delineatedCompactSerialisation: String {
     let separator = "~"

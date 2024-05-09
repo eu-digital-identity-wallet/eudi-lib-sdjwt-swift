@@ -26,7 +26,7 @@ public struct JWT: JWTRepresentable {
 
   // MARK: - Lifecycle
 
-  init(header: JWSHeader, payload: JSON) throws {
+  public init(header: JWSHeader, payload: JSON) throws {
     guard header.algorithm?.rawValue != Keys.none.rawValue else {
       throw SDJWTError.noneAsAlgorithm
     }
@@ -39,7 +39,7 @@ public struct JWT: JWTRepresentable {
     self.payload = payload
   }
 
-  init(header: JWSHeader, kbJwtPayload: JSON) throws {
+  public init(header: JWSHeader, kbJwtPayload: JSON) throws {
     guard header.algorithm?.rawValue != Keys.none.rawValue else {
       throw SDJWTError.noneAsAlgorithm
     }

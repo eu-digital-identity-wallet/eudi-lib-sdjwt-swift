@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import Foundation
+import JSONWebKey
+import JSONWebSignature
+import JSONWebToken
 import SwiftyJSON
-import JOSESwift
 
 public typealias KBJWT = JWT
 
@@ -75,13 +77,13 @@ public struct SignedSDJWT {
 
   var delineatedCompactSerialisation: String {
     let separator = "~"
-    let input = ([jwt.compactSerializedString] + disclosures).reduce("") { $0.isEmpty ? $1 : $0 + separator + $1 } + separator
+      let input = ([jwt.compactSerialization] + disclosures).reduce("") { $0.isEmpty ? $1 : $0 + separator + $1 } + separator
     return DigestCreator()
       .hashAndBase64Encode(
         input: input
     ) ?? ""
   }
-  
+
   // MARK: - Lifecycle
 
   init(
@@ -89,16 +91,14 @@ public struct SignedSDJWT {
     disclosures: [Disclosure],
     serializedKbJwt: String?
   ) throws {
-    self.jwt = try JWS(compactSerialization: serializedJwt)
+    self.jwt = try JWS(jwsString: serializedJwt)
     self.disclosures = disclosures
-    self.kbJwt = try? JWS(compactSerialization: serializedKbJwt ?? "")
+    self.kbJwt = try? JWS(jwsString: serializedKbJwt ?? "")
   }
 
   private init?<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) {
     // Create a Signed SDJWT with no key binding
-    guard let signingAlgorithm = sdJwt.jwt.header.algorithm,
-          let signedJwt = try? SignedSDJWT.createSignedJWT(jwsController: .init(signingAlgorithm: signingAlgorithm, privateKey: issuersPrivateKey), jwt: sdJwt.jwt)
-    else {
+    guard let signedJwt = try? SignedSDJWT.createSignedJWT(key: issuersPrivateKey, jwt: sdJwt.jwt) else {
       return nil
     }
 
@@ -114,12 +114,7 @@ public struct SignedSDJWT {
 
     self.jwt = signedSDJWT.jwt
     self.disclosures = signedSDJWT.disclosures
-
-    guard let signingAlgorithm = kbJWT.header.algorithm,
-          let signedKBJwt = try? SignedSDJWT.createSignedJWT(jwsController: .init(signingAlgorithm: signingAlgorithm, privateKey: holdersPrivateKey), jwt: kbJWT)
-    else {
-      return nil
-    }
+    let signedKBJwt = try? SignedSDJWT.createSignedJWT(key: holdersPrivateKey, jwt: kbJWT)
     self.kbJwt = signedKBJwt
   }
 
@@ -140,8 +135,8 @@ public struct SignedSDJWT {
     }()
   }
 
-  private static func createSignedJWT<KeyType>(jwsController: JWSController<KeyType>, jwt: JWT) throws -> JWS {
-    try jwt.sign(signer: jwsController.signer)
+  private static func createSignedJWT<KeyType>(key: KeyType, jwt: JWT) throws -> JWS {
+    try jwt.sign(key: key)
   }
 
   func disclosuresToPresent(disclosures: [Disclosure]) -> Self {
@@ -151,16 +146,16 @@ public struct SignedSDJWT {
   }
 
   func toSDJWT() throws -> SDJWT {
-    if let kbJwtHeader = kbJwt?.header,
+      if let kbJwtHeader = kbJwt?.protectedHeader,
        let kbJWtPayload = try? kbJwt?.payloadJSON() {
       return try SDJWT(
-        jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
+        jwt: JWT(header: jwt.protectedHeader, payload: jwt.payloadJSON()),
         disclosures: disclosures,
         kbJWT: JWT(header: kbJwtHeader, kbJwtPayload: kbJWtPayload))
     }
 
     return try SDJWT(
-      jwt: JWT(header: jwt.header, payload: jwt.payloadJSON()),
+      jwt: JWT(header: jwt.protectedHeader, payload: jwt.payloadJSON()),
       disclosures: disclosures,
       kbJWT: nil)
   }
@@ -173,22 +168,11 @@ public struct SignedSDJWT {
       throw SDJWTVerifierError.keyBindingFailed(description: "Failled to find holders public key")
     }
 
-    guard let keyType = JWKKeyType(rawValue: jwk["kty"].stringValue) else {
+    guard let jwkObject = try? JSONDecoder.jwt.decode(JWK.self, from: jwk.rawData()) else {
       throw SDJWTVerifierError.keyBindingFailed(description: "failled to extract key type")
     }
 
-    switch keyType {
-    case .EC:
-      guard let crvType = ECCurveType(rawValue: jwk["crv"].stringValue) else {
-        throw SDJWTVerifierError.keyBindingFailed(description: "failled to extract curve type")
-      }
-      return ECPublicKey(crv: crvType, x: jwk["x"].stringValue, y: jwk["y"].stringValue)
-    case .RSA:
-      return RSAPublicKey(modulus: jwk["n"].stringValue, exponent: jwk["e"].stringValue)
-    case .OCT:
-      return try SymmetricKey(key: jwk["k"].rawData())
-    }
-
+    return jwkObject
   }
 }
 

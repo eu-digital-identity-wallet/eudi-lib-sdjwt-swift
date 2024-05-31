@@ -15,7 +15,6 @@
  */
 import Foundation
 import XCTest
-import JOSESwift
 
 @testable import eudi_lib_sdjwt_swift
 
@@ -43,8 +42,9 @@ final class SerialiserTest: XCTestCase {
   func testSerialiseWhenChosingEnvelopeFormat_AppylingNoKeyBinding_ThenExpectACorrectJWT() throws {
     let compactParser = try CompactParser(serialisedString: testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT())
 
-    let envelopeSerializer = try EnvelopedSerialiser(SDJWT: compactParser.getSignedSdJwt(),
-                                                 jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData().payload)
+    let envelopeSerializer = try EnvelopedSerialiser(
+        SDJWT: compactParser.getSignedSdJwt(),
+        jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData())
 
     let parser = try EnvelopedParser(serialiserProtocol: envelopeSerializer)
 

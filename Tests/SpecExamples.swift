@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import Foundation
+import JSONWebKey
+import JSONWebSignature
 import SwiftyJSON
 import XCTest
 
@@ -48,7 +50,7 @@ final class SpecExamples: XCTestCase {
 
     let keyPair = generateES256KeyPair()
 
-    let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), output.get()), signingKey: keyPair.private)
+    let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(DefaultJWSHeaderImpl(algorithm: .ES256), output.get()), signingKey: keyPair.private)
 
     let string = CompactSerialiser(signedSDJWT: sdjwt).serialised
 

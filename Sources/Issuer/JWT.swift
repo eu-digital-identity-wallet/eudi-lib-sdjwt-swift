@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebAlgorithms
+import JSONWebSignature
 import SwiftyJSON
 
 public struct JWT: JWTRepresentable {
 
   // MARK: - Properties
 
-  var header: JWSHeader
+  var header: JWSRegisteredFieldsHeader
   var payload: JSON
 
   // MARK: - Lifecycle
 
-  public init(header: JWSHeader, payload: JSON) throws {
+  public init(header: JWSRegisteredFieldsHeader, payload: JSON) throws {
     guard header.algorithm?.rawValue != Keys.none.rawValue else {
       throw SDJWTError.noneAsAlgorithm
     }
 
-    guard SignatureAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
+    guard SigningAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
       throw SDJWTError.macAsAlgorithm
     }
 
@@ -39,12 +40,12 @@ public struct JWT: JWTRepresentable {
     self.payload = payload
   }
 
-  public init(header: JWSHeader, kbJwtPayload: JSON) throws {
+  public init(header: JWSRegisteredFieldsHeader, kbJwtPayload: JSON) throws {
     guard header.algorithm?.rawValue != Keys.none.rawValue else {
       throw SDJWTError.noneAsAlgorithm
     }
 
-    guard SignatureAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
+    guard SigningAlgorithm.allCases.map({$0.rawValue}).contains(header.algorithm?.rawValue) else {
       throw SDJWTError.macAsAlgorithm
     }
     self.header = header
@@ -54,13 +55,13 @@ public struct JWT: JWTRepresentable {
 
   // MARK: - Methods
 
-  func sign<KeyType>(signer: Signer<KeyType>) throws -> JWS {
+  func sign<KeyType>(key: KeyType) throws -> JWS {
     let unsignedJWT = try self.asUnsignedJWT()
-    return try JWS(header: unsignedJWT.header, payload: unsignedJWT.payload, signer: signer)
+      return try JWS.init(payload: unsignedJWT.payload, protectedHeader: unsignedJWT.header, key: key)
   }
 
   mutating func addKBTyp() {
-    self.header.typ = "kb+jwt"
+    self.header.type = "kb+jwt"
   }
 }
 

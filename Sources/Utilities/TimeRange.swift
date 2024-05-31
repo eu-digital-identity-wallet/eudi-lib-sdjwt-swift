@@ -18,7 +18,7 @@ import Foundation
 public struct TimeRange {
   let startTime: Date
   let endTime: Date
-  
+
   public init?(startTime: Date, endTime: Date) {
     guard startTime < endTime else {
       return nil // Ensure that the start time is earlier than the end time
@@ -26,7 +26,7 @@ public struct TimeRange {
     self.startTime = startTime
     self.endTime = endTime
   }
-  
+
   func contains(date: Date) -> Bool {
     return date >= startTime && date <= endTime
   }

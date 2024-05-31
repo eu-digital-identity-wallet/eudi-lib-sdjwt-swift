@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebSignature
 import SwiftyJSON
 import XCTest
 
@@ -27,7 +27,7 @@ final class SignedJwtTest: XCTestCase {
     let keyPair = generateES256KeyPair()
     let signedJWT = try SDJWTIssuer.issue(
       issuersPrivateKey: keyPair.private,
-      header: .init(
+      header: DefaultJWSHeaderImpl(
         algorithm: .ES256
       )
     ) {

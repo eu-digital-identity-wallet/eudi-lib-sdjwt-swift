@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 import Foundation
-
+import JSONWebKey
+import JSONWebSignature
+import JSONWebToken
 import SwiftyJSON
-import JOSESwift
 import XCTest
 
 @testable import eudi_lib_sdjwt_swift
@@ -25,7 +26,7 @@ final class VerifierTest: XCTestCase {
 
   func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
 
-    let pk = try! ECPublicKey(data: JSON(parseJSON: key).rawData())
+      let pk = try JSONDecoder.jwt.decode(JWK.self, from: key.tryToData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
     let complexStructureSDJWTString =
                 """
@@ -62,7 +63,7 @@ final class VerifierTest: XCTestCase {
 
     let result = try SDJWTVerifier(parser: CompactParser(serialisedString: complexStructureSDJWTString))
       .verifyIssuance { jws in
-        try SignatureVerifier(signedJWT: jws, publicKey: pk.converted(to: SecKey.self))
+        try SignatureVerifier(signedJWT: jws, publicKey: pk)
       } claimVerifier: { _, _ in
         ClaimsVerifier()
       }
@@ -202,28 +203,28 @@ final class VerifierTest: XCTestCase {
 
   func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() throws {
     let iatJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
-                                       header: .init(algorithm: .ES256), buildSDJWT: {
+                                       header: DefaultJWSHeaderImpl(algorithm: .ES256), buildSDJWT: {
       ConstantClaims.iat(time: Date())
       FlatDisclosedClaim("time", "is created at \(Date())")
     })
 
     let expSdJwt = try SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
-      header: .init(algorithm: .ES256)) {
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)) {
         ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
         FlatDisclosedClaim("time", "time runs out")
     }
 
     let nbfSdJwt = try SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
-      header: .init(algorithm: .ES256)) {
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)) {
         ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
         FlatDisclosedClaim("time", "we are ahead of time")
     }
 
     let nbfAndExpSdJwt = try SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
-      header: .init(algorithm: .ES256)
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
     ) {
       ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
       ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
@@ -251,12 +252,12 @@ final class VerifierTest: XCTestCase {
 
   func testVerifierWhenProvidingAKeyBindingJWT_WHenProvidedWithAudNonceAndIatClaims_ThenExpectToPassClaimVerificationAndKBVerification () throws {
     let holdersJWK = holdersKeyPair.public
+    let jwk = try holdersJWK.jwk
 
-    let ecpubKey = try ECPublicKey(publicKey: holdersJWK)
-    let json = JSON(parseJSON: ecpubKey.jsonString()!)
-
-    let issuerSignedSDJWT = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
-                                                  header: .init(algorithm: .ES256)) {
+    let issuerSignedSDJWT = try SDJWTIssuer.issue(
+        issuersPrivateKey: issuersKeyPair.private,
+        header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
       ConstantClaims.iat(time: Date())
       ConstantClaims.exp(time: Date() + 3600)
       ConstantClaims.iss(domain: "https://example.com/issuer")
@@ -276,9 +277,9 @@ final class VerifierTest: XCTestCase {
       ObjectClaim("cnf") {
         ObjectClaim("jwk") {
           PlainClaim("kty", "EC")
-          PlainClaim("y", json["y"].stringValue)
-          PlainClaim("x", json["x"].stringValue)
-          PlainClaim("crv", json["crv"].stringValue)
+          PlainClaim("y", jwk.y?.base64URLEncode())
+          PlainClaim("x", jwk.x?.base64URLEncode())
+          PlainClaim("crv", jwk.curve)
         }
       }
     }
@@ -296,7 +297,7 @@ final class VerifierTest: XCTestCase {
         signedSDJWT: issuerSignedSDJWT,
         disclosuresToPresent: issuerSignedSDJWT.disclosures,
         keyBindingJWT: KBJWT(
-          header: .init(algorithm: .ES256),
+          header: DefaultJWSHeaderImpl(algorithm: .ES256),
           kbJwtPayload: .init([
             Keys.nonce.rawValue: "123456789",
             Keys.aud.rawValue: "example.com",
@@ -338,21 +339,26 @@ final class VerifierTest: XCTestCase {
 
     let compactParser = try CompactParser(serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT())
 
-    let envelopeSerializer = try EnvelopedSerialiser(SDJWT: compactParser.getSignedSdJwt(),
-                                                     jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData().payload)
+    let envelopeSerializer = try EnvelopedSerialiser(
+        SDJWT: compactParser.getSignedSdJwt(),
+        jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234
+    ).toJSONData())
 
-    _ = try SignatureVerifier(signedJWT: .init(header: .init(algorithm: .ES256), payload: envelopeSerializer.data.payload, signer: .init(signingAlgorithm: .ES256, key: holdersKeyPair.private)!), publicKey: holdersKeyPair.public)
+    _ = try SignatureVerifier(
+        signedJWT: JWS(
+            payload: envelopeSerializer.data,
+            protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
+            key: holdersKeyPair.private
+        ),
+        publicKey: holdersKeyPair.public)
 
     let jwt = try JWS(
-      header: .init(algorithm: .ES256),
-      payload: envelopeSerializer.data.payload,
-      signer: .init(
-        signingAlgorithm: .ES256,
-        key: holdersKeyPair.private
-      )!
+      payload: envelopeSerializer.data,
+      protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
+      key: holdersKeyPair.private
     )
 
-    let envelopedJws = try JWS(compactSerialization: jwt.compactSerializedString)
+    let envelopedJws = try JWS(jwsString: jwt.compactSerialization)
 
     let verifyEnvelope =
     try SDJWTVerifier(parser: EnvelopedParser(data: envelopeSerializer.data))

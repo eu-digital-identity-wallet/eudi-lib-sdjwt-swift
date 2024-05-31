@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebKey
+import JSONWebSignature
 import SwiftyJSON
 
 public class KeyBindingVerifier: VerifierProtocol {
@@ -26,7 +27,7 @@ public class KeyBindingVerifier: VerifierProtocol {
        challenge: JWS,
        extractedKey: JWK) throws {
 
-    guard challenge.header.typ == "kb+jwt" else {
+      guard challenge.protectedHeader.type == "kb+jwt" else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }
 
@@ -41,24 +42,8 @@ public class KeyBindingVerifier: VerifierProtocol {
     guard challengePayloadJson[Keys.nonce].exists() else {
       throw SDJWTVerifierError.keyBindingFailed(description: "No Nonce Provided")
     }
-
-    switch extractedKey.keyType {
-    case .EC:
-      guard let secKey = try? (extractedKey as? ECPublicKey)?.converted(to: SecKey.self) else {
-        throw SDJWTVerifierError.keyBindingFailed(description: "Key Type Missmatch")
-      }
-      self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: secKey)
-    case .RSA:
-      guard let secKey = try? (extractedKey as? RSAPublicKey)?.converted(to: SecKey.self) else {
-        throw SDJWTVerifierError.keyBindingFailed(description: "Key Type Missmatch")
-      }
-      self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: secKey)
-    case .OCT:
-      guard let secKey = try? (extractedKey as? SymmetricKey)?.converted(to: Data.self) else {
-        throw SDJWTVerifierError.keyBindingFailed(description: "Key Type Missmatch")
-      }
-      self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: secKey)
-    }
+      
+    self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
 
     try verifyIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(timeInterval)))
     try verifyAud(aud: aud, expectedAudience: expectedAudience)
@@ -87,6 +72,6 @@ public class KeyBindingVerifier: VerifierProtocol {
 
   @discardableResult
   public func verify() throws -> JWS {
-    return try signatureVerifier.verify()
+    try signatureVerifier.verify()
   }
 }

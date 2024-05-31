@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import JOSESwift
+import JSONWebSignature
 import SwiftyJSON
 
 extension JWS {
   func payloadJSON() throws -> JSON {
-    try JSON(data: self.payload.data())
+    try JSON(data: self.payload)
   }
 
   func iat() throws -> Int? {

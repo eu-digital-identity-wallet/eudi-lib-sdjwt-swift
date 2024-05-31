@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
 import SwiftyJSON
 
 public enum SerialisationFormat {

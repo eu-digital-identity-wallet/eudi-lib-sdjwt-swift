@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-import JOSESwift
 import CryptoKit
+import JSONWebAlgorithms
+import JSONWebSignature
 import Security
 
 class JWSController<SecKey> {
 
   // MARK: - Properties
 
-  var signatureAlgorithm: SignatureAlgorithm
+  var signatureAlgorithm: SigningAlgorithm
   // SecKey Should be Data (HMAC) Or SecKey (RSA, EC)
-  let signer: Signer<SecKey>
+  let key: SecKey
 
   // MARK: - Lifecycle
 
-  init(signingAlgorithm: SignatureAlgorithm, privateKey: SecKey) throws {
+  init(signingAlgorithm: SigningAlgorithm, privateKey: SecKey) throws {
     self.signatureAlgorithm = signingAlgorithm
-    guard let signer = Signer(signingAlgorithm: signingAlgorithm, key: privateKey) else {
-      throw JOSESwiftError.signingFailed(description: "Failed To Create Signing Algorith \(signingAlgorithm) with key \(privateKey)")
-    }
-
-    self.signer = signer
+    self.key = privateKey
   }
 }

@@ -16,7 +16,8 @@
 import Foundation
 
 import XCTest
-import JOSESwift
+import JSONWebKey
+import JSONWebSignature
 import SwiftyJSON
 
 @testable import eudi_lib_sdjwt_swift
@@ -24,8 +25,9 @@ import SwiftyJSON
 final class IssuerTest: XCTestCase {
 
   func testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey() throws -> SignedSDJWT {
-    let signedSDJWT = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
-                                       header: .init(algorithm: .ES256)) {
+    let signedSDJWT = try SDJWTIssuer.issue(
+        issuersPrivateKey: issuersKeyPair.private,
+        header: DefaultJWSHeaderImpl(algorithm: .ES256)) {
         ConstantClaims.iat(time: Date())
         ConstantClaims.sub(subject: "Test Subject")
         PlainClaim("name", "plain name")
@@ -42,8 +44,8 @@ final class IssuerTest: XCTestCase {
 
     let jwtString = compactSerializer.serialised.components(separatedBy: "~").first!
 
-    let jws = try JWS(compactSerialization: jwtString)
-    try jws.validate(using: Verifier(verifyingAlgorithm: .ES256, key: issuersKeyPair.public)!)
+    let jws = try JWS(jwsString: jwtString)
+    XCTAssertTrue(try jws.verify(key: issuersKeyPair.public))
   }
 
   func testEnvelopedFormatSerializeation_WhenProvidedWithABuiltSDJWT() throws {
@@ -55,15 +57,15 @@ final class IssuerTest: XCTestCase {
 //                                  "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"
 //                              ]))
 
-    let payload = try Payload(JSON([
-      "aud": "https://verifier.example.com",
-      "iat": 1580000000,
-      "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"]).rawData())
+    let payload = try JSON([
+        "aud": "https://verifier.example.com",
+        "iat": 1580000000,
+        "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"]).rawData()
 
     let envelopedFormat = try EnvelopedSerialiser(SDJWT: sdjwt,
                                               jwTpayload: payload)
 
-    let jwt = try JWT(header: .init(algorithm: .ES256), payload: JSON(envelopedFormat.data))
+    let jwt = try JWT(header: DefaultJWSHeaderImpl(algorithm: .ES256), payload: JSON(envelopedFormat.data))
     print(jwt.payload)
   }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebSignature
 import SwiftyJSON
 
 public class SDJWTIssuer {
@@ -22,7 +22,7 @@ public class SDJWTIssuer {
   /// Enum to represent the purpose of the JWT.
   enum Purpose {
     /// Used for JWT issuance.
-    case issuance(JWSHeader, ClaimSet)
+    case issuance(JWSRegisteredFieldsHeader, ClaimSet)
     /// Used for JWT presentation.
     case presentation(SignedSDJWT, [Disclosure], KBJWT?)
   }
@@ -45,7 +45,7 @@ public class SDJWTIssuer {
   /// - Throws: An error if there's an issue with JWT creation or signing.
   ///
   public static func issue<KeyType>(issuersPrivateKey: KeyType,
-                             header: JWSHeader,
+                             header: JWSRegisteredFieldsHeader,
                              decoys: Int = 0,
                              @SDJWTBuilder buildSDJWT: () throws -> SdElement) throws -> SignedSDJWT {
 

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebKey
+import JSONWebSignature
 
 public protocol VerifierProtocol {
   associatedtype ReturnType

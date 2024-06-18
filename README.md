@@ -17,7 +17,7 @@ the [EUDI Wallet Reference Implementation project description](https://github.co
 This is a library offering a DSL (domain-specific language) for defining how a set of claims should be made selectively
 disclosable.
 
-Library implements [SD-JWT draft5](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html)
+Library implements [SD-JWT draft8](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-08.html)
 is implemented in Swift.
 
 ## Use cases supported
@@ -227,6 +227,11 @@ We welcome contributions to this project. To ensure that the process is smooth f
 involved, follow the guidelines found in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
+
+### Third-party component licenses
+
+* JOSE Support: [jose-swift](https://github.com/beatt83/jose-swift)
+* JSON Support: [SwiftyJSON](https://github.com/SwiftyJSON/SwiftyJSON)
 
 ### License details
 

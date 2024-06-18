@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebKey
+import JSONWebSignature
 
 // To Constraint What can be passed as a key
 // JOSE Supports SecKey for RSA and EC and Data for HMAC
@@ -22,33 +23,30 @@ public protocol KeyExpressible {}
 
 extension SecKey: KeyExpressible {}
 extension Data: KeyExpressible {}
+extension JWK: KeyExpressible {}
 
 public class SignatureVerifier: VerifierProtocol {
 
   // MARK: - Properties
-
-  let verifier: Verifier
   let jws: JWS
+  let key: KeyExpressible
 
   // MARK: - Lifecycle
 
   public init<Key: KeyExpressible>(signedJWT: JWS, publicKey: Key) throws {
-    guard let algorithm = signedJWT.header.algorithm else {
+    guard signedJWT.protectedHeader.algorithm != nil else {
       throw SDJWTVerifierError.noAlgorithmProvided
     }
-
-    guard let verifier = Verifier(verifyingAlgorithm: algorithm, key: publicKey) else {
-      throw SDJWTVerifierError.failedToCreateVerifier
-    }
-
-    self.verifier = verifier
     self.jws = signedJWT
+    self.key = publicKey
   }
 
   // MARK: - Methods
   @discardableResult
   public func verify() throws -> JWS {
-    let verifiedJws = try jws.validate(using: verifier)
-    return verifiedJws
+    guard try jws.verify(key: key) else {
+      throw SDJWTVerifierError.invalidJwt
+    }
+    return jws
   }
 }

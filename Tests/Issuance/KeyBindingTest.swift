@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 import Foundation
-import XCTest
-import JOSESwift
+import JSONWebKey
+import JSONWebSignature
 import SwiftyJSON
+import XCTest
 
 @testable import eudi_lib_sdjwt_swift
 
@@ -51,20 +52,19 @@ final class KeyBindingTest: XCTestCase {
 
   func testKeyBinding() throws {
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
-    let pk = try ECPublicKey(publicKey: issuersKeyPair.public)
+    let pk = try issuersKeyPair.public.jwk
     let jwk: JSON = try
-    ["jwk": JSON(data: pk.jsonData()!)]
+    ["jwk": JSON(data: try JSONEncoder.jwt.encode(pk))]
     let keyBindingJwt = factory.createSDJWTPayload(sdjwtObject: claims.asObject, holdersPublicKey: jwk)
   }
 
   func testcCreateKeyBindingJWT_whenPassedECPublicKey() throws {
 
     let json = JSON(parseJSON: jwk)
-    let ecPk = try ECPublicKey(data: json.rawData())
-    print(try ecPk.converted(to: SecKey.self))
+    let ecPk = try JSONDecoder.jwt.decode(JWK.self, from: jwk.tryToData())
 
-    let kbJws = try JWS(compactSerialization: kbJwt)
-    let verifier = try SignatureVerifier(signedJWT: kbJws, publicKey: ecPk.converted(to: SecKey.self))
+    let kbJws = try JWS(jwsString: kbJwt)
+    let verifier = try SignatureVerifier(signedJWT: kbJws, publicKey: ecPk)
     try XCTAssertNoThrow(verifier.verify())
   }
 
@@ -72,21 +72,23 @@ final class KeyBindingTest: XCTestCase {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
-    let holdersECPK = try ECPublicKey(publicKey: holdersKeyPair.public)
+    let holdersECPK = try holdersKeyPair.public.jwk
     let jwk: JSON = try
-    ["jwk": JSON(data: holdersECPK.jsonData()!)]
+    ["jwk": JSON(data: try JSONEncoder.jwt.encode(holdersECPK))]
 
     let claims = try factory.createSDJWTPayload(sdjwtObject: claims.asObject, holdersPublicKey: jwk).get()
 
-    let issuance = try SDJWTIssuer.createSDJWT(purpose: .issuance(.init(algorithm: .ES256), claims),
-                                               signingKey: issuersKeyPair.private)
+    let issuance = try SDJWTIssuer.createSDJWT(
+        purpose: .issuance(DefaultJWSHeaderImpl(algorithm: .ES256), claims),
+        signingKey: issuersKeyPair.private
+    )
 
     let compactSerializer = CompactSerialiser(signedSDJWT: issuance)
     let jwtString = compactSerializer.serialised
-    
+
     let digestCreator = DigestCreator()
     let out = digestCreator.hashAndBase64Encode(input: jwtString) ?? ""
-    
+
     let kbjwtPayload: ClaimSet = (JSON(
       [
         Keys.aud.rawValue: "https://example.com/verifier",
@@ -98,10 +100,10 @@ final class KeyBindingTest: XCTestCase {
 
     let presentation = try SDJWTIssuer.createSDJWT(
       purpose: .presentation(
-        issuance, 
+        issuance,
         issuance.disclosures,
         KBJWT(
-          header: .init(algorithm: .ES256),
+          header: DefaultJWSHeaderImpl(algorithm: .ES256),
           payload: kbjwtPayload.value
         )
       ),
@@ -111,7 +113,7 @@ final class KeyBindingTest: XCTestCase {
     try SignatureVerifier(signedJWT: issuance.jwt, publicKey: issuersKeyPair.public).verify()
     try SignatureVerifier(signedJWT: presentation.kbJwt!, publicKey: holdersKeyPair.public).verify()
     try SignatureVerifier(signedJWT: presentation.jwt, publicKey: issuersKeyPair.public).verify()
-    
+
     return(issuance, presentation)
   }
 

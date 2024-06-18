@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebKey
+import JSONWebSignature
 
 public protocol VerifierProtocol {
   associatedtype ReturnType
@@ -107,7 +108,7 @@ public class SDJWTVerifier {
         }
         let extractedKey = try sdjwt.extractHoldersPublicKey()
         try keyBindingVerifier(kbJwt, extractedKey).verify()
-        
+
         if let sdHash = try? kbJwt.payloadJSON()["sd_hash"].stringValue {
           if sdHash != sdjwt.delineatedCompactSerialisation {
             throw SDJWTVerifierError.keyBindingFailed(description: "No KB provided")

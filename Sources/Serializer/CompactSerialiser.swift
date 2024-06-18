@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
 
 public class CompactSerialiser: SerialiserProtocol {
 
@@ -41,11 +40,11 @@ public class CompactSerialiser: SerialiserProtocol {
 public extension SerialisationFormat {
   func serialise(signedSDJWT: SignedSDJWT) -> String {
     var output = ""
-    output += signedSDJWT.jwt.compactSerializedString
+    output += signedSDJWT.jwt.compactSerialization
     output += signedSDJWT.disclosures.reduce(into: "~", { partialResult, disclosure in
       partialResult += disclosure + "~"
     })
-    output += signedSDJWT.kbJwt?.compactSerializedString ?? ""
+    output += signedSDJWT.kbJwt?.compactSerialization ?? ""
     return output
   }
 }

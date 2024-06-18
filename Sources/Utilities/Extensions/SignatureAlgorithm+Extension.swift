@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebAlgorithms
 
-extension SignatureAlgorithm: CaseIterable {
-  public static var allCases: [SignatureAlgorithm] {
-    if #available(iOS 11, *) {
-      return [.HS256, .HS384, .HS512, .RS256, .RS384, .RS512, .ES256, .ES384, .ES512, .PS256, .PS384, .PS512]
-    } else {
-      return [.HS256, .HS384, .HS512, .RS256, .RS384, .RS512, .ES256, .ES384, .ES512]
-    }
+extension SigningAlgorithm: CaseIterable {
+  public static var allCases: [SigningAlgorithm] {
+      return [.HS256, .HS384, .HS512, .RS256, .RS384, .RS512, .ES256, .ES384, .ES512, .ES256K, .PS256, .PS384, .PS512, .EdDSA]
   }
 }

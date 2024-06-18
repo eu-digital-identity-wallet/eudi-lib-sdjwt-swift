@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import Foundation
-import JOSESwift
+import JSONWebSignature
 import SwiftyJSON
 
 public class SDJWTIssuer {
@@ -22,7 +22,7 @@ public class SDJWTIssuer {
   /// Enum to represent the purpose of the JWT.
   enum Purpose {
     /// Used for JWT issuance.
-    case issuance(JWSHeader, ClaimSet)
+    case issuance(JWSRegisteredFieldsHeader, ClaimSet)
     /// Used for JWT presentation.
     case presentation(SignedSDJWT, [Disclosure], KBJWT?)
   }
@@ -44,11 +44,12 @@ public class SDJWTIssuer {
   /// - Returns: The signed SDJWT.
   /// - Throws: An error if there's an issue with JWT creation or signing.
   ///
-  public static func issue<KeyType>(issuersPrivateKey: KeyType,
-                             header: JWSHeader,
-                             decoys: Int = 0,
-                             @SDJWTBuilder buildSDJWT: () throws -> SdElement) throws -> SignedSDJWT {
-
+  public static func issue<KeyType>(
+    issuersPrivateKey: KeyType,
+    header: JWSRegisteredFieldsHeader,
+    decoys: Int = 0,
+    @SDJWTBuilder buildSDJWT: () throws -> SdElement
+  ) throws -> SignedSDJWT {
     let factory = SDJWTFactory(decoysLimit: decoys)
     let claimSet = try factory.createSDJWTPayload(sdJwtObject: SDJWTBuilder.build(builder: buildSDJWT)).get()
     let signedSDJWT = try self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
@@ -71,7 +72,7 @@ public class SDJWTIssuer {
   ) throws -> SignedSDJWT {
     try createSDJWT(
       purpose: .presentation(
-        signedSDJWT, 
+        signedSDJWT,
         disclosuresToPresent,
         keyBindingJWT
       ),
@@ -85,8 +86,10 @@ public class SDJWTIssuer {
   ///   - signedSDJWT: The signed SDJWT to present.
   ///   - disclosuresToPresent: The disclosures to include in the presentation.
   ///
-  public static func presentation(signedSDJWT: SignedSDJWT,
-                           disclosuresToPresent: [Disclosure]) throws -> SignedSDJWT {
+  public static func presentation(
+    signedSDJWT: SignedSDJWT,
+    disclosuresToPresent: [Disclosure]
+  ) throws -> SignedSDJWT {
     return try createSDJWT(purpose: .presentation(signedSDJWT, disclosuresToPresent, nil), signingKey: Void.self)
 
   }
@@ -102,7 +105,14 @@ public class SDJWTIssuer {
   static func createSDJWT<KeyType>(purpose: Purpose, signingKey: KeyType) throws -> SignedSDJWT {
     switch purpose {
     case .issuance(let JWSHeader, let claimSet):
-      let ungsingedSDJWT = try SDJWT(jwt: JWT(header: JWSHeader, payload: claimSet.value), disclosures: claimSet.disclosures, kbJWT: nil)
+      let ungsingedSDJWT = try SDJWT(
+        jwt: JWT(
+            header: JWSHeader,
+            payload: claimSet.value
+        ),
+        disclosures: claimSet.disclosures,
+        kbJWT: nil
+      )
       return try createSignedSDJWT(sdJwt: ungsingedSDJWT, issuersPrivateKey: signingKey)
       // ..........
     case .presentation(let signedJWT, let selectedDisclosures, let KBJWT):
@@ -137,8 +147,16 @@ public class SDJWTIssuer {
   /// - Returns: The key-bonded signed SDJWT.
   /// - Throws: An error if there's an issue with JWT signing or key binding.
   ///
-  private static func createKeyBondedSDJWT<KeyType>(signedSDJWT: SignedSDJWT, kbJWT: JWT, holdersPrivateKey: KeyType) throws -> SignedSDJWT {
-    try SignedSDJWT.keyBondedSDJWT(signedSDJWT: signedSDJWT, kbJWT: kbJWT, holdersPrivateKey: holdersPrivateKey)
+  private static func createKeyBondedSDJWT<KeyType>(
+    signedSDJWT: SignedSDJWT,
+    kbJWT: JWT,
+    holdersPrivateKey: KeyType
+  ) throws -> SignedSDJWT {
+    try SignedSDJWT.keyBondedSDJWT(
+        signedSDJWT: signedSDJWT,
+        kbJWT: kbJWT,
+        holdersPrivateKey: holdersPrivateKey
+    )
   }
 
 }

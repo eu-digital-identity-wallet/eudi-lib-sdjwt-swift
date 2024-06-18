@@ -46,10 +46,10 @@ final class DecoyTest: XCTestCase {
         }
       }
     }
-    
+
     let asJSON = alrtSdObject.asJSON
     let asObject = alrtSdObject.asObject
-    
+
     let jwtFactory = SDJWTFactory(decoysLimit: decoysLimit)
     let unsignedJwt = jwtFactory.createSDJWTPayload(sdJwtObject: sdObject.asObject)
 
@@ -69,9 +69,9 @@ final class DecoyTest: XCTestCase {
         FlatDisclosedClaim("adress", "Al. Mich")
       }
     }
-    
+
     let asJSON = sdObject.asObject
-    
+
     let jwtFactory = SDJWTFactory()
     let payload = try! jwtFactory.createSDJWTPayload(sdJwtObject: sdObject.asObject).get()
 

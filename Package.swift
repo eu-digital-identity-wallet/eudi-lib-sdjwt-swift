@@ -1,4 +1,4 @@
-// swift-tools-version: 5.8
+// swift-tools-version: 5.8.1
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -23,16 +23,16 @@ let package = Package(
           from: "5.0.1"
         ),
         .package(
-          url: "https://github.com/niscy-eudiw/JOSESwift.git",
-          exact: "2.4.1-gcm"
-        ),
+          url: "https://github.com/beatt83/jose-swift.git",
+          from: "3.1.0"
+        )
     ],
     targets: [
         .target(
             name: "eudi-lib-sdjwt-swift",
             dependencies: [
-                .product(name: "SwiftyJSON", package: "swiftyjson"),
-                .product(name: "JOSESwift", package: "JOSESwift")
+                "jose-swift",
+                .product(name: "SwiftyJSON", package: "swiftyjson")
             ],
             path: "Sources",
             plugins: [

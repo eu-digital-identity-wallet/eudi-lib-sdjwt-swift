@@ -15,7 +15,6 @@
  */
 import Foundation
 import SwiftyJSON
-import JOSESwift
 
 public class EnvelopedSerialiser: SerialiserProtocol {
 
@@ -34,11 +33,11 @@ public class EnvelopedSerialiser: SerialiserProtocol {
 
   // MARK: - Lifecycle
 
-  public init(SDJWT: SignedSDJWT, jwTpayload: Payload, options opt: JSONSerialization.ReadingOptions = []) throws {
+  public init(SDJWT: SignedSDJWT, jwTpayload: Data, options opt: JSONSerialization.ReadingOptions = []) throws {
     var updatedSDJWT = SDJWT
     updatedSDJWT.kbJwt = nil
 
-    payload = try JSON(data: jwTpayload.data())
+    payload = try JSON(data: jwTpayload)
     let compactSerialiser = CompactSerialiser(signedSDJWT: updatedSDJWT)
     payload[Keys.sdJwt].string = compactSerialiser.serialised
   }

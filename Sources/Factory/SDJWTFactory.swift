@@ -15,7 +15,6 @@
  */
 import Foundation
 import SwiftyJSON
-import JOSESwift
 
 typealias ClaimSet = (value: JSON, disclosures: [Disclosure])
 

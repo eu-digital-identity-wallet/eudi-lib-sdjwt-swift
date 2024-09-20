@@ -22,21 +22,21 @@ import SwiftyJSON
 public typealias KBJWT = JWT
 
 struct SDJWT {
-
+  
   // MARK: - Properties
-
+  
   public internal(set) var jwt: JWT
   public internal(set) var disclosures: [Disclosure]
   public internal(set) var kbJwt: JWT?
-
+  
   // MARK: - Lifecycle
-
+  
   init(jwt: JWT, disclosures: [Disclosure], kbJWT: KBJWT?) throws {
     self.jwt = jwt
     self.disclosures = disclosures
     self.kbJwt = kbJWT
   }
-
+  
   func extractDigestCreator() throws -> DigestCreator {
     if jwt.payload[Keys.sdAlg.rawValue].exists() {
       let stringValue = jwt.payload[Keys.sdAlg.rawValue].stringValue
@@ -49,7 +49,7 @@ struct SDJWT {
       throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
     }
   }
-
+  
   func recreateClaims() throws -> ClaimExtractorResult {
     let digestCreator = try extractDigestCreator()
     var digestsOfDisclosuresDict = [DisclosureDigest: Disclosure]()
@@ -61,31 +61,31 @@ struct SDJWT {
         throw SDJWTVerifierError.failedToCreateVerifier
       }
     }
-
+    
     return try ClaimExtractor(digestsOfDisclosuresDict: digestsOfDisclosuresDict)
       .findDigests(payload: jwt.payload, disclosures: disclosures)
   }
 }
 
 public struct SignedSDJWT {
-
+  
   // MARK: - Properties
-
+  
   public let jwt: JWS
   public internal(set) var disclosures: [Disclosure]
   public internal(set) var kbJwt: JWS?
-
+  
   var delineatedCompactSerialisation: String {
     let separator = "~"
-      let input = ([jwt.compactSerialization] + disclosures).reduce("") { $0.isEmpty ? $1 : $0 + separator + $1 } + separator
+    let input = ([jwt.compactSerialization] + disclosures).reduce("") { $0.isEmpty ? $1 : $0 + separator + $1 } + separator
     return DigestCreator()
       .hashAndBase64Encode(
         input: input
-    ) ?? ""
+      ) ?? ""
   }
-
+  
   // MARK: - Lifecycle
-
+  
   init(
     serializedJwt: String,
     disclosures: [Disclosure],
@@ -95,83 +95,83 @@ public struct SignedSDJWT {
     self.disclosures = disclosures
     self.kbJwt = try? JWS(jwsString: serializedKbJwt ?? "")
   }
-
+  
   private init?<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) {
     // Create a Signed SDJWT with no key binding
     guard let signedJwt = try? SignedSDJWT.createSignedJWT(key: issuersPrivateKey, jwt: sdJwt.jwt) else {
       return nil
     }
-
+    
     self.jwt = signedJwt
     self.disclosures = sdJwt.disclosures
     self.kbJwt = nil
   }
-
+  
   private init?<KeyType>(signedSDJWT: SignedSDJWT, kbJWT: JWT, holdersPrivateKey: KeyType) {
     // Assume that we have a valid signed jwt from the issuer
     // And key exchange has been established
     // signed SDJWT might contain or not the cnf claim
-
+    
     self.jwt = signedSDJWT.jwt
     self.disclosures = signedSDJWT.disclosures
     let signedKBJwt = try? SignedSDJWT.createSignedJWT(key: holdersPrivateKey, jwt: kbJWT)
     self.kbJwt = signedKBJwt
   }
-
+  
   // MARK: - Methods
-
+  
   // expose static func initializers to distinguish between 2 cases of
   // signed SDJWT creation
-
+  
   static func nonKeyBondedSDJWT<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) throws -> SignedSDJWT {
     try .init(sdJwt: sdJwt, issuersPrivateKey: issuersPrivateKey) ?? {
       throw SDJWTVerifierError.invalidJwt
     }()
   }
-
+  
   static func keyBondedSDJWT<KeyType>(signedSDJWT: SignedSDJWT, kbJWT: JWT, holdersPrivateKey: KeyType) throws -> SignedSDJWT {
     try .init(signedSDJWT: signedSDJWT, kbJWT: kbJWT, holdersPrivateKey: holdersPrivateKey) ?? {
       throw SDJWTVerifierError.invalidJwt
     }()
   }
-
+  
   private static func createSignedJWT<KeyType>(key: KeyType, jwt: JWT) throws -> JWS {
     try jwt.sign(key: key)
   }
-
+  
   func disclosuresToPresent(disclosures: [Disclosure]) -> Self {
     var updated = self
     updated.disclosures = disclosures
     return updated
   }
-
+  
   func toSDJWT() throws -> SDJWT {
-      if let kbJwtHeader = kbJwt?.protectedHeader,
+    if let kbJwtHeader = kbJwt?.protectedHeader,
        let kbJWtPayload = try? kbJwt?.payloadJSON() {
       return try SDJWT(
         jwt: JWT(header: jwt.protectedHeader, payload: jwt.payloadJSON()),
         disclosures: disclosures,
         kbJWT: JWT(header: kbJwtHeader, kbJwtPayload: kbJWtPayload))
     }
-
+    
     return try SDJWT(
       jwt: JWT(header: jwt.protectedHeader, payload: jwt.payloadJSON()),
       disclosures: disclosures,
       kbJWT: nil)
   }
-
+  
   func extractHoldersPublicKey() throws -> JWK {
     let payloadJson = try self.jwt.payloadJSON()
     let jwk = payloadJson[Keys.cnf]["jwk"]
-
+    
     guard jwk.exists() else {
       throw SDJWTVerifierError.keyBindingFailed(description: "Failled to find holders public key")
     }
-
+    
     guard let jwkObject = try? JSONDecoder.jwt.decode(JWK.self, from: jwk.rawData()) else {
       throw SDJWTVerifierError.keyBindingFailed(description: "failled to extract key type")
     }
-
+    
     return jwkObject
   }
 }
@@ -180,14 +180,29 @@ extension SignedSDJWT {
   func serialised(serialiser: (SignedSDJWT) -> (SerialiserProtocol)) throws -> Data {
     serialiser(self).data
   }
-
+  
   func serialised(serialiser: (SignedSDJWT) -> (SerialiserProtocol)) throws -> String {
     serialiser(self).serialised
   }
 }
 
-extension SignedSDJWT {
-  public func recreateClaims() throws -> ClaimExtractorResult {
+public extension SignedSDJWT {
+  func recreateClaims() throws -> ClaimExtractorResult {
     return try self.toSDJWT().recreateClaims()
+  }
+  
+  func asJwsJsonObject(
+    option: JwsJsonSupportOption = .flattened,
+    kbJwt: JWTString?,
+    getParts: (JWTString) throws -> (String, String, String)
+  ) throws -> JSON {
+    let (protected, payload, signature) = try getParts(jwt.compactSerialization)
+    return option.buildJwsJson(
+      protected: protected,
+      payload: payload,
+      signature: signature,
+      disclosures: Set(disclosures),
+      kbJwt: kbJwt
+    )
   }
 }

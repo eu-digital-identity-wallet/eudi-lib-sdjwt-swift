@@ -25,6 +25,10 @@ let package = Package(
         .package(
           url: "https://github.com/beatt83/jose-swift.git",
           from: "3.1.0"
+        ),
+        .package(
+          url: "https://github.com/apple/swift-certificates.git",
+          from: "1.0.0"
         )
     ],
     targets: [
@@ -32,7 +36,8 @@ let package = Package(
             name: "eudi-lib-sdjwt-swift",
             dependencies: [
                 "jose-swift",
-                .product(name: "SwiftyJSON", package: "swiftyjson")
+                .product(name: "SwiftyJSON", package: "swiftyjson"),
+                .product(name: "X509", package: "swift-certificates"),
             ],
             path: "Sources",
             plugins: [

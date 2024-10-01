@@ -60,3 +60,67 @@ extension String {
     return nil
   }
 }
+
+extension String {
+  
+  /// Converts a PEM encoded public key to `SecKey`.
+  /// - Returns: The corresponding `SecKey` if successful, otherwise `nil`.
+  func pemToSecKey() -> SecKey? {
+    // Remove the PEM header and footer
+    let keyString = self
+      .replacingOccurrences(of: "-----BEGIN PUBLIC KEY-----", with: "")
+      .replacingOccurrences(of: "-----END PUBLIC KEY-----", with: "")
+      .replacingOccurrences(of: "\n", with: "")
+      .replacingOccurrences(of: "\r", with: "")
+    
+    // Decode the Base64-encoded string
+    guard let keyData = Data(base64Encoded: keyString) else {
+      print("Invalid Base64 string")
+      return nil
+    }
+    
+    // First, try RSA
+    if let secKey = String.createSecKey(from: keyData, keyType: kSecAttrKeyTypeRSA) {
+      print("Key identified as RSA.")
+      return secKey
+    }
+    
+    // If RSA fails, try EC
+    if let secKey = String.createSecKey(from: keyData, keyType: kSecAttrKeyTypeEC) {
+      print("Key identified as EC.")
+      return secKey
+    }
+    
+    // Add more key types if needed (e.g., DSA, etc.)
+    
+    // If neither RSA nor EC works, return nil
+    print("Unable to identify key type.")
+    return nil
+  }
+  
+  /// Creates a `SecKey` from the provided key data.
+  /// - Parameters:
+  ///   - keyData: The raw key data.
+  ///   - keyType: The key type (e.g., RSA or EC).
+  /// - Returns: The `SecKey` if successful, otherwise `nil`.
+  private static func createSecKey(from keyData: Data, keyType: CFString) -> SecKey? {
+    // Define the attributes for creating the SecKey
+    let attributes: [CFString: Any] = [
+      kSecAttrKeyType: keyType,
+      kSecAttrKeyClass: kSecAttrKeyClassPublic,
+      kSecAttrKeySizeInBits: keyData.count * 8
+    ]
+    
+    // Try to create the SecKey
+    var error: Unmanaged<CFError>?
+    if let secKey = SecKeyCreateWithData(keyData as CFData, attributes as CFDictionary, &error) {
+      return secKey
+    } else {
+      if let err = error?.takeRetainedValue() {
+        print("Error creating SecKey: \(err.localizedDescription)")
+      }
+      return nil
+    }
+  }
+}
+

@@ -74,9 +74,11 @@ public class CompactParser: ParserProtocol {
     }
     
     // Ensure that all components are properly assigned
-    guard let unwrappedHeader = header,
-          let unwrappedPayload = payload,
-          let unwrappedSignature = signature else {
+    guard
+      let unwrappedHeader = header,
+      let unwrappedPayload = payload,
+      let unwrappedSignature = signature
+    else {
       throw SDJWTVerifierError.parsingError
     }
     

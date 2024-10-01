@@ -24,21 +24,6 @@ public protocol VerifierProtocol {
   func verify() throws -> ReturnType
 }
 
-public enum SDJWTVerifierError: Error {
-  case parsingError
-  case invalidJwt
-  case keyBindingFailed(description: String)
-  case invalidDisclosure(disclosures: [Disclosure])
-  case missingOrUnknownHashingAlgorithm
-  case nonUniqueDisclosures
-  case nonUniqueDisclosureDigests
-  case missingDigests(disclosures: [Disclosure])
-  case noAlgorithmProvided
-  case failedToCreateVerifier
-  case expiredJwt
-  case notValidYetJwt
-}
-
 /// `SDJWTVerifier` is a class for verifying SD JSON Web Tokens (SDJWT) in a Swift application.
 /// This class provides comprehensive methods to validate both cases of Issuance to a holder and presentation to a verifier
 ///

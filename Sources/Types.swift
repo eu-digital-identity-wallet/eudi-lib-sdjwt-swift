@@ -32,6 +32,22 @@ public enum SDJWTError: Error {
   case macAsAlgorithm
 }
 
+public enum SDJWTVerifierError: Error {
+  case parsingError
+  case invalidJwt
+  case invalidIssuer
+  case keyBindingFailed(description: String)
+  case invalidDisclosure(disclosures: [Disclosure])
+  case missingOrUnknownHashingAlgorithm
+  case nonUniqueDisclosures
+  case nonUniqueDisclosureDigests
+  case missingDigests(disclosures: [Disclosure])
+  case noAlgorithmProvided
+  case failedToCreateVerifier
+  case expiredJwt
+  case notValidYetJwt
+}
+
 /// Static Keys Used by the JWT
 enum Keys: String {
   case sd = "_sd"

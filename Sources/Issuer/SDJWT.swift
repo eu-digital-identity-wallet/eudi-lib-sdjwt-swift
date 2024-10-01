@@ -96,6 +96,13 @@ public struct SignedSDJWT {
     self.kbJwt = try? JWS(jwsString: serializedKbJwt ?? "")
   }
   
+  init?(json: JSON) throws {
+    let triple = try JwsJsonSupport.parseJWSJson(unverifiedSdJwt: json)
+    self.jwt = triple.jwt
+    self.disclosures = triple.disclosures
+    self.kbJwt = triple.kbJwt
+  }
+  
   private init?<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) {
     // Create a Signed SDJWT with no key binding
     guard let signedJwt = try? SignedSDJWT.createSignedJWT(key: issuersPrivateKey, jwt: sdJwt.jwt) else {
@@ -190,6 +197,7 @@ public extension SignedSDJWT {
   func recreateClaims() throws -> ClaimExtractorResult {
     return try self.toSDJWT().recreateClaims()
   }
+  
   
   func asJwsJsonObject(
     option: JwsJsonSupportOption = .flattened,

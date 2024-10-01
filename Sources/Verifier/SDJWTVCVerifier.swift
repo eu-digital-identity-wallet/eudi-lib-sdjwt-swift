@@ -191,6 +191,7 @@ private extension SDJWTVCVerifier {
     }
     
     let certChain = parseCertificates(from: jws.protectedHeaderData)
+    let leaf = certChain.first
     
     let issUrl = URL(string: iss)
     let issScheme = issUrl?.scheme
@@ -204,9 +205,13 @@ private extension SDJWTVCVerifier {
         kid: jws.protectedHeader.keyID
       )
     } else if issScheme == HTTPS_URI_SCHEME {
-      guard let issUrl = issUrl else {
+      guard
+        let issUrl = issUrl,
+        isIssuerFQDNContained(in: leaf, issuerUrl: issUrl) || isIssuerURIContained(in: leaf, iss: iss)
+      else {
         return nil
       }
+      
       return .x509CertChain(
         iss: issUrl,
         chain: certChain
@@ -218,5 +223,35 @@ private extension SDJWTVCVerifier {
       )
     }
     return nil
+  }
+  
+  private func isIssuerFQDNContained(in leaf: Certificate?, issuerUrl: URL) -> Bool {
+    // Get the host from the issuer URL
+    guard let issuerFQDN = issuerUrl.host else {
+      return false
+    }
+    
+    // Extract the DNS names from the certificate's subject alternative names
+    let dnsNames = try? leaf?.extensions
+      .subjectAlternativeNames?
+      .rawSubjectAlternativeNames()
+    
+    // Check if any of the DNS names match the issuer FQDN
+    let contains = dnsNames?.contains(where: { $0 == issuerFQDN }) ?? false
+    
+    return contains
+  }
+  
+  func isIssuerURIContained(in leaf: Certificate?, iss: String) -> Bool {
+    // Extract the URIs from the certificate's subject alternative names
+    let uris = try? leaf?
+      .extensions
+      .subjectAlternativeNames?
+      .rawUniformResourceIdentifiers()
+    
+    // Check if any of the URIs match the 'iss' string
+    let contains = uris?.contains(where: { $0 == iss }) ?? false
+    
+    return contains
   }
 }

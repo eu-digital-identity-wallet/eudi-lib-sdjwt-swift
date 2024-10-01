@@ -56,3 +56,8 @@ func parseCertificates(from data: Data) -> [Certificate] {
     }
   }
 }
+
+func parseCertificateData(_ data: Data) -> [String] {
+  let header = try? JSON(data: data)
+  return header?["x5c"].array?.compactMap { $0.stringValue } ?? []
+}

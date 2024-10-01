@@ -24,20 +24,6 @@ private let HTTPS_URI_SCHEME = "https"
 private let DID_URI_SCHEME = "did"
 private let SD_JWT_VC_TYPE = "vc+sd-jwt"
 
-public protocol X509CertificateTrust {
-  func isTrusted(chain: [Certificate]) async -> Bool
-}
-
-struct X509CertificateTrustNone: X509CertificateTrust {
-  func isTrusted(chain: [Certificate]) async -> Bool {
-    return false
-  }
-}
-
-public struct X509CertificateTrustFactory {
-  public static let none: X509CertificateTrust = X509CertificateTrustNone()
-}
-
 /**
  * A protocol to look up public keys from DIDs/DID URLs.
  */

@@ -16,7 +16,17 @@
 import Foundation
 import X509
 
+/// Extension for the `SubjectAlternativeNames` structure provided by X.509 library.
+/// This extension provides utility methods for extracting DNS names and URIs from the
+/// subject alternative names (SAN) field of an X.509 certificate.
 extension SubjectAlternativeNames {
+  
+  /// Extracts the DNS names from the subject alternative names (SAN) field of a certificate.
+  ///
+  /// This function iterates over all general names in the `SubjectAlternativeNames` structure
+  /// and extracts only those that are DNS names (`.dnsName`). It returns these names as an array of strings.
+  ///
+  /// - Returns: An array of DNS names found in the subject alternative names field, or an empty array if no DNS names are present.
   func rawSubjectAlternativeNames() -> [String] {
     self.compactMap { generalName in
       switch generalName {
@@ -27,6 +37,12 @@ extension SubjectAlternativeNames {
     }
   }
   
+  /// Extracts the Uniform Resource Identifiers (URIs) from the subject alternative names (SAN) field of a certificate.
+  ///
+  /// This function iterates over all general names in the `SubjectAlternativeNames` structure
+  /// and extracts only those that are URIs (`.uniformResourceIdentifier`). It returns these URIs as an array of strings.
+  ///
+  /// - Returns: An array of URIs found in the subject alternative names field, or an empty array if no URIs are present.
   func rawUniformResourceIdentifiers() -> [String] {
     self.compactMap { generalName in
       switch generalName {

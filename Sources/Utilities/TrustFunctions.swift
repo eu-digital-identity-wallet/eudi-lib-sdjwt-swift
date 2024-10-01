@@ -18,27 +18,21 @@ import X509
 import SwiftyJSON
 
 func parseCertificates(from chain: [String]) -> [Certificate] {
-  chain.compactMap { serializedCertificate in
-    guard let serializedData = Data(base64Encoded: serializedCertificate) else {
-      return nil
-    }
-    
-    if let string = String(data: serializedData, encoding: .utf8) {
-      guard let data = Data(base64Encoded: string.removeCertificateDelimiters()) else {
-        return nil
-      }
-      let derBytes = [UInt8](data)
-      return try? Certificate(derEncoded: derBytes)
-    } else {
-      let derBytes = [UInt8](serializedData)
-      return try? Certificate(derEncoded: derBytes)
-    }
-  }
+  processChain(chain)
 }
 
 func parseCertificates(from data: Data) -> [Certificate] {
   let header = try? JSON(data: data)
   let chain = header?["x5c"].array?.compactMap { $0.stringValue } ?? []
+  return processChain(chain)
+}
+
+func parseCertificateData(_ data: Data) -> [String] {
+  let header = try? JSON(data: data)
+  return header?["x5c"].array?.compactMap { $0.stringValue } ?? []
+}
+
+fileprivate func processChain(_ chain: [String]) -> [Certificate] {
   return chain.compactMap { serializedCertificate in
     guard let serializedData = Data(base64Encoded: serializedCertificate) else {
       return nil
@@ -55,9 +49,4 @@ func parseCertificates(from data: Data) -> [Certificate] {
       return try? Certificate(derEncoded: derBytes)
     }
   }
-}
-
-func parseCertificateData(_ data: Data) -> [String] {
-  let header = try? JSON(data: data)
-  return header?["x5c"].array?.compactMap { $0.stringValue } ?? []
 }

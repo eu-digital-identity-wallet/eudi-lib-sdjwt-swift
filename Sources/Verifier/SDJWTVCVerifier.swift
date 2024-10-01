@@ -28,24 +28,67 @@ private let SD_JWT_VC_TYPE = "vc+sd-jwt"
  * A protocol to look up public keys from DIDs/DID URLs.
  */
 public protocol LookupPublicKeysFromDIDDocument {
+  /**
+   * Asynchronously looks up public keys from a DID document based on a DID or DID URL.
+   *
+   * - Parameters:
+   *   - did: The DID identifier.
+   *   - didUrl: The DID URL (optional).
+   * - Returns: An array of JWKs (public keys) or `nil` if the lookup fails.
+   */
   func lookup(did: String, didUrl: String?) async -> [JWK]?
 }
 
+/**
+ * A protocol defining methods for verifying SD-JWTs
+ */
 protocol SdJwtVcVerifierType {
+  
+  /**
+   * Verifies the issuance of an SD-JWT from a serialized string.
+   *
+   * - Parameter unverifiedSdJwt: The unverified SD-JWT in string format.
+   * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
+   */
   func verifyIssuance(
     unverifiedSdJwt: String
   ) async throws -> Result<SignedSDJWT, any Error>
+  
+  /**
+   * Verifies the issuance of an SD-JWT from a `JSON` object.
+   *
+   * - Parameter unverifiedSdJwt: The unverified SD-JWT in `JSON` format.
+   * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
+   */
   func verifyIssuance(
     unverifiedSdJwt: JSON
   ) async throws -> Result<SignedSDJWT, any Error>
 }
 
+/**
+ * A class for verifying SD-JWT Verifiable Credentials.
+ * This class verifies SD-JWT VCs by validating the JWT's signatures and
+ * using trust chains and metadata fetching.
+ */
 public class SDJWTVCVerifier: SdJwtVcVerifierType {
   
+  /// X.509 certificate trust configuration used for verifying certificates.
   private let trust: X509CertificateTrust
+  
+  /// Optional service for fetching public keys from DID documents.
   private let lookup: LookupPublicKeysFromDIDDocument?
+  
+  /// Service for fetching issuer metadata such as public keys.
   private let fetcher: any SdJwtVcIssuerMetaDataFetching
   
+  /**
+   * Initializes the `SDJWTVCVerifier` with dependencies for metadata fetching, certificate trust, and public key lookup.
+   *
+   * - Parameters:
+   *   - fetcher: A service responsible for fetching issuer metadata.
+   *   - trust: The X.509 trust configuration.
+   *   - lookup: Optional service for looking up public keys from DIDs or DID URLs.
+   */
   public init(
     fetcher: SdJwtVcIssuerMetaDataFetching = SdJwtVcIssuerMetaDataFetcher(
       urlSession: .shared
@@ -58,6 +101,12 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     self.lookup = lookup
   }
   
+  /**
+   * Verifies the issuance of an SD-JWT VC.
+   *
+   * - Parameter unverifiedSdJwt: The unverified SD-JWT in string format.
+   * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
+   */
   func verifyIssuance(
     unverifiedSdJwt: String
   ) async throws -> Result<SignedSDJWT, any Error> {
@@ -86,6 +135,12 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
   }
   
+  /**
+   * Verifies the issuance of an SD-JWT VC.
+   *
+   * - Parameter unverifiedSdJwt: The unverified SD-JWT in `JSON` format.
+   * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
+   */
   func verifyIssuance(
     unverifiedSdJwt: JSON
   ) async throws -> Result<SignedSDJWT, any Error> {
@@ -122,6 +177,16 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
 }
 
 private extension SDJWTVCVerifier {
+  
+  /**
+   * Selects the issuer's public key from the JWS object based on metadata, X.509 certificates, or DID URLs.
+   *
+   * - Parameters:
+   *   - jws: The JSON Web Signature object.
+   *   - trust: The X.509 trust configuration.
+   *   - lookup: Optional service for looking up public keys from DID documents.
+   * - Returns: A `Result` containing either the selected `JWK` or an error.
+   */
   func issuerJwsKeySelector(
     jws: JWS,
     trust: X509CertificateTrust,
@@ -170,6 +235,12 @@ private extension SDJWTVCVerifier {
     }
   }
   
+  /**
+   * Determines the source of the issuer's public key from the JWS object.
+   *
+   * - Parameter jws: The JSON Web Signature object.
+   * - Returns: An optional `SdJwtVcIssuerPublicKeySource` object.
+   */
   func keySource(jws: JWS) throws -> SdJwtVcIssuerPublicKeySource? {
     
     guard let iss = try? jws.iss() else {

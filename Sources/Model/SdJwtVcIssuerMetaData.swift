@@ -15,6 +15,31 @@
  */
 import Foundation
 import JSONWebKey
+import SwiftyJSON
+
+struct SdJwtVcIssuerMetadataTO: Decodable {
+  let issuer: String
+  let jwksUri: String?
+  let jwks: JWKSet?
+  
+  enum CodingKeys: String, CodingKey {
+    case issuer
+    case jwksUri = "jwks_uri"
+    case jwks
+  }
+  
+  init(from decoder: Decoder) throws {
+    let container = try decoder.container(keyedBy: CodingKeys.self)
+    issuer = try container.decode(String.self, forKey: .issuer)
+    jwksUri = try container.decodeIfPresent(String.self, forKey: .jwksUri)
+    
+    if let jwksData = try container.decodeIfPresent(JWKSet.self, forKey: .jwks) {
+      jwks = jwksData
+    } else {
+      jwks = nil
+    }
+  }
+}
 
 public struct SdJwtVcIssuerMetaData {
   public let issuer: URL

@@ -63,6 +63,12 @@ extension String {
 
 extension String {
   
+  func removeCertificateDelimiters() -> String {
+    return self.replacingOccurrences(of: "-----BEGIN CERTIFICATE-----\n", with: "")
+      .replacingOccurrences(of: "-----END CERTIFICATE-----", with: "")
+      .replacingOccurrences(of: "\n", with: "")
+  }
+  
   /// Converts a PEM encoded public key to `SecKey`.
   /// - Returns: The corresponding `SecKey` if successful, otherwise `nil`.
   func pemToSecKey() -> SecKey? {

@@ -185,14 +185,12 @@ private extension SDJWTVCVerifier {
   }
   
   func keySource(jws: JWS) throws -> SdJwtVcIssuerPublicKeySource? {
-    let kid = jws.protectedHeader.keyID
-    let certChain = try [Certificate(pemEncoded: jws.protectedHeader.x509CertificateChain!)]
-    let payload = jws.payload
-    let json = try JSON(data: payload)
     
-    guard let iss = json["iss"].string else {
+    guard let iss = try? jws.iss() else {
       throw SDJWTVerifierError.invalidIssuer
     }
+    
+    let certChain = parseCertificates(from: jws.protectedHeaderData)
     
     let issUrl = URL(string: iss)
     let issScheme = issUrl?.scheme
@@ -203,7 +201,7 @@ private extension SDJWTVCVerifier {
       }
       return .metadata(
         iss: issUrl,
-        kid: kid
+        kid: jws.protectedHeader.keyID
       )
     } else if issScheme == HTTPS_URI_SCHEME {
       guard let issUrl = issUrl else {
@@ -216,7 +214,7 @@ private extension SDJWTVCVerifier {
     } else if issScheme == DID_URI_SCHEME && certChain.isEmpty {
       return .didUrl(
         iss: iss,
-        kid: kid
+        kid: jws.protectedHeader.keyID
       )
     }
     return nil

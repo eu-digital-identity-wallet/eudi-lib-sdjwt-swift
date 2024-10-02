@@ -31,10 +31,12 @@ final class VcVerifierTest: XCTestCase {
   override func tearDown() async throws {
   }
   
-  func testX509() async throws {
+  func testVerifyIssuance_WithValidSDJWT_ShouldSucceed() async throws {
     
+    // Given
     let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
     
+    // When
     let result = try await SDJWTVCVerifier(
       fetcher: SdJwtVcIssuerMetaDataFetcher(
         session: URLSession.shared
@@ -45,12 +47,16 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: sdJwtString
     )
     
+    // Then
     XCTAssertNoThrow(try result.get())
   }
   
-  func testIssuerMetaData() async throws {
+  func testVerifyIssuance_WithIssuerMetaData_ShouldSucceed() async throws {
     
+    // Given
     let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    
+    // When
     let result = try await SDJWTVCVerifier(
       fetcher: SdJwtVcIssuerMetaDataFetcher(
         session: NetworkingMock(
@@ -63,24 +69,24 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: sdJwtString
     )
     
+    // Then
     XCTAssertNoThrow(try result.get())
   }
   
-  func testDid() async throws {
+  func testVerifyIssuance_WithDID_ShouldSucceed() async throws {
     
-    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    // Given
+    let sdJwtString = SDJWTConstants.did_sd_jwt.clean()
+    
+    // When
     let result = try await SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(
-        session: NetworkingMock(
-          path: "issuer_meta_data",
-          extension: "json"
-        )
-      )
+      lookup: LookupPublicKeysFromDIDDocumentMock()
     )
     .verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
     
+    // Then
     XCTAssertNoThrow(try result.get())
   }
 }

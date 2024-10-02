@@ -20,7 +20,9 @@ import XCTest
 @testable import eudi_lib_sdjwt_swift
 
 class LookupPublicKeysFromDIDDocumentMock: LookupPublicKeysFromDIDDocument {
-  func lookup(did: String, didUrl: String?) async -> [JWK]? {
-    []
+  func lookup(did: String, didUrl: String?) async throws -> [JWK]? {
+    let data = SDJWTConstants.did_key.data(using: .utf8)!
+    let key = try JSONDecoder.jwt.decode(JWK.self, from: data)
+    return [key]
   }
 }

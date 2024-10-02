@@ -36,7 +36,7 @@ public protocol LookupPublicKeysFromDIDDocument {
    *   - didUrl: The DID URL (optional).
    * - Returns: An array of JWKs (public keys) or `nil` if the lookup fails.
    */
-  func lookup(did: String, didUrl: String?) async -> [JWK]?
+  func lookup(did: String, didUrl: String?) async throws -> [JWK]?
 }
 
 /**
@@ -225,7 +225,7 @@ private extension SDJWTVCVerifier {
       }
       return .failure(SDJWTVerifierError.invalidJwt)
     case .didUrl(let iss, let kid):
-      guard let key = await lookup?.lookup(
+      guard let key = try await lookup?.lookup(
         did: iss,
         didUrl: kid
       )?.first(where: { $0.keyID == kid }) else {

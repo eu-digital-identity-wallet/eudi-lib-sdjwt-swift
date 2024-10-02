@@ -26,7 +26,7 @@ final class VerifierTest: XCTestCase {
 
   func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
 
-      let pk = try JSONDecoder.jwt.decode(JWK.self, from: key.tryToData())
+    let pk = try JSONDecoder.jwt.decode(JWK.self, from: key.tryToData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
     let complexStructureSDJWTString =
                 """

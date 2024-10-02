@@ -5,17 +5,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/krzyzanowskim/CryptoSwift.git",
       "state" : {
-        "revision" : "c9c3df6ab812de32bae61fc0cd1bf6d45170ebf0",
-        "version" : "1.8.2"
+        "revision" : "678d442c6f7828def400a70ae15968aef67ef52d",
+        "version" : "1.8.3"
       }
     },
     {
       "identity" : "jose-swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/beatt83/jose-swift.git",
+      "location" : "https://github.com/dtsiflit/jose-swift.git",
       "state" : {
-        "revision" : "682002aae8d841d47bd9f641b8b85a233460d140",
-        "version" : "3.1.0"
+        "branch" : "fix/x509-chain-type",
+        "revision" : "7e5164025e89408398c415cff18dcb4e249d65f4"
       }
     },
     {

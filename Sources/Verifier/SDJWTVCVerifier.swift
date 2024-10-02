@@ -91,7 +91,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    */
   public init(
     fetcher: SdJwtVcIssuerMetaDataFetching = SdJwtVcIssuerMetaDataFetcher(
-      urlSession: .shared
+      session: URLSession.shared
     ),
     trust: X509CertificateTrust = X509CertificateTrustFactory.none,
     lookup: LookupPublicKeysFromDIDDocument? = nil
@@ -206,7 +206,7 @@ private extension SDJWTVCVerifier {
       guard let jwk = try await fetcher.fetchIssuerMetaData(
         issuer: iss
       )?.jwks.first(where: { $0.keyID == kid }) else {
-        return .failure(SDJWTVerifierError.invalidJwt)
+        return .failure(SDJWTVerifierError.invalidJwk)
       }
       return .success(jwk)
       

@@ -35,6 +35,7 @@ public enum SDJWTError: Error {
 public enum SDJWTVerifierError: Error {
   case parsingError
   case invalidJwt
+  case invalidJwk
   case invalidIssuer
   case keyBindingFailed(description: String)
   case invalidDisclosure(disclosures: [Disclosure])

@@ -18,21 +18,24 @@ import SwiftyJSON
 import JSONWebKey
 
 public protocol SdJwtVcIssuerMetaDataFetching {
-  var urlSession: URLSession { get }
+  var session: Networking { get }
   func fetchIssuerMetaData(issuer: URL) async throws -> SdJwtVcIssuerMetaData?
 }
 
 public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
   
-  public let urlSession: URLSession
+  public let session: Networking
   
-  public init(urlSession: URLSession) {
-    self.urlSession = urlSession
+  public init(session: Networking) {
+    self.session = session
   }
   
   public func fetchIssuerMetaData(issuer: URL) async throws -> SdJwtVcIssuerMetaData? {
     let issuerMetadataUrl = issuerMetadataUrl(for: issuer)
-    let metadata: SdJwtVcIssuerMetadataTO = try await fetch(from: issuerMetadataUrl)
+    let metadata: SdJwtVcIssuerMetadataTO = try await fetch(
+      from: issuerMetadataUrl,
+      with: session
+    )
     
     guard issuer == URL(string: metadata.issuer) else {
       throw SDJWTVerifierError.invalidJwt
@@ -46,7 +49,10 @@ public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
         jwks: jwks.keys
       )
     } else if metadata.jwksUri != nil {
-      let jwks: JWKSet = try await fetch(from: issuerMetadataUrl)
+      let jwks: JWKSet = try await fetch(
+        from: issuerMetadataUrl,
+        with: session
+      )
       return .init(
         issuer: issuer,
         jwks: jwks.keys
@@ -64,9 +70,9 @@ private extension SdJwtVcIssuerMetaDataFetcher {
     return components.url!
   }
   
-  func fetch<T: Decodable>(from url: URL) async throws -> T {
+  func fetch<T: Decodable>(from url: URL, with session: Networking) async throws -> T {
     
-    let (data, response) = try await URLSession.shared.data(from: url)
+    let (data, response) = try await session.data(from: url)
     
     guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
       throw URLError(.badServerResponse)

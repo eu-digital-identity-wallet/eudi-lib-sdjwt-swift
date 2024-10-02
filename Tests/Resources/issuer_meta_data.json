@@ -1,0 +1,14 @@
+{
+    "issuer": "https://leaf.example.com",
+    "jwks": {
+        "keys": [
+            {
+                "crv": "P-256",
+                "kid": "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48",
+                "kty": "EC",
+                "x": "a-YaMtV2EvvoOSdVJP7lH59Td9_ctrCvqIUu24LEHus",
+                "y": "PExhk1ozTPSk7eJsYZXVp5SEWMbhOgeHZGgBlnFhLjc"
+            }
+        ]
+    }
+}

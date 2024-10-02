@@ -31,16 +31,13 @@ final class VcVerifierTest: XCTestCase {
   override func tearDown() async throws {
   }
   
-  func testVerifyIssuance_WithValidSDJWT_ShouldSucceed() async throws {
+  func testVerifyIssuance_WithValidSDJWT_Withx509Header_ShouldSucceed() async throws {
     
     // Given
     let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
     
     // When
     let result = try await SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(
-        session: URLSession.shared
-      ),
       trust: X509CertificateChainVerifier()
     )
     .verifyIssuance(
@@ -51,7 +48,7 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
-  func testVerifyIssuance_WithIssuerMetaData_ShouldSucceed() async throws {
+  func testVerifyIssuance_WithValidSDJWT_WithIssuerMetaData_ShouldSucceed() async throws {
     
     // Given
     let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
@@ -73,7 +70,7 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
-  func testVerifyIssuance_WithDID_ShouldSucceed() async throws {
+  func testVerifyIssuance_WithValidSDJWT_WithDID_ShouldSucceed() async throws {
     
     // Given
     let sdJwtString = SDJWTConstants.did_sd_jwt.clean()
@@ -84,6 +81,56 @@ final class VcVerifierTest: XCTestCase {
     )
     .verifyIssuance(
       unverifiedSdJwt: sdJwtString
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
+  func testVerifyIssuance_WithValidSDJWTFlattendedJSON_Withx509Header_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
+    let parser = CompactParser(serialisedString: sdJwtString)
+    let sdJwt = try! parser.getSignedSdJwt()
+    
+    // When
+    let json = try sdJwt.asJwsJsonObject(
+      option: .flattened,
+      kbJwt: sdJwt.kbJwt?.compactSerialization,
+      getParts: parser.extractJWTParts
+    )
+    
+    let result = try await SDJWTVCVerifier(
+      trust: X509CertificateChainVerifier()
+    )
+    .verifyIssuance(
+      unverifiedSdJwt: json
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
+  func testVerifyIssuance_WithValidSDJWTGeneralJSON_Withx509Header_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
+    let parser = CompactParser(serialisedString: sdJwtString)
+    let sdJwt = try! parser.getSignedSdJwt()
+    
+    // When
+    let json = try sdJwt.asJwsJsonObject(
+      option: .general,
+      kbJwt: sdJwt.kbJwt?.compactSerialization,
+      getParts: parser.extractJWTParts
+    )
+    
+    let result = try await SDJWTVCVerifier(
+      trust: X509CertificateChainVerifier()
+    )
+    .verifyIssuance(
+      unverifiedSdJwt: json
     )
     
     // Then

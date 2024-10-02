@@ -23,8 +23,8 @@ let package = Package(
       from: "5.0.1"
     ),
     .package(
-      url: "https://github.com/dtsiflit/jose-swift.git",
-      branch: "fix/x509-chain-type"
+      url: "https://github.com/beatt83/jose-swift.git",
+      from: "4.0.0"
     ),
     .package(
       url: "https://github.com/apple/swift-certificates.git",
@@ -48,8 +48,7 @@ let package = Package(
       dependencies: ["eudi-lib-sdjwt-swift"],
       path: "Tests",
       resources: [
-        // Process or copy resources in your test target
-        .process("Resources")  // Specify the folder containing resources for tests
+        .process("Resources")
       ]
     )
   ]

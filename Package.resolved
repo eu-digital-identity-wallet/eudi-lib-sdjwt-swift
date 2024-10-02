@@ -12,10 +12,10 @@
     {
       "identity" : "jose-swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/dtsiflit/jose-swift.git",
+      "location" : "https://github.com/beatt83/jose-swift.git",
       "state" : {
-        "branch" : "fix/x509-chain-type",
-        "revision" : "7e5164025e89408398c415cff18dcb4e249d65f4"
+        "revision" : "c289a01f895501257e170d422a57a6edc593bbcd",
+        "version" : "4.0.0"
       }
     },
     {

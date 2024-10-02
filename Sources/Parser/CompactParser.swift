@@ -29,6 +29,7 @@ public class CompactParser: ParserProtocol {
   
   var serialisedString: String
   var serialisationFormat: SerialisationFormat = .serialised
+  
   // MARK: - Lifecycle
   
   public required init(serialiserProtocol: SerialiserProtocol) {

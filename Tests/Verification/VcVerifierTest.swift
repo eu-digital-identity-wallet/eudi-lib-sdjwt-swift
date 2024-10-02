@@ -136,4 +136,35 @@ final class VcVerifierTest: XCTestCase {
     // Then
     XCTAssertNoThrow(try result.get())
   }
+  
+  func testVerifyIssuance_WithValidSDJWTFlattended_WithIssuerMetaData_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    let parser = CompactParser(serialisedString: sdJwtString)
+    let sdJwt = try! parser.getSignedSdJwt()
+    
+    // When
+    let json = try sdJwt.asJwsJsonObject(
+      option: .general,
+      kbJwt: sdJwt.kbJwt?.compactSerialization,
+      getParts: parser.extractJWTParts
+    )
+    
+    // When
+    let result = try await SDJWTVCVerifier(
+      fetcher: SdJwtVcIssuerMetaDataFetcher(
+        session: NetworkingMock(
+          path: "issuer_meta_data",
+          extension: "json"
+        )
+      )
+    )
+    .verifyIssuance(
+      unverifiedSdJwt: json
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
 }

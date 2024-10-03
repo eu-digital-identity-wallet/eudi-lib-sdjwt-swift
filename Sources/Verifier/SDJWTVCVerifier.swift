@@ -63,6 +63,18 @@ protocol SdJwtVcVerifierType {
   func verifyIssuance(
     unverifiedSdJwt: JSON
   ) async throws -> Result<SignedSDJWT, any Error>
+  
+  func verifyPresentation(
+    unverifiedSdJwt: String,
+    claimsVerifier: ClaimsVerifier,
+    keyBindingVerifier: KeyBindingVerifier?
+  ) async throws -> Result<SignedSDJWT, any Error>
+  
+  func verifyPresentation(
+    unverifiedSdJwt: JSON,
+    claimsVerifier: ClaimsVerifier,
+    keyBindingVerifier: KeyBindingVerifier?
+  ) async throws -> Result<SignedSDJWT, any Error>
 }
 
 /**
@@ -173,6 +185,73 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           signedJWT: jws,
           publicKey: jwk
         )
+      }
+    case .failure(let error):
+      throw error
+    }
+  }
+  
+  func verifyPresentation(
+    unverifiedSdJwt: String,
+    claimsVerifier: ClaimsVerifier,
+    keyBindingVerifier: KeyBindingVerifier? = nil
+  ) async throws -> Result<SignedSDJWT, any Error> {
+    let jws = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt).jwt
+    let jwk = try await issuerJwsKeySelector(
+      jws: jws,
+      trust: trust,
+      lookup: lookup
+    )
+    
+    switch jwk {
+    case .success(let jwk):
+      return try SDJWTVerifier(
+        parser: parser,
+        serialisedString: unverifiedSdJwt
+      ).verifyPresentation { jws in
+        try SignatureVerifier(
+          signedJWT: jws,
+          publicKey: jwk
+        )
+      } claimVerifier: { _, _ in
+        claimsVerifier
+      }
+    case .failure(let error):
+      throw error
+    }
+  }
+  
+  func verifyPresentation(
+    unverifiedSdJwt: JSON,
+    claimsVerifier: ClaimsVerifier,
+    keyBindingVerifier: KeyBindingVerifier?
+  ) async throws -> Result<SignedSDJWT, any Error> {
+    guard
+      let sdJwt = try SignedSDJWT(
+        json: unverifiedSdJwt
+      )
+    else {
+      throw SDJWTVerifierError.invalidJwt
+    }
+    
+    let jws = sdJwt.jwt
+    let jwk = try await issuerJwsKeySelector(
+      jws: jws,
+      trust: trust,
+      lookup: lookup
+    )
+    
+    switch jwk {
+    case .success(let jwk):
+      return SDJWTVerifier(
+        sdJwt: sdJwt
+      ).verifyPresentation { jws in
+        try SignatureVerifier(
+          signedJWT: jws,
+          publicKey: jwk
+        )
+      } claimVerifier: { _, _ in
+        claimsVerifier
       }
     case .failure(let error):
       throw error

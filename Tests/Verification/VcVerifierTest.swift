@@ -167,4 +167,26 @@ final class VcVerifierTest: XCTestCase {
     // Then
     XCTAssertNoThrow(try result.get())
   }
+  
+  func testPresentation() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    
+    // When
+    let result = try await SDJWTVCVerifier(
+      fetcher: SdJwtVcIssuerMetaDataFetcher(
+        session: NetworkingMock(
+          path: "issuer_meta_data",
+          extension: "json"
+        )
+      )
+    ).verifyPresentation(
+      unverifiedSdJwt: sdJwtString,
+      claimsVerifier: ClaimsVerifier()
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
 }

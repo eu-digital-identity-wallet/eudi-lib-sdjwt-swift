@@ -215,6 +215,12 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         )
       } claimVerifier: { _, _ in
         claimsVerifier
+      } keyBindingVerifier: { jws, jwk in
+        try keyBindingVerifier?.verify(
+          challenge: jws,
+          extractedKey: jwk
+        )
+        return keyBindingVerifier
       }
     case .failure(let error):
       throw error
@@ -252,6 +258,12 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         )
       } claimVerifier: { _, _ in
         claimsVerifier
+      } keyBindingVerifier: { jws, jwk in
+        try keyBindingVerifier?.verify(
+          challenge: jws,
+          extractedKey: jwk
+        )
+        return keyBindingVerifier
       }
     case .failure(let error):
       throw error

@@ -324,7 +324,8 @@ final class VerifierTest: XCTestCase {
       ClaimsVerifier()
 
     } keyBindingVerifier: { jws, holdersPublicKey in
-      try KeyBindingVerifier(
+      let verifier = KeyBindingVerifier()
+      try verifier.verify(
         iatOffset: .init(
           startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
           endTime: Date(timeIntervalSince1970: 1694600000)
@@ -333,6 +334,7 @@ final class VerifierTest: XCTestCase {
         challenge: jws,
         extractedKey: holdersPublicKey
       )
+      return verifier
     }
 
     XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)

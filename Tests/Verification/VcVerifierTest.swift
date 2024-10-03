@@ -151,7 +151,6 @@ final class VcVerifierTest: XCTestCase {
       getParts: parser.extractJWTParts
     )
     
-    // When
     let result = try await SDJWTVCVerifier(
       fetcher: SdJwtVcIssuerMetaDataFetcher(
         session: NetworkingMock(
@@ -168,10 +167,10 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
-  func testPresentation() async throws {
+  func testVerifyPresentation_WithValidSDJWTPresentation_ShouldSucceed() async throws {
     
     // Given
-    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
     
     // When
     let result = try await SDJWTVCVerifier(
@@ -183,7 +182,39 @@ final class VcVerifierTest: XCTestCase {
       )
     ).verifyPresentation(
       unverifiedSdJwt: sdJwtString,
-      claimsVerifier: ClaimsVerifier()
+      claimsVerifier: ClaimsVerifier(),
+      keyBindingVerifier: KeyBindingVerifier()
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
+  func testVerifyPresentation_WithValidSDJWT_AsFlattendedJSON_Presentation_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
+    let parser = CompactParser()
+    let sdJwt = try! parser.getSignedSdJwt(serialisedString: sdJwtString)
+    
+    // When
+    let json = try sdJwt.asJwsJsonObject(
+      option: .general,
+      kbJwt: sdJwt.kbJwt?.compactSerialization,
+      getParts: parser.extractJWTParts
+    )
+    
+    let result = try await SDJWTVCVerifier(
+      fetcher: SdJwtVcIssuerMetaDataFetcher(
+        session: NetworkingMock(
+          path: "issuer_meta_data",
+          extension: "json"
+        )
+      )
+    ).verifyPresentation(
+      unverifiedSdJwt: json,
+      claimsVerifier: ClaimsVerifier(),
+      keyBindingVerifier: KeyBindingVerifier()
     )
     
     // Then

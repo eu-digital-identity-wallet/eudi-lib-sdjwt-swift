@@ -91,7 +91,7 @@ public class SDJWTVerifier {
   public func verifyPresentation(
     issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
     claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
-    keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier)? = nil
+    keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier?)? = nil
   ) -> Result<SignedSDJWT, Error> {
     Result {
       let commonVerifyResult = self.verify(issuersSignatureVerifier: issuersSignatureVerifier, claimVerifier: claimVerifier)
@@ -102,7 +102,12 @@ public class SDJWTVerifier {
           throw SDJWTVerifierError.keyBindingFailed(description: "No KB provided")
         }
         let extractedKey = try sdjwt.extractHoldersPublicKey()
-        try keyBindingVerifier(kbJwt, extractedKey).verify()
+        
+        guard let result = try keyBindingVerifier(kbJwt, extractedKey) else {
+          throw SDJWTVerifierError.keyBindingFailed(description: "No key binding verifier provided")
+        }
+        
+        try result.verify()
 
         if let sdHash = try? kbJwt.payloadJSON()["sd_hash"].stringValue {
           if sdHash != sdjwt.delineatedCompactSerialisation {

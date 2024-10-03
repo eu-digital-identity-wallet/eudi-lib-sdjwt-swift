@@ -91,8 +91,8 @@ final class VcVerifierTest: XCTestCase {
     
     // Given
     let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
-    let parser = CompactParser(serialisedString: sdJwtString)
-    let sdJwt = try! parser.getSignedSdJwt()
+    let parser = CompactParser()
+    let sdJwt = try! parser.getSignedSdJwt(serialisedString: sdJwtString)
     
     // When
     let json = try sdJwt.asJwsJsonObject(
@@ -116,8 +116,8 @@ final class VcVerifierTest: XCTestCase {
     
     // Given
     let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
-    let parser = CompactParser(serialisedString: sdJwtString)
-    let sdJwt = try! parser.getSignedSdJwt()
+    let parser = CompactParser()
+    let sdJwt = try! parser.getSignedSdJwt(serialisedString: sdJwtString)
     
     // When
     let json = try sdJwt.asJwsJsonObject(
@@ -141,8 +141,8 @@ final class VcVerifierTest: XCTestCase {
     
     // Given
     let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
-    let parser = CompactParser(serialisedString: sdJwtString)
-    let sdJwt = try! parser.getSignedSdJwt()
+    let parser = CompactParser()
+    let sdJwt = try! parser.getSignedSdJwt(serialisedString: sdJwtString)
     
     // When
     let json = try sdJwt.asJwsJsonObject(

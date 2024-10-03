@@ -81,21 +81,27 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   /// Service for fetching issuer metadata such as public keys.
   private let fetcher: any SdJwtVcIssuerMetaDataFetching
   
+  /// A parser conforming to `ParserProtocol`, responsible for parsing SD-JWTs.
+  private let parser: ParserProtocol
+  
   /**
    * Initializes the `SDJWTVCVerifier` with dependencies for metadata fetching, certificate trust, and public key lookup.
    *
    * - Parameters:
+   *   - parser: A parser responsible for parsing SD-JWTs.
    *   - fetcher: A service responsible for fetching issuer metadata.
    *   - trust: The X.509 trust configuration.
    *   - lookup: Optional service for looking up public keys from DIDs or DID URLs.
    */
   public init(
+    parser: ParserProtocol = CompactParser(),
     fetcher: SdJwtVcIssuerMetaDataFetching = SdJwtVcIssuerMetaDataFetcher(
       session: URLSession.shared
     ),
     trust: X509CertificateTrust = X509CertificateTrustFactory.none,
     lookup: LookupPublicKeysFromDIDDocument? = nil
   ) {
+    self.parser = parser
     self.fetcher = fetcher
     self.trust = trust
     self.lookup = lookup
@@ -110,8 +116,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   func verifyIssuance(
     unverifiedSdJwt: String
   ) async throws -> Result<SignedSDJWT, any Error> {
-    let parser = CompactParser(serialisedString: unverifiedSdJwt)
-    let jws = try parser.getSignedSdJwt().jwt
+    let jws = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt).jwt
     let jwk = try await issuerJwsKeySelector(
       jws: jws,
       trust: trust,
@@ -121,9 +126,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     switch jwk {
     case .success(let jwk):
       return try SDJWTVerifier(
-        parser: CompactParser(
-          serialisedString: unverifiedSdJwt
-        )
+        parser: parser,
+        serialisedString: unverifiedSdJwt
       ).verifyIssuance { jws in
         try SignatureVerifier(
           signedJWT: jws,

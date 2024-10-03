@@ -41,8 +41,11 @@ public class SDJWTVerifier {
   ///   - parser: A parser conforming to `ParserProtocol`.
   /// - Throws: An error if the SDJWT cannot be obtained.
   ///
-  public  init(parser: ParserProtocol) throws {
-    self.sdJwt = try parser.getSignedSdJwt()
+  public  init(
+    parser: ParserProtocol = CompactParser(),
+    serialisedString: String
+  ) throws {
+    self.sdJwt = try parser.getSignedSdJwt(serialisedString: serialisedString)
   }
 
   /// Initializes the verifier with a pre-existing SDJWT.

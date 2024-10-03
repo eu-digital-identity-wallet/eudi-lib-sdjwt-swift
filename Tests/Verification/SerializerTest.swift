@@ -34,21 +34,24 @@ final class SerialiserTest: XCTestCase {
 
   func testPareserWhenReceivingASerialisedFormatJWT_ThenConstructUnsignedSDJWT() throws {
     let serialisedString = try testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
-    let parser = CompactParser(serialisedString: serialisedString)
-    let jwt = try parser.getSignedSdJwt().toSDJWT()
+    let parser = CompactParser()
+    let jwt = try parser.getSignedSdJwt(serialisedString: serialisedString).toSDJWT()
     print(jwt.disclosures)
   }
 
   func testSerialiseWhenChosingEnvelopeFormat_AppylingNoKeyBinding_ThenExpectACorrectJWT() throws {
-    let compactParser = try CompactParser(serialisedString: testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT())
-
+    let compactParser = CompactParser()
     let envelopeSerializer = try EnvelopedSerialiser(
-        SDJWT: compactParser.getSignedSdJwt(),
+        SDJWT: compactParser.getSignedSdJwt(
+          serialisedString: testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
+        ),
         jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData())
 
-    let parser = try EnvelopedParser(serialiserProtocol: envelopeSerializer)
-
-    let verifier = try SDJWTVerifier(parser: parser).verifyIssuance { jws in
+    let parser = EnvelopedParser()
+    let verifier = try SDJWTVerifier(
+      parser: parser,
+      serialisedString: envelopeSerializer.serialised
+    ).verifyIssuance { jws in
       try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
     } claimVerifier: { _, _ in
       ClaimsVerifier()

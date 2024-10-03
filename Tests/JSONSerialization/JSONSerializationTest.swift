@@ -31,8 +31,8 @@ final class JSONSerializationTest: XCTestCase {
   func testSdJWTGeneralSerialization() async throws {
     
     // Given
-    let parser = CompactParser(serialisedString: SDJWTConstants.compactSdJwt)
-    let sdJwt = try! parser.getSignedSdJwt()
+    let parser = CompactParser()
+    let sdJwt = try! parser.getSignedSdJwt(serialisedString: SDJWTConstants.compactSdJwt)
     
     // When
     let json = try sdJwt.asJwsJsonObject(
@@ -69,8 +69,8 @@ final class JSONSerializationTest: XCTestCase {
   func testSdJWTFlattendedSerializationtest() async throws {
     
     // Given
-    let parser = CompactParser(serialisedString: SDJWTConstants.compactSdJwt)
-    let sdJwt = try! parser.getSignedSdJwt()
+    let parser = CompactParser()
+    let sdJwt = try! parser.getSignedSdJwt(serialisedString: SDJWTConstants.compactSdJwt)
     
     // When
     let json = try sdJwt.asJwsJsonObject(

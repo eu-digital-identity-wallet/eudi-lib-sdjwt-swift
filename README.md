@@ -27,6 +27,7 @@ is implemented in Swift.
   Issuer
 - [Presentation Verification](#presentation-verification): As a Verifier verify SD-JWT in Combined Presentation Format or in Envelope Format 
 - [Recreate initial claims](#recreate-original-claims): Given a SD-JWT recreate the original claims
+* [SD-JWT VC support](#sd-jwt-vc-support)
 
 ## Issuance
 
@@ -220,6 +221,16 @@ All examples assume that we have the following claim set
 - [Option 3: SD-JWT with Recursive Disclosures](Docs/examples/option3-recursive-sd-jwt.md)
 - [Example 2a: Handling Structured Claims](Docs/examples/example2a-handling-structure-claims.md)
 - [Example 3: Complex Structured SD-JWT](Docs/examples/example3-complex-structured.md)
+
+## SD-JWT VC support
+
+The library support verifying 
+[SD-JWT-based Verifiable Credentials](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html).
+More specifically, Issuer-signed JWT Verification Key Validation support is provided by
+[SDJWTVerifier](Sources/Verifier/SDJWTVerifier.swift).  
+Please check [VcVerifierTest](Tests/Verification/VcVerifierTest.swift) for code examples of
+verifying an Issuance SD-JWT VC and a Presentation SD-JWT VC (including verification of the Key Binding JWT).
+
 
 ## How to contribute
 

@@ -20,6 +20,8 @@ import SwiftyJSON
 
 public class KeyBindingVerifier: VerifierProtocol {
   
+  static let kbJwt = "kb+jwt"
+  
   private var signatureVerifier: SignatureVerifier?
   
   public init() {
@@ -31,7 +33,7 @@ public class KeyBindingVerifier: VerifierProtocol {
     challenge: JWS,
     extractedKey: JWK
   ) throws {
-    guard challenge.protectedHeader.type == "kb+jwt" else {
+    guard challenge.protectedHeader.type == Self.kbJwt else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }
     
@@ -57,7 +59,7 @@ public class KeyBindingVerifier: VerifierProtocol {
     challenge: JWS,
     extractedKey: JWK
   ) throws {
-    guard challenge.protectedHeader.type == "kb+jwt" else {
+    guard challenge.protectedHeader.type == Self.kbJwt else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }
     

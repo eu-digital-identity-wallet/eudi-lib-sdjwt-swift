@@ -15,18 +15,18 @@
  */
 import Foundation
 import SwiftyJSON
+import JSONWebSignature
+
+fileprivate let JWS_JSON_HEADER = "header"
+fileprivate let JWS_JSON_DISCLOSURES = "disclosures"
+fileprivate let JWS_JSON_KB_JWT = "kb_jwt"
+fileprivate let JWS_JSON_PROTECTED = "protected"
+fileprivate let JWS_JSON_SIGNATURE = "signature"
+fileprivate let JWS_JSON_SIGNATURES = "signatures"
+fileprivate let JWS_JSON_PAYLOAD = "payload"
 
 public enum JwsJsonSupportOption {
-  
   case general, flattened
-  
-  private static let JWS_JSON_HEADER = "header"
-  private static let JWS_JSON_DISCLOSURES = "disclosures"
-  private static let JWS_JSON_KB_JWT = "kb_jwt"
-  private static let JWS_JSON_PROTECTED = "protected"
-  private static let JWS_JSON_SIGNATURE = "signature"
-  private static let JWS_JSON_SIGNATURES = "signatures"
-  private static let JWS_JSON_PAYLOAD = "payload"
 }
 
 internal extension JwsJsonSupportOption {
@@ -40,16 +40,16 @@ internal extension JwsJsonSupportOption {
   ) -> JSON {
     let headersAndSignature = JSONObject {
       [
-        Self.JWS_JSON_HEADER: JSONObject {
+        JWS_JSON_HEADER: JSONObject {
           [
-            Self.JWS_JSON_DISCLOSURES: JSONArray {
+            JWS_JSON_DISCLOSURES: JSONArray {
               disclosures.map { JSON($0) }
             },
-            Self.JWS_JSON_KB_JWT: kbJwt == nil ? nil : JSON(kbJwt!)
+            JWS_JSON_KB_JWT: kbJwt == nil ? nil : JSON(kbJwt!)
           ]
         },
-        Self.JWS_JSON_PROTECTED: JSON(protected),
-        Self.JWS_JSON_SIGNATURE: JSON(signature)
+        JWS_JSON_PROTECTED: JSON(protected),
+        JWS_JSON_SIGNATURE: JSON(signature)
       ]
     }
     
@@ -57,8 +57,8 @@ internal extension JwsJsonSupportOption {
     case .general:
       return JSONObject {
         [
-          Self.JWS_JSON_PAYLOAD: JSON(payload),
-          Self.JWS_JSON_SIGNATURES: JSONArray {
+          JWS_JSON_PAYLOAD: JSON(payload),
+          JWS_JSON_SIGNATURES: JSONArray {
             [headersAndSignature]
           }
         ]
@@ -66,11 +66,77 @@ internal extension JwsJsonSupportOption {
     case .flattened:
       return JSONObject {
         [
-          Self.JWS_JSON_PAYLOAD: JSON(payload),
+          JWS_JSON_PAYLOAD: JSON(payload),
         ]
         headersAndSignature
       }
     }
+  }
+}
+
+internal class JwsJsonSupport {
+  
+  static func parseJWSJson(unverifiedSdJwt: JSON) throws -> (jwt: JWS, disclosures: [String], kbJwt: JWS?) {
+    
+    let signatureContainer: JSON = unverifiedSdJwt[JWS_JSON_SIGNATURES]
+      .array?
+      .first ?? unverifiedSdJwt
+    
+    let unverifiedJwt = try createUnverifiedJwt(
+      signatureContainer: signatureContainer,
+      unverifiedSdJwt: unverifiedSdJwt
+    )
+    
+    let unprotectedHeader = extractUnprotectedHeader(from: signatureContainer)
+    
+    return try extractUnverifiedValues(
+      unprotectedHeader: unprotectedHeader,
+      unverifiedJwt: unverifiedJwt
+    )
+  }
+  
+  static private func createUnverifiedJwt(signatureContainer: JSON, unverifiedSdJwt: JSON) throws -> String {
+    guard let protected = signatureContainer[JWS_JSON_PROTECTED].string else {
+      throw SDJWTVerifierError.invalidJwt
+    }
+    
+    guard let signature = signatureContainer[JWS_JSON_SIGNATURE].string else {
+      throw SDJWTVerifierError.invalidJwt
+    }
+    
+    guard let payload = unverifiedSdJwt[JWS_JSON_PAYLOAD].string else {
+      throw SDJWTVerifierError.invalidJwt
+    }
+    
+    return "\(protected).\(payload).\(signature)"
+  }
+  
+  static private func extractUnprotectedHeader(from signatureContainer: JSON) -> JSON? {
+    if let jsonObject = signatureContainer[JWS_JSON_HEADER].dictionary {
+      return JSON(jsonObject)
+    }
+    return nil
+  }
+  
+  static func extractUnverifiedValues(unprotectedHeader: JSON?, unverifiedJwt: String) throws -> (JWS, [String], JWS?) {
+    
+    let unverifiedDisclosures: [String] = unprotectedHeader?[JWS_JSON_DISCLOSURES]
+      .array?
+      .compactMap { element in
+        return element.string
+      } ?? []
+    
+    let jws: JWS? = if let unverifiedKBJwt = unprotectedHeader?[JWS_JSON_KB_JWT].string {
+      try JWS(jwsString: unverifiedKBJwt)
+    } else {
+      nil
+    }
+    
+    return (
+      try JWS(jwsString: unverifiedJwt),
+      unverifiedDisclosures,
+      jws
+    )
   }
 }
 

@@ -26,7 +26,7 @@ final class VerifierTest: XCTestCase {
 
   func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
 
-      let pk = try JSONDecoder.jwt.decode(JWK.self, from: key.tryToData())
+    let pk = try JSONDecoder.jwt.decode(JWK.self, from: key.tryToData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
     let complexStructureSDJWTString =
                 """
@@ -61,7 +61,10 @@ final class VerifierTest: XCTestCase {
                 AiV2VpZGVuc3RyYVx1MDBkZmUgMjIifV0~
                 """.clean()
 
-    let result = try SDJWTVerifier(parser: CompactParser(serialisedString: complexStructureSDJWTString))
+    let result = try SDJWTVerifier(
+      parser: CompactParser(),
+      serialisedString: complexStructureSDJWTString
+    )
       .verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: pk)
       } claimVerifier: { _, _ in
@@ -70,8 +73,8 @@ final class VerifierTest: XCTestCase {
 
     XCTAssertNoThrow(try result.get())
 
-    let recreatedClaimsResult = try CompactParser(serialisedString: complexStructureSDJWTString)
-      .getSignedSdJwt()
+    let recreatedClaimsResult = try CompactParser()
+      .getSignedSdJwt(serialisedString: complexStructureSDJWTString)
       .recreateClaims()
 
     XCTAssertTrue(recreatedClaimsResult.recreatedClaims.exists())
@@ -138,10 +141,12 @@ final class VerifierTest: XCTestCase {
                 """
       .clean()
 
-    let result = try SDJWTVerifier(parser: CompactParser(serialisedString: ComplexStructureSDJWTString))
-      .unsingedVerify { signedSDJWT in
-        try DisclosuresVerifier(signedSDJWT: signedSDJWT)
-      }
+    let result = try SDJWTVerifier(
+      parser: CompactParser(),
+      serialisedString: ComplexStructureSDJWTString
+    ).unsingedVerify { signedSDJWT in
+      try DisclosuresVerifier(signedSDJWT: signedSDJWT)
+    }
 
     XCTAssertNoThrow(try result.get())
   }
@@ -319,7 +324,8 @@ final class VerifierTest: XCTestCase {
       ClaimsVerifier()
 
     } keyBindingVerifier: { jws, holdersPublicKey in
-      try KeyBindingVerifier(
+      let verifier = KeyBindingVerifier()
+      try verifier.verify(
         iatOffset: .init(
           startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
           endTime: Date(timeIntervalSince1970: 1694600000)
@@ -328,6 +334,7 @@ final class VerifierTest: XCTestCase {
         challenge: jws,
         extractedKey: holdersPublicKey
       )
+      return verifier
     }
 
     XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
@@ -337,10 +344,12 @@ final class VerifierTest: XCTestCase {
   func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() throws {
     let serializerTest = SerialiserTest()
 
-    let compactParser = try CompactParser(serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT())
+    let compactParser = CompactParser()
 
     let envelopeSerializer = try EnvelopedSerialiser(
-        SDJWT: compactParser.getSignedSdJwt(),
+        SDJWT: compactParser.getSignedSdJwt(
+          serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
+        ),
         jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234
     ).toJSONData())
 
@@ -361,7 +370,10 @@ final class VerifierTest: XCTestCase {
     let envelopedJws = try JWS(jwsString: jwt.compactSerialization)
 
     let verifyEnvelope =
-    try SDJWTVerifier(parser: EnvelopedParser(data: envelopeSerializer.data))
+    try SDJWTVerifier(
+      parser: EnvelopedParser(),
+      serialisedString: envelopeSerializer.serialised
+    )
       .verifyEnvelope(envelope: envelopedJws) { jws in
 
         try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)

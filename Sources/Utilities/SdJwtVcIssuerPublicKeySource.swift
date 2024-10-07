@@ -14,24 +14,11 @@
  * limitations under the License.
  */
 import Foundation
+import X509
 
-public protocol ParserProtocol {
-  // Existing method to support SerialiserProtocol
-  func getSignedSdJwt(using serialiserProtocol: SerialiserProtocol) throws -> SignedSDJWT
-  
-  // New method to support String input
-  func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT
+public enum SdJwtVcIssuerPublicKeySource {
+  case metadata(iss: URL, kid: String?)
+  case x509CertChain(iss: URL, chain: [Certificate])
+  case didUrl(iss: String, kid: String?)
 }
 
-struct NoParser: ParserProtocol {
-  
-  var sdJWT: SignedSDJWT
-  
-  func getSignedSdJwt(using serialiserProtocol: any SerialiserProtocol) throws -> SignedSDJWT {
-    return self.sdJWT
-  }
-  
-  func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT {
-    return self.sdJWT
-  }
-}

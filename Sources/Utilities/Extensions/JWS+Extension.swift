@@ -29,4 +29,8 @@ extension JWS {
   func aud() throws -> String? {
     return try payloadJSON()[Keys.aud.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.aud.rawValue].string
   }
+  
+  func iss() throws -> String? {
+    return try payloadJSON()[Keys.iss.rawValue].array?.toJSONString() ?? payloadJSON()[Keys.iss.rawValue].string
+  }
 }

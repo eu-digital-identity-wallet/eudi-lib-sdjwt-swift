@@ -14,24 +14,15 @@
  * limitations under the License.
  */
 import Foundation
+import JSONWebKey
+import XCTest
 
-public protocol ParserProtocol {
-  // Existing method to support SerialiserProtocol
-  func getSignedSdJwt(using serialiserProtocol: SerialiserProtocol) throws -> SignedSDJWT
-  
-  // New method to support String input
-  func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT
-}
+@testable import eudi_lib_sdjwt_swift
 
-struct NoParser: ParserProtocol {
-  
-  var sdJWT: SignedSDJWT
-  
-  func getSignedSdJwt(using serialiserProtocol: any SerialiserProtocol) throws -> SignedSDJWT {
-    return self.sdJWT
-  }
-  
-  func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT {
-    return self.sdJWT
+class LookupPublicKeysFromDIDDocumentMock: LookupPublicKeysFromDIDDocument {
+  func lookup(did: String, didUrl: String?) async throws -> [JWK]? {
+    let data = SDJWTConstants.did_key.data(using: .utf8)!
+    let key = try JSONDecoder.jwt.decode(JWK.self, from: data)
+    return [key]
   }
 }

@@ -15,23 +15,14 @@
  */
 import Foundation
 
-public protocol ParserProtocol {
-  // Existing method to support SerialiserProtocol
-  func getSignedSdJwt(using serialiserProtocol: SerialiserProtocol) throws -> SignedSDJWT
+extension URL: @retroactive Identifiable {}
+extension URL: Stubbable {
   
-  // New method to support String input
-  func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT
-}
-
-struct NoParser: ParserProtocol {
-  
-  var sdJWT: SignedSDJWT
-  
-  func getSignedSdJwt(using serialiserProtocol: any SerialiserProtocol) throws -> SignedSDJWT {
-    return self.sdJWT
+  public var id: ObjectIdentifier {
+    ObjectIdentifier(NSObject())
   }
   
-  func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT {
-    return self.sdJWT
+  static func stub() -> URL {
+    return URL(string: "https://www.example.com/")!
   }
 }

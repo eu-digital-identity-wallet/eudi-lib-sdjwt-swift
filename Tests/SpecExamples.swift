@@ -54,7 +54,10 @@ final class SpecExamples: XCTestCase {
 
     let string = CompactSerialiser(signedSDJWT: sdjwt).serialised
 
-    let disclosureVerifierOut = try DisclosuresVerifier(parser: CompactParser(serialisedString: string)).verify()
+    let disclosureVerifierOut = try DisclosuresVerifier(
+      parser: CompactParser(),
+      serialisedString: string
+    ).verify()
 
     validateObjectResults(factoryResult: output,
                           expectedDigests: disclosureVerifierOut.digestsFoundOnPayload.count,

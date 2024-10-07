@@ -19,42 +19,76 @@ import JSONWebSignature
 import SwiftyJSON
 
 public class KeyBindingVerifier: VerifierProtocol {
-
-  let signatureVerifier: SignatureVerifier
-
-  public init(iatOffset: TimeRange,
-       expectedAudience: String,
-       challenge: JWS,
-       extractedKey: JWK) throws {
-
-      guard challenge.protectedHeader.type == "kb+jwt" else {
+  
+  static let kbJwt = "kb+jwt"
+  
+  private var signatureVerifier: SignatureVerifier?
+  
+  public init() {
+  }
+  
+  public func verify(
+    iatOffset: TimeRange,
+    expectedAudience: String,
+    challenge: JWS,
+    extractedKey: JWK
+  ) throws {
+    guard challenge.protectedHeader.type == Self.kbJwt else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }
-
+    
     let challengePayloadJson = try challenge.payloadJSON()
-
+    
     guard let timeInterval = challengePayloadJson[Keys.iat].int else {
       throw SDJWTVerifierError.keyBindingFailed(description: "No iat claim Provided")
     }
-
+    
     let aud = challengePayloadJson[Keys.aud]
-
+    
     guard challengePayloadJson[Keys.nonce].exists() else {
       throw SDJWTVerifierError.keyBindingFailed(description: "No Nonce Provided")
     }
-
+    
     self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
-
+    
     try verifyIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(timeInterval)))
     try verifyAud(aud: aud, expectedAudience: expectedAudience)
   }
+  
+  public func verify(
+    challenge: JWS,
+    extractedKey: JWK
+  ) throws {
+    guard challenge.protectedHeader.type == Self.kbJwt else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
+    }
+    
+    let challengePayloadJson = try challenge.payloadJSON()
+    
+    guard challengePayloadJson[Keys.nonce].exists() else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "No Nonce Provided")
+    }
+    
+    self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
+  }
+  
+  @discardableResult
+  public func verify() throws -> JWS {
+    guard let verifier = signatureVerifier else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "Invalid signature verifier")
+    }
+    return try verifier.verify()
+  }
+}
 
+private extension KeyBindingVerifier {
+  
   func verifyIat(iatOffset: TimeRange, iat: Date) throws {
     guard iatOffset.contains(date: iat) else {
       throw SDJWTVerifierError.keyBindingFailed(description: "iat not in valid time window")
     }
   }
-
+  
   func verifyAud(aud: JSON, expectedAudience: String) throws {
     if let array = aud.array {
       guard array
@@ -68,10 +102,5 @@ public class KeyBindingVerifier: VerifierProtocol {
         throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
       }
     }
-  }
-
-  @discardableResult
-  public func verify() throws -> JWS {
-    try signatureVerifier.verify()
   }
 }

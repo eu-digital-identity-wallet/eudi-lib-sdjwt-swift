@@ -18,31 +18,32 @@ import Foundation
 public class EnvelopedParser: ParserProtocol {
 
   // MARK: - Properties
-
-  var sdJwt: SignedSDJWT
-
+  
+  let compactParser: ParserProtocol
+  
   // MARK: - Lifecycle
 
-  public init(serialiserProtocol: SerialiserProtocol) throws {
-    let jsonDecoder = JSONDecoder()
-    let envelopedJwt = try jsonDecoder.decode(EnvelopedJwt.self, from: serialiserProtocol.data)
-    let compactParser = CompactParser(serialisedString: envelopedJwt.sdJwt)
-    self.sdJwt = try compactParser.getSignedSdJwt()
-  }
-
-  public init(data: Data) throws {
-    let jsonDecoder = JSONDecoder()
-    let envelopedJwt = try jsonDecoder.decode(EnvelopedJwt.self, from: data)
-    let compactParser = CompactParser(serialisedString: envelopedJwt.sdJwt)
-    self.sdJwt = try compactParser.getSignedSdJwt()
+  public init(
+    compactParser: ParserProtocol = CompactParser()
+  ) {
+    self.compactParser = compactParser
   }
 
   // MARK: - Methods
 
-  public func getSignedSdJwt() throws -> SignedSDJWT {
-    return sdJwt
+  public func getSignedSdJwt(using serialiserProtocol: any SerialiserProtocol) throws -> SignedSDJWT {
+    let jsonDecoder = JSONDecoder()
+    let envelopedJwt = try jsonDecoder.decode(EnvelopedJwt.self, from: serialiserProtocol.data)
+    return try compactParser.getSignedSdJwt(serialisedString: envelopedJwt.sdJwt)
   }
-
+  
+  public func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT {
+    let jsonDecoder = JSONDecoder()
+    let envelopedJwt = try jsonDecoder.decode(
+      EnvelopedJwt.self, from: serialisedString.data(using: .utf8) ?? Data()
+    )
+    return try compactParser.getSignedSdJwt(serialisedString: envelopedJwt.sdJwt)
+  }
 }
 
 public struct EnvelopedJwt: Codable {

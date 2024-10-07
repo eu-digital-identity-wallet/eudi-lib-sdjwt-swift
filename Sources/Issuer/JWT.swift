@@ -22,6 +22,8 @@ public struct JWT: JWTRepresentable {
 
   // MARK: - Properties
 
+  static let kbJwt = "kb+jwt"
+  
   var header: JWSRegisteredFieldsHeader
   var payload: JSON
 
@@ -61,7 +63,7 @@ public struct JWT: JWTRepresentable {
   }
 
   mutating func addKBTyp() {
-    self.header.type = "kb+jwt"
+    self.header.type = Self.kbJwt
   }
 }
 

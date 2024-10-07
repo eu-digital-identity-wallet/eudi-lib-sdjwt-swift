@@ -17,28 +17,30 @@ import Foundation
 import SwiftyJSON
 
 public class ClaimsVerifier: VerifierProtocol {
-
+  
   // MARK: - Properties
   var iat: Date?
   var iatValidWindow: TimeRange?
-
+  
   var nbf: Date?
   var exp: Date?
-
+  
   var audClaim: JSON?
   var expectedAud: String?
-
+  
   let currentDate: Date
+  
   // MARK: - Lifecycle
-
-  public init(iat: Int? = nil,
-       iatValidWindow: TimeRange? = nil,
-       nbf: Int? = nil,
-       exp: Int? = nil,
-       audClaim: String? = nil,
-       expectedAud: String? = nil,
-       currentDate: Date = Date()) {
-
+  
+  public init(
+    iat: Int? = nil,
+    iatValidWindow: TimeRange? = nil,
+    nbf: Int? = nil,
+    exp: Int? = nil,
+    audClaim: String? = nil,
+    expectedAud: String? = nil,
+    currentDate: Date = Date()) {
+    
     if let iat {
       self.iat = Date(timeIntervalSince1970: TimeInterval(iat))
     }
@@ -48,12 +50,12 @@ public class ClaimsVerifier: VerifierProtocol {
     if let exp {
       self.exp = Date(timeIntervalSince1970: TimeInterval(exp))
     }
-
+    
     self.audClaim = JSON(parseJSON: audClaim ?? "")
     self.expectedAud = expectedAud
     self.currentDate = currentDate
   }
-
+  
   // MARK: - Methods
   @discardableResult
   public func verify() throws -> Bool {
@@ -62,23 +64,23 @@ public class ClaimsVerifier: VerifierProtocol {
        iatValidWindow.contains(date: iat) {
       throw SDJWTVerifierError.invalidJwt
     }
-
+    
     if let nbf {
       try self.verifyNotBefore(nbf: nbf)
     }
-
+    
     if let exp {
       try self.verifyNotExpired(exp: exp)
     }
-
+    
     if let expectedAud,
        let audClaim {
       try self.verifyAud(aud: audClaim, expectedAudience: expectedAud)
     }
-
+    
     return true
   }
-
+  
   private func verifyNotBefore(nbf: Date) throws {
     switch nbf.compare(currentDate) {
     case .orderedDescending:
@@ -87,7 +89,7 @@ public class ClaimsVerifier: VerifierProtocol {
       break
     }
   }
-
+  
   private func verifyNotExpired(exp: Date) throws {
     switch exp.compare(currentDate) {
     case .orderedAscending, .orderedSame:
@@ -96,7 +98,7 @@ public class ClaimsVerifier: VerifierProtocol {
       break
     }
   }
-
+  
   func verifyAud(aud: JSON, expectedAudience: String) throws {
     if let array = aud.array {
       guard array

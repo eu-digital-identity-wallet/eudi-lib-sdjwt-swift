@@ -15,23 +15,23 @@
  */
 import Foundation
 
-public protocol ParserProtocol {
-  // Existing method to support SerialiserProtocol
-  func getSignedSdJwt(using serialiserProtocol: SerialiserProtocol) throws -> SignedSDJWT
-  
-  // New method to support String input
-  func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT
+extension URLSession: Networking {}
+
+public protocol Networking {
+  func data(
+    from url: URL
+  ) async throws -> (Data, URLResponse)
+  func data(
+    for request: URLRequest
+  ) async throws -> (Data, URLResponse)
 }
 
-struct NoParser: ParserProtocol {
-  
-  var sdJWT: SignedSDJWT
-  
-  func getSignedSdJwt(using serialiserProtocol: any SerialiserProtocol) throws -> SignedSDJWT {
-    return self.sdJWT
+public extension Networking {
+  func data(from url: URL) async throws -> (Data, URLResponse) {
+    try await data(from: url)
   }
   
-  func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT {
-    return self.sdJWT
+  func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+    try await data(for: request)
   }
 }

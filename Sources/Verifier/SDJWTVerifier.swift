@@ -24,21 +24,6 @@ public protocol VerifierProtocol {
   func verify() throws -> ReturnType
 }
 
-public enum SDJWTVerifierError: Error {
-  case parsingError
-  case invalidJwt
-  case keyBindingFailed(description: String)
-  case invalidDisclosure(disclosures: [Disclosure])
-  case missingOrUnknownHashingAlgorithm
-  case nonUniqueDisclosures
-  case nonUniqueDisclosureDigests
-  case missingDigests(disclosures: [Disclosure])
-  case noAlgorithmProvided
-  case failedToCreateVerifier
-  case expiredJwt
-  case notValidYetJwt
-}
-
 /// `SDJWTVerifier` is a class for verifying SD JSON Web Tokens (SDJWT) in a Swift application.
 /// This class provides comprehensive methods to validate both cases of Issuance to a holder and presentation to a verifier
 ///
@@ -56,8 +41,11 @@ public class SDJWTVerifier {
   ///   - parser: A parser conforming to `ParserProtocol`.
   /// - Throws: An error if the SDJWT cannot be obtained.
   ///
-  public  init(parser: ParserProtocol) throws {
-    self.sdJwt = try parser.getSignedSdJwt()
+  public  init(
+    parser: ParserProtocol = CompactParser(),
+    serialisedString: String
+  ) throws {
+    self.sdJwt = try parser.getSignedSdJwt(serialisedString: serialisedString)
   }
 
   /// Initializes the verifier with a pre-existing SDJWT.
@@ -79,10 +67,15 @@ public class SDJWTVerifier {
   ///   - claimVerifier: An optional closure to verify claims.
   /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
   ///
-  public  func verifyIssuance(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                              claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) rethrows -> Result<SignedSDJWT, Error> {
+  public func verifyIssuance(
+    issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+    claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil
+  ) rethrows -> Result<SignedSDJWT, Error> {
     Result {
-      try self.verify(issuersSignatureVerifier: issuersSignatureVerifier, claimVerifier: claimVerifier).get()
+      try self.verify(
+        issuersSignatureVerifier: issuersSignatureVerifier,
+        claimVerifier: claimVerifier
+      ).get()
     }
   }
 
@@ -95,9 +88,11 @@ public class SDJWTVerifier {
   ///   - keyBindingVerifier: An optional closure to verify key binding.
   /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
   ///
-  public func verifyPresentation(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                                 claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
-                                 keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier)? = nil) -> Result<SignedSDJWT, Error> {
+  public func verifyPresentation(
+    issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+    claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
+    keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier?)? = nil
+  ) -> Result<SignedSDJWT, Error> {
     Result {
       let commonVerifyResult = self.verify(issuersSignatureVerifier: issuersSignatureVerifier, claimVerifier: claimVerifier)
       let sdjwt = try commonVerifyResult.get()
@@ -107,7 +102,12 @@ public class SDJWTVerifier {
           throw SDJWTVerifierError.keyBindingFailed(description: "No KB provided")
         }
         let extractedKey = try sdjwt.extractHoldersPublicKey()
-        try keyBindingVerifier(kbJwt, extractedKey).verify()
+        
+        guard let result = try keyBindingVerifier(kbJwt, extractedKey) else {
+          throw SDJWTVerifierError.keyBindingFailed(description: "No key binding verifier provided")
+        }
+        
+        try result.verify()
 
         if let sdHash = try? kbJwt.payloadJSON()["sd_hash"].stringValue {
           if sdHash != sdjwt.delineatedCompactSerialisation {
@@ -121,10 +121,12 @@ public class SDJWTVerifier {
     }
   }
 
-  public func verifyEnvelope(envelope: JWS,
-                             issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                             holdersSignatureVerifier: () throws -> SignatureVerifier,
-                             claimVerifier: (_ audClaim: String, _ iat: Int) -> ClaimsVerifier) -> Result<JWS, Error> {
+  public func verifyEnvelope(
+    envelope: JWS,
+    issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
+    holdersSignatureVerifier: () throws -> SignatureVerifier,
+    claimVerifier: (_ audClaim: String, _ iat: Int) -> ClaimsVerifier
+  ) -> Result<JWS, Error> {
     Result {
       try issuersSignatureVerifier(sdJwt.jwt).verify()
       try holdersSignatureVerifier().verify()

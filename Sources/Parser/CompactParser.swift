@@ -27,22 +27,22 @@ public class CompactParser: ParserProtocol {
   
   private static let TILDE = "~"
   
-  var serialisedString: String
   var serialisationFormat: SerialisationFormat = .serialised
+  
   // MARK: - Lifecycle
   
-  public required init(serialiserProtocol: SerialiserProtocol) {
-    self.serialisedString = serialiserProtocol.serialised
-  }
-  
-  public init(serialisedString: String) {
-    self.serialisedString = serialisedString
+  public init() {
   }
   
   // MARK: - Methods
   
-  public func getSignedSdJwt() throws -> SignedSDJWT {
-    let (serialisedJWT, disclosuresInBase64, serialisedKBJWT) = try self.parseCombined()
+  public func getSignedSdJwt(using serialiserProtocol: SerialiserProtocol) throws -> SignedSDJWT {
+    let serialisedString = serialiserProtocol.serialised
+    return try getSignedSdJwt(serialisedString: serialisedString)
+  }
+  
+  public func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT {
+    let (serialisedJWT, disclosuresInBase64, serialisedKBJWT) = try self.parseCombined(serialisedString)
     return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: disclosuresInBase64, serializedKbJwt: serialisedKBJWT)
   }
   
@@ -74,9 +74,11 @@ public class CompactParser: ParserProtocol {
     }
     
     // Ensure that all components are properly assigned
-    guard let unwrappedHeader = header,
-          let unwrappedPayload = payload,
-          let unwrappedSignature = signature else {
+    guard
+      let unwrappedHeader = header,
+      let unwrappedPayload = payload,
+      let unwrappedSignature = signature
+    else {
       throw SDJWTVerifierError.parsingError
     }
     
@@ -85,8 +87,8 @@ public class CompactParser: ParserProtocol {
     
   }
   
-  private func parseCombined() throws -> (String, [Disclosure], String?) {
-    let parts = self.serialisedString
+  private func parseCombined(_ serialisedString: String) throws -> (String, [Disclosure], String?) {
+    let parts = serialisedString
       .split(separator: "~")
       .map {String($0)}
     

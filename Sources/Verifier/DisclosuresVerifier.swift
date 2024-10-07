@@ -62,8 +62,8 @@ public class DisclosuresVerifier: VerifierProtocol {
     recreatedClaims = claimExtractor.recreatedClaims
   }
 
-  convenience init(parser: ParserProtocol) throws {
-    try self.init(signedSDJWT: try parser.getSignedSdJwt())
+  convenience init(parser: ParserProtocol, serialisedString: String) throws {
+    try self.init(signedSDJWT: try parser.getSignedSdJwt(serialisedString: serialisedString))
   }
 
   // MARK: - Methods

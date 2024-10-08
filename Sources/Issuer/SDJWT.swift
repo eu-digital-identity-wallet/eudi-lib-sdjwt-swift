@@ -20,8 +20,9 @@ import JSONWebToken
 import SwiftyJSON
 
 public typealias KBJWT = JWT
+extension JWS: @unchecked @retroactive Sendable {}
 
-struct SDJWT {
+struct SDJWT: Sendable {
   
   // MARK: - Properties
   
@@ -67,7 +68,7 @@ struct SDJWT {
   }
 }
 
-public struct SignedSDJWT {
+public struct SignedSDJWT: Sendable {
   
   // MARK: - Properties
   

@@ -18,7 +18,7 @@ import Foundation
 public typealias Disclosure = String
 public typealias DisclosureDigest = String
 
-protocol HashingAlgorithm {
+protocol HashingAlgorithm: Sendable {
   var identifier: String { get }
 
   func hash(disclosure: Disclosure) -> Data?

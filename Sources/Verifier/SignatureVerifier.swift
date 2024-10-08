@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebKey
-import JSONWebSignature
+@preconcurrency import JSONWebKey
+@preconcurrency import JSONWebSignature
 
 // To Constraint What can be passed as a key
 // JOSE Supports SecKey for RSA and EC and Data for HMAC
-public protocol KeyExpressible {}
+public protocol KeyExpressible: Sendable {}
 
-extension SecKey: KeyExpressible {}
-extension Data: KeyExpressible {}
-extension JWK: KeyExpressible {}
+extension SecKey: KeyExpressible, @unchecked @retroactive Sendable {}
+extension Data: KeyExpressible, @unchecked @retroactive Sendable {}
+extension JWK: KeyExpressible, @unchecked @retroactive Sendable {}
 
-public class SignatureVerifier: VerifierProtocol {
+public final class SignatureVerifier: VerifierProtocol {
 
   // MARK: - Properties
   let jws: JWS

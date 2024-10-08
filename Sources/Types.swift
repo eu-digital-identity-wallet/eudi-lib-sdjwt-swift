@@ -25,7 +25,7 @@ public enum SDJWTError: Error {
   case encodingError
   case discloseError
   case serializationError
-  case nonObjectFormat(ofElement: Any)
+  case nonObjectFormat(ofElement: String)
   case keyCreation
   case algorithmMissMatch
   case noneAsAlgorithm

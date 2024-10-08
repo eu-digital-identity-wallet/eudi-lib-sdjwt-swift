@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 import Foundation
-import JSONWebKey
+@preconcurrency import JSONWebKey
 import SwiftyJSON
 
-struct SdJwtVcIssuerMetadataTO: Decodable {
+struct SdJwtVcIssuerMetadataTO: Decodable, Sendable {
   let issuer: String
   let jwksUri: String?
   let jwks: JWKSet?

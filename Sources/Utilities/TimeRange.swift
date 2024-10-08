@@ -15,7 +15,7 @@
  */
 import Foundation
 
-public struct TimeRange {
+public struct TimeRange: Sendable {
   let startTime: Date
   let endTime: Date
 

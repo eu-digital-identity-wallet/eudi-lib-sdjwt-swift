@@ -18,7 +18,9 @@ import XCTest
 
 @testable import eudi_lib_sdjwt_swift
 
+@MainActor
 final class SerialiserTest: XCTestCase {
+  
   func testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT() throws -> String {
     let keyBindingTest = KeyBindingTest()
     let (issuersSDJWT, holdersSDJWT) = try keyBindingTest.testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification()

@@ -15,10 +15,10 @@
  */
 import Foundation
 import JSONWebAlgorithms
-import JSONWebSignature
+@preconcurrency import JSONWebSignature
 import SwiftyJSON
 
-public struct JWT: JWTRepresentable {
+public struct JWT: JWTRepresentable, Sendable {
 
   // MARK: - Properties
 

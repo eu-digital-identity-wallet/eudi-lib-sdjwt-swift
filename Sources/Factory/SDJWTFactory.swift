@@ -85,7 +85,9 @@ class SDJWTFactory {
   private func encodeObject(sdJwtObject: [String: SdElement]?) throws -> ClaimSet {
     // Check if the input object is of correct format
     guard let sdJwtObject else {
-      throw SDJWTError.nonObjectFormat(ofElement: sdJwtObject)
+      throw SDJWTError.nonObjectFormat(
+        ofElement: (try? sdJwtObject?.toJSONString()) ?? ""
+      )
     }
 
     // Initialize arrays to store disclosures and JSON output

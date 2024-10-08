@@ -47,7 +47,7 @@ extension SdElement {
       })
       output += 1
     }
-
+    
     return output
   }
 }
@@ -84,72 +84,66 @@ func generateES256KeyPair() -> KeyPair {
       kSecAttrKeyType as String: kSecAttrKeyTypeECSECPrimeRandom,
       kSecAttrKeySizeInBits as String: 256
     ]
-
+    
     var error: Unmanaged<CFError>?
     guard let privateKey = SecKeyCreateRandomKey(attributes as CFDictionary, &error) else {
       throw error!.takeRetainedValue() as Error
     }
     return privateKey
   }
-
+  
   func generateECDHPublicKey(from privateKey: SecKey) throws -> SecKey {
     guard let publicKey = SecKeyCopyPublicKey(privateKey) else {
       throw SDJWTError.keyCreation
     }
     return publicKey
   }
-
+  
   let privateKey = try! generateECDHPrivateKey()
   let publicKey = try! generateECDHPublicKey(from: privateKey)
-
+  
   return KeyPair(publicKey, privateKey)
 }
 
-class MockSaltProvider: SaltProvider {
-
+final class MockSaltProvider: SaltProvider {
+  
   // MARK: - Properties
-
+  
   var saltString: Salt {
     return salt.base64EncodedString().base64ToUTF8() ?? ""
   }
-
-  var salt: Data
-
+  
+  let salt: Data
+  
   // MARK: - LifeCycle
-
+  
   init(saltString: String) {
-    self.salt = Data(saltString.utf8)
-  }
-
-  // MARK: - Methods
-
-  func updateSalt(string: Salt) {
     self.salt = Data(saltString.utf8)
   }
 }
 
 class TestLogger {
-    static func log(_ message: String) {
-        #if DEBUG
-//        if isRunningTests() {
-            print(message)
-//        }
-        #endif
+  static func log(_ message: String) {
+#if DEBUG
+    //        if isRunningTests() {
+    print(message)
+    //        }
+#endif
+  }
+  
+  private static func isRunningTests() -> Bool {
+    let environment = ProcessInfo.processInfo.environment
+    if let injectBundle = environment["XCInjectBundleInto"] {
+      return NSString(string: injectBundle).pathExtension == "xctest"
     }
-
-    private static func isRunningTests() -> Bool {
-        let environment = ProcessInfo.processInfo.environment
-        if let injectBundle = environment["XCInjectBundleInto"] {
-            return NSString(string: injectBundle).pathExtension == "xctest"
-        }
-        return false
-    }
+    return false
+  }
 }
 
 extension String {
   func clean() -> String {
     self
-    .replacingOccurrences(of: "\n", with: "")
-    .replacingOccurrences(of: " ", with: "")
+      .replacingOccurrences(of: "\n", with: "")
+      .replacingOccurrences(of: " ", with: "")
   }
 }

@@ -15,14 +15,16 @@
  */
 import Foundation
 import X509
-import JSONWebKey
-import SwiftyJSON
+@preconcurrency import JSONWebKey
+@preconcurrency import SwiftyJSON
 import JSONWebSignature
 import JSONWebToken
 
 private let HTTPS_URI_SCHEME = "https"
 private let DID_URI_SCHEME = "did"
 private let SD_JWT_VC_TYPE = "vc+sd-jwt"
+
+extension JSON: @unchecked @retroactive Sendable { }
 
 /**
  * A protocol to look up public keys from DIDs/DID URLs.
@@ -36,7 +38,7 @@ public protocol LookupPublicKeysFromDIDDocument {
    *   - didUrl: The DID URL (optional).
    * - Returns: An array of JWKs (public keys) or `nil` if the lookup fails.
    */
-  func lookup(did: String, didUrl: String?) async throws -> [JWK]?
+  @MainActor func lookup(did: String, didUrl: String?) async throws -> [JWK]?
 }
 
 /**
@@ -110,7 +112,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     fetcher: SdJwtVcIssuerMetaDataFetching = SdJwtVcIssuerMetaDataFetcher(
       session: URLSession.shared
     ),
-    trust: X509CertificateTrust = X509CertificateTrustFactory.none,
+    trust: X509CertificateTrust,// = X509CertificateTrustFactory.none,
     lookup: LookupPublicKeysFromDIDDocument? = nil
   ) {
     self.parser = parser
@@ -125,6 +127,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    * - Parameter unverifiedSdJwt: The unverified SD-JWT in string format.
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
+  @MainActor
   func verifyIssuance(
     unverifiedSdJwt: String
   ) async throws -> Result<SignedSDJWT, any Error> {
@@ -157,6 +160,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    * - Parameter unverifiedSdJwt: The unverified SD-JWT in `JSON` format.
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
+  @MainActor
   func verifyIssuance(
     unverifiedSdJwt: JSON
   ) async throws -> Result<SignedSDJWT, any Error> {
@@ -170,6 +174,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
     
     let jws = sdJwt.jwt
+    let lookup = self.lookup
+    
     let jwk = try await issuerJwsKeySelector(
       jws: jws,
       trust: trust,
@@ -191,6 +197,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
   }
   
+  @MainActor
   func verifyPresentation(
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier,
@@ -227,6 +234,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
   }
   
+  @MainActor
   func verifyPresentation(
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
@@ -282,6 +290,7 @@ private extension SDJWTVCVerifier {
    *   - lookup: Optional service for looking up public keys from DID documents.
    * - Returns: A `Result` containing either the selected `JWK` or an error.
    */
+  @MainActor
   func issuerJwsKeySelector(
     jws: JWS,
     trust: X509CertificateTrust,

@@ -18,11 +18,9 @@ import JSONWebKey
 import JSONWebSignature
 import SwiftyJSON
 
-public class KeyBindingVerifier: VerifierProtocol {
+public final class KeyBindingVerifier: VerifierProtocol {
   
   static let kbJwt = "kb+jwt"
-  
-  private var signatureVerifier: SignatureVerifier?
   
   public init() {
   }
@@ -49,7 +47,8 @@ public class KeyBindingVerifier: VerifierProtocol {
       throw SDJWTVerifierError.keyBindingFailed(description: "No Nonce Provided")
     }
     
-    self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
+    let signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
+    _ = try signatureVerifier.verify()
     
     try verifyIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(timeInterval)))
     try verifyAud(aud: aud, expectedAudience: expectedAudience)
@@ -69,15 +68,13 @@ public class KeyBindingVerifier: VerifierProtocol {
       throw SDJWTVerifierError.keyBindingFailed(description: "No Nonce Provided")
     }
     
-    self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
+    let signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
+    _ = try signatureVerifier.verify()
   }
   
   @discardableResult
   public func verify() throws -> JWS {
-    guard let verifier = signatureVerifier else {
-      throw SDJWTVerifierError.keyBindingFailed(description: "Invalid signature verifier")
-    }
-    return try verifier.verify()
+    throw SDJWTVerifierError.keyBindingFailed(description: "Invalid signature verifier")
   }
 }
 

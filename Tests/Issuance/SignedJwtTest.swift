@@ -22,6 +22,7 @@ import XCTest
 
 final class SignedJwtTest: XCTestCase {
 
+  @MainActor
   func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheSDJW_WithNoKeyBidning() throws {
 
     let keyPair = generateES256KeyPair()

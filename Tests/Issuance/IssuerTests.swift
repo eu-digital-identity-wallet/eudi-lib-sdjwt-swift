@@ -22,6 +22,7 @@ import SwiftyJSON
 
 @testable import eudi_lib_sdjwt_swift
 
+@MainActor
 final class IssuerTest: XCTestCase {
 
   func testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey() throws -> SignedSDJWT {
@@ -50,17 +51,11 @@ final class IssuerTest: XCTestCase {
 
   func testEnvelopedFormatSerializeation_WhenProvidedWithABuiltSDJWT() throws {
     let sdjwt = try self.testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey()
-//    let envelopeJWT = try JWT(header: .init(parameters: [Keys.sdAlg.rawValue: SignatureAlgorithm.ES256.rawValue]),
-//                              payload: JSON([
-//                                  "aud": "https://verifier.example.com",
-//                                  "iat": 1580000000,
-//                                  "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"
-//                              ]))
-
     let payload = try JSON([
         "aud": "https://verifier.example.com",
         "iat": 1580000000,
-        "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"]).rawData()
+        "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"
+    ]).rawData()
 
     let envelopedFormat = try EnvelopedSerialiser(SDJWT: sdjwt,
                                               jwTpayload: payload)

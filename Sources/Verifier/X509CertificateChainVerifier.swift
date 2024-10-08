@@ -18,8 +18,8 @@ import X509
 import SwiftASN1
 import Security
 
-public protocol X509CertificateTrust {
-  func isTrusted(chain: [Certificate]) async -> Bool
+public protocol X509CertificateTrust: Sendable {
+  @MainActor func isTrusted(chain: [Certificate]) async -> Bool
 }
 
 struct X509CertificateTrustNone: X509CertificateTrust {
@@ -28,7 +28,7 @@ struct X509CertificateTrustNone: X509CertificateTrust {
   }
 }
 
-public struct X509CertificateTrustFactory {
+public struct X509CertificateTrustFactory: Sendable {
   public static let none: X509CertificateTrust = X509CertificateTrustNone()
 }
 

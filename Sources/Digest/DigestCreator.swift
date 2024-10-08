@@ -15,18 +15,21 @@
  */
 import Foundation
 
-class DigestCreator {
+final class DigestCreator: Sendable {
 
   // MARK: - Properties
 
-  var hashingAlgorithm: HashingAlgorithm
-
-  let saltProvider = DefaultSaltProvider()
+  let hashingAlgorithm: HashingAlgorithm
+  let saltProvider: SaltProvider
 
   // MARK: - LifeCycle
 
-  init(hashingAlgorithm: HashingAlgorithm = SHA256Hashing()) {
+  init(
+    hashingAlgorithm: HashingAlgorithm = SHA256Hashing(),
+    saltProvider: SaltProvider = DefaultSaltProvider()
+  ) {
     self.hashingAlgorithm = hashingAlgorithm
+    self.saltProvider = saltProvider
   }
 
   // MARK: - Methods
@@ -47,7 +50,7 @@ class DigestCreator {
 
 }
 
-public enum DigestType: RawRepresentable, Hashable {
+public enum DigestType: RawRepresentable, Hashable, Sendable {
 
   public typealias RawValue = DisclosureDigest
 

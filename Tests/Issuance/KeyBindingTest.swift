@@ -21,6 +21,7 @@ import XCTest
 
 @testable import eudi_lib_sdjwt_swift
 
+@MainActor
 final class KeyBindingTest: XCTestCase {
 
   let kbJwt = """
@@ -60,7 +61,6 @@ final class KeyBindingTest: XCTestCase {
 
   func testcCreateKeyBindingJWT_whenPassedECPublicKey() throws {
 
-    let json = JSON(parseJSON: jwk)
     let ecPk = try JSONDecoder.jwt.decode(JWK.self, from: jwk.tryToData())
 
     let kbJws = try JWS(jwsString: kbJwt)

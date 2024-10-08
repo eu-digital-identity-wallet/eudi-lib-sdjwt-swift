@@ -15,11 +15,11 @@
  */
 import Foundation
 import SwiftyJSON
-import JSONWebKey
+@preconcurrency import JSONWebKey
 
 public protocol SdJwtVcIssuerMetaDataFetching {
   var session: Networking { get }
-  func fetchIssuerMetaData(issuer: URL) async throws -> SdJwtVcIssuerMetaData?
+  @MainActor func fetchIssuerMetaData(issuer: URL) async throws -> SdJwtVcIssuerMetaData?
 }
 
 public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
@@ -70,6 +70,7 @@ private extension SdJwtVcIssuerMetaDataFetcher {
     return components.url!
   }
   
+  @MainActor
   func fetch<T: Decodable>(from url: URL, with session: Networking) async throws -> T {
     
     let (data, response) = try await session.data(from: url)

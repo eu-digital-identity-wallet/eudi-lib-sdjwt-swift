@@ -16,11 +16,11 @@
 import Foundation
 import CryptoKit
 
-class SHA256Hashing: HashingAlgorithm {
+final class SHA256Hashing: HashingAlgorithm {
 
   // MARK: - Properties
 
-  var identifier: String = "sha-256"
+  let identifier: String = "sha-256"
 
   // MARK: - Methods
 

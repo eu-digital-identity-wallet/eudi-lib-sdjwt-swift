@@ -17,12 +17,12 @@ import Foundation
 
 typealias Salt = String
 
-protocol SaltProvider {
+protocol SaltProvider: Sendable {
   var salt: Data { get }
   var saltString: Salt { get }
 }
 
-class DefaultSaltProvider: SaltProvider {
+final class DefaultSaltProvider: SaltProvider {
 
   // MARK: - Properties
 

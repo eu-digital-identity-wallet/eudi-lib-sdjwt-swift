@@ -17,7 +17,7 @@ import Foundation
 import JSONWebKey
 import JSONWebSignature
 
-public protocol VerifierProtocol {
+public protocol VerifierProtocol: Sendable {
   associatedtype ReturnType
 
   @discardableResult
@@ -67,6 +67,7 @@ public class SDJWTVerifier {
   ///   - claimVerifier: An optional closure to verify claims.
   /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
   ///
+  @MainActor
   public func verifyIssuance(
     issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
     claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil
@@ -107,7 +108,10 @@ public class SDJWTVerifier {
           throw SDJWTVerifierError.keyBindingFailed(description: "No key binding verifier provided")
         }
         
-        try result.verify()
+        try result.verify(
+          challenge: kbJwt,
+          extractedKey: extractedKey
+        )
 
         if let sdHash = try? kbJwt.payloadJSON()["sd_hash"].stringValue {
           if sdHash != sdjwt.delineatedCompactSerialisation {

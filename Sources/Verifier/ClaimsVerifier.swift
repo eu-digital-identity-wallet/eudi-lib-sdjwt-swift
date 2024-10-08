@@ -16,17 +16,17 @@
 import Foundation
 import SwiftyJSON
 
-public class ClaimsVerifier: VerifierProtocol {
+public final class ClaimsVerifier: VerifierProtocol {
   
   // MARK: - Properties
-  var iat: Date?
-  var iatValidWindow: TimeRange?
+  let iat: Date?
+  let iatValidWindow: TimeRange?
   
-  var nbf: Date?
-  var exp: Date?
+  let nbf: Date?
+  let exp: Date?
   
-  var audClaim: JSON?
-  var expectedAud: String?
+  let audClaim: JSON?
+  let expectedAud: String?
   
   let currentDate: Date
   
@@ -43,17 +43,26 @@ public class ClaimsVerifier: VerifierProtocol {
     
     if let iat {
       self.iat = Date(timeIntervalSince1970: TimeInterval(iat))
+    } else {
+      self.iat = nil
     }
+      
     if let nbf {
       self.nbf = Date(timeIntervalSince1970: TimeInterval(nbf))
+    } else {
+      self.nbf = nil
     }
+      
     if let exp {
       self.exp = Date(timeIntervalSince1970: TimeInterval(exp))
+    } else {
+      self.exp = nil
     }
     
     self.audClaim = JSON(parseJSON: audClaim ?? "")
     self.expectedAud = expectedAud
     self.currentDate = currentDate
+    self.iatValidWindow = iatValidWindow
   }
   
   // MARK: - Methods
@@ -61,7 +70,7 @@ public class ClaimsVerifier: VerifierProtocol {
   public func verify() throws -> Bool {
     if let iat,
        let iatValidWindow,
-       iatValidWindow.contains(date: iat) {
+       !iatValidWindow.contains(date: iat) {
       throw SDJWTVerifierError.invalidJwt
     }
     

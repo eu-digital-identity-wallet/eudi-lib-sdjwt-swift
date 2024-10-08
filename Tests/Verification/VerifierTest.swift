@@ -22,10 +22,11 @@ import XCTest
 
 @testable import eudi_lib_sdjwt_swift
 
+@MainActor
 final class VerifierTest: XCTestCase {
-
+  
   func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
-
+    
     let pk = try JSONDecoder.jwt.decode(JWK.self, from: key.tryToData())
     // Copied from Spec https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
     let complexStructureSDJWTString =
@@ -60,7 +61,7 @@ final class VerifierTest: XCTestCase {
                 9jb2RlIjogIjEyMzQ0IiwgImNvdW50cnkiOiAiREUiLCAic3RyZWV0X2FkZHJlc3MiOi
                 AiV2VpZGVuc3RyYVx1MDBkZmUgMjIifV0~
                 """.clean()
-
+    
     let result = try SDJWTVerifier(
       parser: CompactParser(),
       serialisedString: complexStructureSDJWTString
@@ -70,18 +71,18 @@ final class VerifierTest: XCTestCase {
       } claimVerifier: { _, _ in
         ClaimsVerifier()
       }
-
+    
     XCTAssertNoThrow(try result.get())
-
+    
     let recreatedClaimsResult = try CompactParser()
       .getSignedSdJwt(serialisedString: complexStructureSDJWTString)
       .recreateClaims()
-
+    
     XCTAssertTrue(recreatedClaimsResult.recreatedClaims.exists())
     XCTAssertTrue(recreatedClaimsResult.digestsFoundOnPayload.count == 6)
-
+    
   }
-
+  
   func testVerifierBehaviour_WhenPassedNoSignature_ThenExpectToPassAllCriterias() throws {
     let ComplexStructureSDJWTString =
                 """
@@ -127,7 +128,7 @@ final class VerifierTest: XCTestCase {
                 0dyIKICAgICAgXSwKICAgICAgInR5cGUiOiAiVmFjY2luZVJlY2
                 lwaWVudCIKICAgIH0sCiAgICAidHlwZSI6ICJWYWNjaW5hdGlvb
                 kV2ZW50IgogIH0sCiAgIl9zZF9hbGciOiAic2hhLTI1NiIKfQ
-
+                
                 .tKnLymr8fQfupOgvMgBK3GCEIDEzhgta4MgnxYm9fWGMkqrz2R5PSkv0I-AXKXtIF6bdZRbjL-t43vC87jVoZQ~WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgImF0Y0NvZGUiLCAiSjA3QlgwMyJd
                 ~WyJlbHVWNU9nM2dTTklJOEVZbnN4QV9BIiwgIm1lZGljaW5hbFByb2R1Y3ROYW1lIiwgIkNPVklELTE5IFZhY2NpbmUgTW9kZXJuYSJd
                 ~WyI2SWo3dE0tYTVpVlBHYm9TNXRtdlZBIiwgIm1hcmtldGluZ0F1dGhvcml6YXRpb25Ib2xkZXIiLCAiTW9kZXJuYSBCaW90ZWNoIl0
@@ -140,23 +141,23 @@ final class VerifierTest: XCTestCase {
                 ~WyJ5MXNWVTV3ZGZKYWhWZGd3UGdTN1JRIiwgImJhdGNoTnVtYmVyIiwgIjE2MjYzODI3MzYiXQ~WyJIYlE0WDhzclZXM1FEeG5JSmRxeU9BIiwgImhlYWx0aFByb2Zlc3Npb25hbCIsICI4ODMxMTAwMDAwMTUzNzYiXQ~
                 """
       .clean()
-
+    
     let result = try SDJWTVerifier(
       parser: CompactParser(),
       serialisedString: ComplexStructureSDJWTString
     ).unsingedVerify { signedSDJWT in
       try DisclosuresVerifier(signedSDJWT: signedSDJWT)
     }
-
+    
     XCTAssertNoThrow(try result.get())
   }
-
+  
   func testVerifier_WhenPassingSameKeys_ThenExpectToFail() throws {
-
+    
     let jsonElementArray: JSON = [
       "...": "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k"
     ]
-
+    
     let json: JSON = [
       "evidence": [
         jsonElementArray
@@ -167,7 +168,7 @@ final class VerifierTest: XCTestCase {
         "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ"
       ]
     ]
-
+    
     let element = """
       WyJQYzMzSk0yTGNoY1VfbEhnZ3ZfdWZRIiwgeyJfc2QiOiBbIjl3cGpWUFd1
       RDdQSzBuc1FETDhCMDZsbWRnVjNMVnliaEh5ZFFwVE55TEkiLCAiRzVFbmhP
@@ -176,24 +177,24 @@ final class VerifierTest: XCTestCase {
       eFE0SFNvRXRjVG1DQ0tPZURzbEJfZW11Y1lMejJvTzhvSE5yMWJFVlEiXX1d
       """
       .clean()
-
+    
     let enclosedInDisclosure = """
       WyJRZ19PNjR6cUF4ZTQxMmExMDhpcm9BIiwgInRpbWUiLCAiMjAxMi0wNC0y
       MlQxMTozMFoiXQ
-
+      
       """
       .clean()
     let duplicateSD = """
       WyJlSThaV205UW5LUHBOUGVOZW5IZGhRIiwgIm1ldGhvZCIsICJwaXBwIl0
       """
       .clean()
-
+    
     let disclosureForDigestDict = [
       "tYJ0TDucyZZCRMbROG4qRO5vkPSFRxFhUELc18CSl3k": element,
       "9wpjVPWuD7PK0nsQDL8B06lmdgV3LVybhHydQpTNyLI": enclosedInDisclosure,
       "WpxQ4HSoEtcTmCCKOeDslB_emucYLz2oO8oHNr1bEVQ": duplicateSD
     ]
-
+    
     let claimExtractor = ClaimExtractor(digestsOfDisclosuresDict: disclosureForDigestDict)
     XCTAssertThrowsError(try claimExtractor.findDigests(payload: json, disclosures: [element, enclosedInDisclosure])) { error in
       let error = error as? SDJWTVerifierError
@@ -205,28 +206,28 @@ final class VerifierTest: XCTestCase {
       }
     }
   }
-
+  
   func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() throws {
     let iatJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
                                        header: DefaultJWSHeaderImpl(algorithm: .ES256), buildSDJWT: {
       ConstantClaims.iat(time: Date())
       FlatDisclosedClaim("time", "is created at \(Date())")
     })
-
+    
     let expSdJwt = try SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(algorithm: .ES256)) {
         ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
         FlatDisclosedClaim("time", "time runs out")
-    }
-
+      }
+    
     let nbfSdJwt = try SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(algorithm: .ES256)) {
         ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
         FlatDisclosedClaim("time", "we are ahead of time")
-    }
-
+      }
+    
     let nbfAndExpSdJwt = try SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(algorithm: .ES256)
@@ -235,33 +236,38 @@ final class VerifierTest: XCTestCase {
       ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
       FlatDisclosedClaim("time", "time runs out or maybe not")
     }
-
+    
     for sdjwt in [iatJwt, expSdJwt, nbfSdJwt, nbfAndExpSdJwt] {
-      let result = try SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
-        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+      let result = try SDJWTVerifier(
+        sdJwt: sdjwt
+      ).verifyIssuance { jws in
+        try SignatureVerifier(
+          signedJWT: jws,
+          publicKey: issuersKeyPair.public
+        )
       } claimVerifier: { nbf, exp in
         ClaimsVerifier(
-          iat: Int(Date().timeIntervalSince1970.rounded()),
+          iat: Int(Date(timeIntervalSinceNow: .zero).timeIntervalSinceNow.rounded()),
           iatValidWindow: TimeRange(
-            startTime: Date(),
-            endTime: Date(timeIntervalSinceNow: 10)
+            startTime: Date(timeIntervalSince1970: -10),
+            endTime: Date(timeIntervalSince1970: 10)
           ),
           nbf: nbf,
           exp: exp
         )
       }
-
+      
       XCTAssertNoThrow(try result.get())
     }
   }
-
+  
   func testVerifierWhenProvidingAKeyBindingJWT_WHenProvidedWithAudNonceAndIatClaims_ThenExpectToPassClaimVerificationAndKBVerification () throws {
     let holdersJWK = holdersKeyPair.public
     let jwk = try holdersJWK.jwk
-
+    
     let issuerSignedSDJWT = try SDJWTIssuer.issue(
-        issuersPrivateKey: issuersKeyPair.private,
-        header: DefaultJWSHeaderImpl(algorithm: .ES256)
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
     ) {
       ConstantClaims.iat(time: Date())
       ConstantClaims.exp(time: Date() + 3600)
@@ -278,7 +284,7 @@ final class VerifierTest: XCTestCase {
         FlatDisclosedClaim("country", "JP")
       }
       FlatDisclosedClaim("birthdate", "1940-01-01")
-
+      
       ObjectClaim("cnf") {
         ObjectClaim("jwk") {
           PlainClaim("kty", "EC")
@@ -288,14 +294,14 @@ final class VerifierTest: XCTestCase {
         }
       }
     }
-
+    
     let sdHash = DigestCreator()
       .hashAndBase64Encode(
         input: CompactSerialiser(
           signedSDJWT: issuerSignedSDJWT
         ).serialised
       ) ?? ""
-
+    
     let holder = try SDJWTIssuer
       .presentation(
         holdersPrivateKey: holdersKeyPair.private,
@@ -311,7 +317,7 @@ final class VerifierTest: XCTestCase {
           ])
         )
       )
-
+    
     let verifier = SDJWTVerifier(
       sdJwt: holder
     ).verifyPresentation { jws in
@@ -319,10 +325,10 @@ final class VerifierTest: XCTestCase {
         signedJWT: jws,
         publicKey: issuersKeyPair.public
       )
-
+      
     } claimVerifier: { _, _ in
       ClaimsVerifier()
-
+      
     } keyBindingVerifier: { jws, holdersPublicKey in
       let verifier = KeyBindingVerifier()
       try verifier.verify(
@@ -336,61 +342,63 @@ final class VerifierTest: XCTestCase {
       )
       return verifier
     }
-
+    
     XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
     XCTAssertNoThrow(try verifier.get())
   }
-
+  
   func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() throws {
     let serializerTest = SerialiserTest()
-
+    
     let compactParser = CompactParser()
-
+    
     let envelopeSerializer = try EnvelopedSerialiser(
-        SDJWT: compactParser.getSignedSdJwt(
-          serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
-        ),
-        jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234
-    ).toJSONData())
-
+      SDJWT: compactParser.getSignedSdJwt(
+        serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
+      ),
+      jwTpayload: JWTBody(
+        nonce: "",
+        aud: "sub",
+        iat: 1234
+      ).toJSONData()
+    )
+    
     _ = try SignatureVerifier(
-        signedJWT: JWS(
-            payload: envelopeSerializer.data,
-            protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
-            key: holdersKeyPair.private
-        ),
-        publicKey: holdersKeyPair.public)
-
+      signedJWT: JWS(
+        payload: envelopeSerializer.data,
+        protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
+        key: holdersKeyPair.private
+      ),
+      publicKey: holdersKeyPair.public)
+    
     let jwt = try JWS(
       payload: envelopeSerializer.data,
       protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
       key: holdersKeyPair.private
     )
-
+    
     let envelopedJws = try JWS(jwsString: jwt.compactSerialization)
-
-    let verifyEnvelope =
-    try SDJWTVerifier(
+    
+    let verifyEnvelope = try SDJWTVerifier(
       parser: EnvelopedParser(),
       serialisedString: envelopeSerializer.serialised
-    )
-      .verifyEnvelope(envelope: envelopedJws) { jws in
-
-        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-      } holdersSignatureVerifier: {
-
-        try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
-      } claimVerifier: { audClaim, iat in
-        ClaimsVerifier(
-          iat: iat,
-          iatValidWindow: .init(
-            startTime: Date(timeIntervalSince1970: 1234-10),
-            endTime: Date(timeIntervalSince1970: 1234+10)
-          ),
-          audClaim: audClaim,
-          expectedAud: "sub"
-        )
-      }
+    ).verifyEnvelope(envelope: envelopedJws) { jws in
+      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
+      
+    } holdersSignatureVerifier: {
+      try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
+      
+    } claimVerifier: { audClaim, iat in
+      ClaimsVerifier(
+        iat: iat,
+        iatValidWindow: .init(
+          startTime: Date(timeIntervalSince1970: 1234 - 10),
+          endTime: Date(timeIntervalSince1970: 1234 + 10)
+        ),
+        audClaim: audClaim,
+        expectedAud: "sub"
+      )
+    }
     XCTAssertNoThrow(try verifyEnvelope.get())
   }
 }

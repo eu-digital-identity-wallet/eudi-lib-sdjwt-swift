@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import Foundation
+@preconcurrency import Foundation
 import JSONWebKey
 import JSONWebSignature
 import JSONWebToken
@@ -59,7 +59,8 @@ final class VcVerifierTest: XCTestCase {
           path: "issuer_meta_data",
           extension: "json"
         )
-      )
+      ),
+      trust: X509CertificateTrustFactory.none
     ).verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
@@ -75,6 +76,7 @@ final class VcVerifierTest: XCTestCase {
     
     // When
     let result = try await SDJWTVCVerifier(
+      trust: X509CertificateTrustFactory.none,
       lookup: LookupPublicKeysFromDIDDocumentMock()
     ).verifyIssuance(
       unverifiedSdJwt: sdJwtString
@@ -152,7 +154,8 @@ final class VcVerifierTest: XCTestCase {
           path: "issuer_meta_data",
           extension: "json"
         )
-      )
+      ),
+      trust: X509CertificateTrustFactory.none
     ).verifyIssuance(
       unverifiedSdJwt: json
     )
@@ -173,7 +176,8 @@ final class VcVerifierTest: XCTestCase {
           path: "issuer_meta_data",
           extension: "json"
         )
-      )
+      ),
+      trust: X509CertificateTrustFactory.none
     ).verifyPresentation(
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: ClaimsVerifier(),
@@ -204,7 +208,8 @@ final class VcVerifierTest: XCTestCase {
           path: "issuer_meta_data",
           extension: "json"
         )
-      )
+      ),
+      trust: X509CertificateTrustFactory.none
     ).verifyPresentation(
       unverifiedSdJwt: json,
       claimsVerifier: ClaimsVerifier(),
@@ -217,10 +222,10 @@ final class VcVerifierTest: XCTestCase {
   
   func testVerifyPresentation_WithDSLBuiltValidSDJWT_WithIssuerMetaData_Presentation_ShouldSucceed() async throws {
     
-    let issuersKey = issuersKeyPair.public
+    let issuersKey = await issuersKeyPair.public
     let issuerJwk = try issuersKey.jwk
     
-    let holdersKey = holdersKeyPair.public
+    let holdersKey = await holdersKeyPair.public
     let holdersJwk = try holdersKey.jwk
     
     let jsonObject: JSON = [
@@ -238,7 +243,7 @@ final class VcVerifierTest: XCTestCase {
       ]
     ]
     
-    let issuerSignedSDJWT = try SDJWTIssuer.issue(
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
@@ -278,7 +283,7 @@ final class VcVerifierTest: XCTestCase {
         ).serialised
       )!
     
-    let holder = try SDJWTIssuer
+    let holder = try await SDJWTIssuer
       .presentation(
         holdersPrivateKey: holdersKeyPair.private,
         signedSDJWT: issuerSignedSDJWT,
@@ -301,7 +306,8 @@ final class VcVerifierTest: XCTestCase {
         session: NetworkingJSONMock(
           json: jsonObject
         )
-      )
+      ),
+      trust: X509CertificateTrustFactory.none
     ).verifyPresentation(
       unverifiedSdJwt: serialized,
       claimsVerifier: ClaimsVerifier(),

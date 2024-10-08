@@ -20,7 +20,7 @@ import XCTest
 
 @testable import eudi_lib_sdjwt_swift
 
-class NetworkingBundleMock: Networking {
+final class NetworkingBundleMock: Networking {
   
   let path: String
   let `extension`: String
@@ -59,7 +59,7 @@ class NetworkingBundleMock: Networking {
   }
 }
 
-class NetworkingJSONMock: Networking {
+final class NetworkingJSONMock: Networking {
   
   let json: JSON
   let statusCode: Int

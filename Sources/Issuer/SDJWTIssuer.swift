@@ -114,14 +114,12 @@ public class SDJWTIssuer {
         kbJWT: nil
       )
       return try createSignedSDJWT(sdJwt: ungsingedSDJWT, issuersPrivateKey: signingKey)
-      // ..........
     case .presentation(let signedJWT, let selectedDisclosures, let KBJWT):
       let signedJWT = signedJWT.disclosuresToPresent(disclosures: selectedDisclosures)
       if let KBJWT {
         return try createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: KBJWT, holdersPrivateKey: signingKey)
       }
       return signedJWT
-      // ..........
     }
 
   }

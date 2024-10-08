@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 import Foundation
+import SwiftyJSON
+
 import XCTest
 
 @testable import eudi_lib_sdjwt_swift
 
-class NetworkingMock: Networking {
+class NetworkingBundleMock: Networking {
   
   let path: String
   let `extension`: String
@@ -41,6 +43,39 @@ class NetworkingMock: Networking {
     let url = URL(fileURLWithPath: path!)
     let data = try! Data(contentsOf: url)
     let result = Result<Data, Error>.success(data)
+    let response = HTTPURLResponse(
+      url: .stub(),
+      statusCode: statusCode,
+      httpVersion: nil,
+      headerFields: [:]
+    )
+    return try (result.get(), response!)
+  }
+  
+  func data(
+    for request: URLRequest
+  ) async throws -> (Data, URLResponse) {
+    return try await data(from: URL(string: "https://www.example.com")!)
+  }
+}
+
+class NetworkingJSONMock: Networking {
+  
+  let json: JSON
+  let statusCode: Int
+  
+  init(
+    json: JSON,
+    statusCode: Int = 200
+  ) {
+    self.json = json
+    self.statusCode = statusCode
+  }
+  
+  func data(
+    from url: URL
+  ) async throws -> (Data, URLResponse) {
+    let result = Result<Data, Error>.success(try self.json.rawData())
     let response = HTTPURLResponse(
       url: .stub(),
       statusCode: statusCode,

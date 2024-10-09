@@ -74,6 +74,7 @@ public struct SignedSDJWT {
   public let jwt: JWS
   public internal(set) var disclosures: [Disclosure]
   public internal(set) var kbJwt: JWS?
+  public internal(set) var claimSet: JSON
   
   var delineatedCompactSerialisation: String {
     let separator = "~"
@@ -94,6 +95,7 @@ public struct SignedSDJWT {
     self.jwt = try JWS(jwsString: serializedJwt)
     self.disclosures = disclosures
     self.kbJwt = try? JWS(jwsString: serializedKbJwt ?? "")
+    self.claimSet = try jwt.payloadJSON()
   }
   
   init?(json: JSON) throws {
@@ -101,20 +103,28 @@ public struct SignedSDJWT {
     self.jwt = triple.jwt
     self.disclosures = triple.disclosures
     self.kbJwt = triple.kbJwt
+    self.claimSet = try jwt.payloadJSON()
   }
   
-  private init?<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) {
+  private init?<KeyType>(
+    sdJwt: SDJWT,
+    issuersPrivateKey: KeyType
+  ) throws {
     // Create a Signed SDJWT with no key binding
     guard let signedJwt = try? SignedSDJWT.createSignedJWT(key: issuersPrivateKey, jwt: sdJwt.jwt) else {
       return nil
     }
-    
     self.jwt = signedJwt
     self.disclosures = sdJwt.disclosures
     self.kbJwt = nil
+    self.claimSet = try jwt.payloadJSON()
   }
   
-  private init?<KeyType>(signedSDJWT: SignedSDJWT, kbJWT: JWT, holdersPrivateKey: KeyType) {
+  private init?<KeyType>(
+    signedSDJWT: SignedSDJWT,
+    kbJWT: JWT,
+    holdersPrivateKey: KeyType
+  ) throws {
     // Assume that we have a valid signed jwt from the issuer
     // And key exchange has been established
     // signed SDJWT might contain or not the cnf claim
@@ -123,6 +133,7 @@ public struct SignedSDJWT {
     self.disclosures = signedSDJWT.disclosures
     let signedKBJwt = try? SignedSDJWT.createSignedJWT(key: holdersPrivateKey, jwt: kbJWT)
     self.kbJwt = signedKBJwt
+    self.claimSet = try jwt.payloadJSON()
   }
   
   // MARK: - Methods

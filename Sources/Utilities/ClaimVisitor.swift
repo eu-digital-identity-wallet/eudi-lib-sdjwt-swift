@@ -22,6 +22,9 @@ public protocol ClaimVisitor: Sendable {
 public final class Visitor: ClaimVisitor {
   
   nonisolated(unsafe) var disclosuresPerClaim: [JSONPointer: [Disclosure]] = [:]
+  nonisolated(unsafe) var disclosures: [Disclosure] {
+    disclosuresPerClaim.flatMap { $0.value }
+  }
   
   public init() {
   }

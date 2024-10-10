@@ -31,7 +31,12 @@ public class ClaimExtractor {
 
   // MARK: - Methods
 
-  public func findDigests(payload json: JSON, disclosures: [Disclosure]) throws -> ClaimExtractorResult {
+  public func findDigests(
+    payload json: JSON,
+    disclosures: [Disclosure],
+    visitor: Visitor? = nil,
+    currentPath: [String] = []
+  ) throws -> ClaimExtractorResult {
     var json = json
     json.dictionaryObject?.removeValue(forKey: Keys.sdAlg.rawValue)
     var foundDigests: [DigestType] = []
@@ -51,6 +56,12 @@ public class ClaimExtractor {
           }
 
           json[foundDisclosure.key] = foundDisclosure.value
+          
+          if let d = digestsOfDisclosuresDict[foundDigest] {
+            let currentJsonPointer = "/" + (currentPath + [foundDisclosure.key]).joined(separator: "/")
+            // visitor?.call(key: foundDisclosure.key, disclosure: foundDisclosure.value.stringValue + " " + foundDigest + " " + d + " " + currentJsonPointer)
+            visitor?.call(key: currentJsonPointer, disclosure: d)
+          }
           foundDigests.append(.object(foundDigest))
 
         } else {
@@ -58,28 +69,42 @@ public class ClaimExtractor {
           break
         }
       }
-
     }
 
     // Loop through the inner JSON data
     for (key, subJson): (String, JSON) in json {
       if !subJson.dictionaryValue.isEmpty {
-        let foundOnSubJSON = try self.findDigests(payload: subJson, disclosures: disclosures)
+        let newPath = currentPath + [key]  // Update the path
+        let foundOnSubJSON = try self.findDigests(
+          payload: subJson,
+          disclosures: disclosures,
+          visitor: visitor,
+          currentPath: newPath // Pass the updated path
+        )
+        
         // if found swap the disclosed value with the found value
         foundDigests += foundOnSubJSON.digestsFoundOnPayload
         json[key] = foundOnSubJSON.recreatedClaims
       } else if !subJson.arrayValue.isEmpty {
         for (index, object) in subJson.arrayValue.enumerated() {
+          let newPath = currentPath + [key, "\(index)"] // Update the path for array elements
           if object[Keys.dots.rawValue].exists() {
             if let foundDisclosedArrayElement = digestsOfDisclosuresDict[object[Keys.dots].stringValue]?
               .base64URLDecode()?
               .arrayProperty {
 
               foundDigests.appendOptional(.array(object[Keys.dots].stringValue))
+              
               // If the object is a json we should further process it and replace
               // the element with the value found in the disclosure
               // Example https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-example-3-complex-structure
-              if let ifHasNested = try? findDigests(payload: foundDisclosedArrayElement, disclosures: disclosures),
+              if let ifHasNested = try? findDigests(
+                payload: foundDisclosedArrayElement,
+                disclosures: disclosures,
+                visitor: visitor,
+                currentPath: newPath  // Pass the updated path for the nested JSON
+
+              ),
                  !ifHasNested.digestsFoundOnPayload.isEmpty {
                 foundDigests += ifHasNested.digestsFoundOnPayload
                 json[key].arrayObject?[index] = ifHasNested.recreatedClaims
@@ -89,7 +114,6 @@ public class ClaimExtractor {
         }
       }
     }
-
     return (foundDigests, json)
   }
 }

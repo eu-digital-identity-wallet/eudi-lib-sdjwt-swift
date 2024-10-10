@@ -19,7 +19,7 @@ import SwiftyJSON
 /// JSON Pointer defines a string syntax for identifying a specific value within a JSON document.
 ///
 /// More details about JSON Pointer can be found in the RFC specification: https://datatracker.ietf.org/doc/html/rfc6901
-public struct JSONPointer {
+public struct JSONPointer: Hashable {
   
   /// The pointer string that represents the path in the JSON document.
   public let pointer: String

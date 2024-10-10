@@ -177,32 +177,19 @@ public extension SignedSDJWT {
   }
   
   func present(query: Set<JSONPointer>) async throws -> SignedSDJWT? {
-    try await present(query: query) { jws in
-      return try jws.payloadJSON()
-    }
-  }
-  
-  func present(
-    query: Set<JSONPointer>,
-    claimsOf: (JWS) throws -> JSON
-  ) async throws -> SignedSDJWT? {
     return try await present(
       query: { jsonPointer in
         return query.contains(jsonPointer)
-      },
-      claimsOf: claimsOf
+      }
     )
   }
   
   func present(
-    query: (JSONPointer) -> Bool,
-    claimsOf: (JWS) throws -> JSON
+    query: (JSONPointer) -> Bool
   ) async throws -> SignedSDJWT? {
-    let (_, disclosuresPerClaim) = try recreateClaimsAndDisclosuresPerClaim(
-      claimsOf: claimsOf
-    )
+    let (_, disclosuresPerClaim) = try recreateClaimsAndDisclosuresPerClaim()
     let keys = disclosuresPerClaim.keys.filter(query)
-    if !keys.isEmpty {//keys.isEmpty {
+    if keys.isEmpty {
       return nil
     } else {
       let disclosures = Set(
@@ -222,9 +209,7 @@ public extension SignedSDJWT {
 }
 
 private extension SignedSDJWT {
-  func recreateClaimsAndDisclosuresPerClaim<JWS>(
-    claimsOf: (JWS) throws -> JSON
-  ) throws -> (JSON, DisclosuresPerClaim) {
+  func recreateClaimsAndDisclosuresPerClaim() throws -> (JSON, DisclosuresPerClaim) {
     
     let claims = try recreateClaims()
     print(claims)

@@ -78,7 +78,7 @@ final class PresentationTest: XCTestCase {
     
     // When
     let query: Set<JSONPointer> = Set(
-      ["/address/region", "/address/country", "/dimitri_recursive/recursive_address"]
+      ["/address/region", "/address/country", "/test_recursive/recursive_address"]
         .compactMap {
           JSONPointer(pointer: $0)
         }

@@ -225,8 +225,11 @@ All examples assume that we have the following claim set
 ## SD-JWT VC support
 
 The library supports verifying [SD-JWT-based Verifiable Credentials](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-04.html).
-More specifically, Issuer-signed JWT Verification Key Validation support is provided by [SDJWTVerifier](Sources/Verifier/SDJWTVerifier.swift). Please check [VcVerifierTest](Tests/Verification/VcVerifierTest.swift) for code examples of verifying an Issuance SD-JWT VC and a Presentation SD-JWT VC (including verification of the Key Binding JWT).
+More specifically, Issuer-signed JWT Verification Key Validation support is provided by [SDJWTVerifier](Sources/Verifier/SDJWTVerifier.swift). 
 
+Please check [PresentationTest](Tests/Presentation/PresentationTest.swift) for code examples on creating a holder presentation.
+
+Please check [VcVerifierTest](Tests/Verification/VcVerifierTest.swift) for code examples on verifying an Issuance SD-JWT VC and a Presentation SD-JWT VC (including verification of the Key Binding JWT).
 
 ## How to contribute
 

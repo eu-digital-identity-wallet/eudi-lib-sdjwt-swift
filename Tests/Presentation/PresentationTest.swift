@@ -32,29 +32,13 @@ final class PresentationTest: XCTestCase {
     try await super.tearDown()
   }
   
-  func test() async throws {
+  func testSDJWTPresentationWithSelectiveDisclosures() async throws {
     
-    
-    let issuersKey = issuersKeyPair.public
-    let issuerJwk = try issuersKey.jwk
-    
+    // Given
+    let visitor = Visitor()
     let holdersKey = holdersKeyPair.public
     let holdersJwk = try holdersKey.jwk
-    
-    let jsonObject: JSON = [
-      "issuer": "https://example.com/issuer",
-      "jwks": [
-        "keys": [
-          [
-            "crv": "P-256",
-            "kid": "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48",
-            "kty": "EC",
-            "x": issuerJwk.x?.base64URLEncode(),
-            "y": issuerJwk.y?.base64URLEncode()
-          ]
-        ]
-      ]
-    ]
+    var verifier: KeyBindingVerifier = KeyBindingVerifier()
     
     let issuerSignedSDJWT = try SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
@@ -87,22 +71,76 @@ final class PresentationTest: XCTestCase {
           PlainClaim("crv", "P-256")
         }
       }
+      RecursiveObject("test_recursive") {
+        FlatDisclosedClaim("recursive_address", "東京都港区芝公園４丁目２−８")
+      }
     }
     
+    // When
     let query: Set<JSONPointer> = Set(
-      ["/address/region", "/address/country"]
+      ["/address/region", "/address/country", "/dimitri_recursive/recursive_address"]
         .compactMap {
           JSONPointer(pointer: $0)
         }
     )
-
     
     let presentedSdJwt = try await issuerSignedSDJWT.present(
-      query: query
+      query: query,
+      visitor: visitor
     )
     
-    // po CompactSerialiser(signedSDJWT: presentedSdJwt!).serialised
-//    print(presentedSdJwt)
+    guard let presentedSdJwt = presentedSdJwt else {
+      XCTFail("Expected presentedSdJwt value to be non-nil but it was nil")
+      return
+    }
+    
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(
+          signedSDJWT: presentedSdJwt
+        ).serialised
+      )!
+    
+    var holderPresentation: SignedSDJWT?
+    XCTAssertNoThrow(
+      holderPresentation = try SDJWTIssuer
+        .presentation(
+          holdersPrivateKey: holdersKeyPair.private,
+          signedSDJWT: issuerSignedSDJWT,
+          disclosuresToPresent: presentedSdJwt.disclosures,
+          keyBindingJWT: KBJWT(
+            header: DefaultJWSHeaderImpl(algorithm: .ES256),
+            kbJwtPayload: .init([
+              Keys.nonce.rawValue: "123456789",
+              Keys.aud.rawValue: "example.com",
+              Keys.iat.rawValue: 1694600000,
+              Keys.sdHash.rawValue: sdHash
+            ])
+          )
+        )
+    )
+    
+    let kbJwt = holderPresentation?.kbJwt
+    
+    // Then
+    XCTAssertNoThrow(
+      try verifier.verify(
+        iatOffset: .init(
+          startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
+          endTime: Date(timeIntervalSince1970: 1694600000)
+        )!,
+        expectedAudience: "example.com",
+        challenge: kbJwt!,
+        extractedKey: holdersJwk
+      )
+    )
+    
+    XCTAssertNotNil(kbJwt)
+    XCTAssertEqual(presentedSdJwt.disclosures.count, 4)
+    
+    let presentedDisclosures = Set(presentedSdJwt.disclosures)
+    let visitedDisclosures = Set(visitor.disclosures)
+    XCTAssertTrue(presentedDisclosures.isSubset(of: visitedDisclosures))
   }
 }
 

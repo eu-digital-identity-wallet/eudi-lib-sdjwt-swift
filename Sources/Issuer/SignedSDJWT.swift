@@ -18,7 +18,7 @@ import SwiftyJSON
 import JSONWebSignature
 import JSONWebKey
 
-typealias DisclosuresPerClaim = Dictionary<JSONPointer, [Disclosure]>
+public typealias DisclosuresPerClaim = Dictionary<JSONPointer, [Disclosure]>
 
 public struct SignedSDJWT {
   
@@ -157,8 +157,11 @@ public extension SignedSDJWT {
     serialiser(self).serialised
   }
   
-  func recreateClaims() throws -> ClaimExtractorResult {
-    return try self.toSDJWT().recreateClaims()
+  func recreateClaims(visitor: Visitor? = nil) throws -> ClaimExtractorResult {
+    return try self.toSDJWT()
+      .recreateClaims(
+        visitor: visitor
+      )
   }
   
   func asJwsJsonObject(
@@ -176,18 +179,25 @@ public extension SignedSDJWT {
     )
   }
   
-  func present(query: Set<JSONPointer>) async throws -> SignedSDJWT? {
+  func present(
+    query: Set<JSONPointer>,
+    visitor: Visitor? = Visitor()
+  ) async throws -> SignedSDJWT? {
     return try await present(
       query: { jsonPointer in
         return query.contains(jsonPointer)
-      }
+      },
+      visitor: visitor
     )
   }
   
-  func present(
-    query: (JSONPointer) -> Bool
+  private func present(
+    query: (JSONPointer) -> Bool,
+    visitor: Visitor?
   ) async throws -> SignedSDJWT? {
-    let (_, disclosuresPerClaim) = try recreateClaimsAndDisclosuresPerClaim()
+    let (_, disclosuresPerClaim) = try recreateClaimsAndDisclosuresPerClaim(
+      visitor: visitor
+    )
     let keys = disclosuresPerClaim.keys.filter(query)
     if keys.isEmpty {
       return nil
@@ -209,30 +219,14 @@ public extension SignedSDJWT {
 }
 
 private extension SignedSDJWT {
-  func recreateClaimsAndDisclosuresPerClaim() throws -> (JSON, DisclosuresPerClaim) {
+  func recreateClaimsAndDisclosuresPerClaim(visitor: Visitor?) throws -> (JSON, DisclosuresPerClaim) {
     
-    let claims = try recreateClaims()
+    let claims = try recreateClaims(visitor: visitor)
     print(claims)
     
-    return (JSON.empty, [:])
-  }
-}
-
-public protocol ClaimVisitor {
-  func call(pointer: JSONPointer, disclosure: Disclosure?)
-  func call(key: String, disclosure: Disclosure?)
-}
-
-public class Visitor: ClaimVisitor {
-  
-  public init() {
-  }
-  
-  public func call(pointer: JSONPointer, disclosure: Disclosure?) {
-    print("Visitor")
-  }
-  
-  public func call(key: String, disclosure: Disclosure?) {
-    print("Visitor: \(key) \(disclosure ?? "N/A")")
+    return (
+      claims.recreatedClaims,
+      claims.disclosuresPerClaim ?? [:]
+    )
   }
 }

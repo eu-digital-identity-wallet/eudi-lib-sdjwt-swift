@@ -15,18 +15,22 @@
  */
 import SwiftyJSON
 
-public typealias ClaimExtractorResult = (digestsFoundOnPayload: [DigestType], recreatedClaims: JSON)
+public typealias ClaimExtractorResult = (
+  digestsFoundOnPayload: [DigestType],
+  recreatedClaims: JSON,
+  disclosuresPerClaim: DisclosuresPerClaim?
+)
 
 public class ClaimExtractor {
 
   // MARK: - Properties
 
-  var digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]
+  var digestsOfDisclosures: [DisclosureDigest: Disclosure]
 
   // MARK: - Lifecycle
 
   public init(digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]) {
-    self.digestsOfDisclosuresDict = digestsOfDisclosuresDict
+    self.digestsOfDisclosures = digestsOfDisclosuresDict
   }
 
   // MARK: - Methods
@@ -46,9 +50,9 @@ public class ClaimExtractor {
       var sdArray = sdArray.compactMap(\.string)
       // try to find matching digests in order to be replaced with the value
       while true {
-        let (updatedSdArray, foundDigest) = sdArray.findAndRemoveFirst(from: digestsOfDisclosuresDict.compactMap({$0.key}))
+        let (updatedSdArray, foundDigest) = sdArray.findAndRemoveFirst(from: digestsOfDisclosures.compactMap({$0.key}))
         if let foundDigest,
-           let foundDisclosure = digestsOfDisclosuresDict[foundDigest]?.base64URLDecode()?.objectProperty {
+           let foundDisclosure = digestsOfDisclosures[foundDigest]?.base64URLDecode()?.objectProperty {
           json[Keys.sd.rawValue].arrayObject = updatedSdArray
 
           guard !json[foundDisclosure.key].exists() else {
@@ -57,10 +61,15 @@ public class ClaimExtractor {
 
           json[foundDisclosure.key] = foundDisclosure.value
           
-          if let d = digestsOfDisclosuresDict[foundDigest] {
+          if let disclosure = digestsOfDisclosures[foundDigest] {
             let currentJsonPointer = "/" + (currentPath + [foundDisclosure.key]).joined(separator: "/")
             // visitor?.call(key: foundDisclosure.key, disclosure: foundDisclosure.value.stringValue + " " + foundDigest + " " + d + " " + currentJsonPointer)
-            visitor?.call(key: currentJsonPointer, disclosure: d)
+            visitor?.call(
+              pointer: .init(
+                pointer: currentJsonPointer
+              ),
+              disclosure: disclosure
+            )
           }
           foundDigests.append(.object(foundDigest))
 
@@ -89,7 +98,7 @@ public class ClaimExtractor {
         for (index, object) in subJson.arrayValue.enumerated() {
           let newPath = currentPath + [key, "\(index)"] // Update the path for array elements
           if object[Keys.dots.rawValue].exists() {
-            if let foundDisclosedArrayElement = digestsOfDisclosuresDict[object[Keys.dots].stringValue]?
+            if let foundDisclosedArrayElement = digestsOfDisclosures[object[Keys.dots].stringValue]?
               .base64URLDecode()?
               .arrayProperty {
 
@@ -105,7 +114,7 @@ public class ClaimExtractor {
                 currentPath: newPath  // Pass the updated path for the nested JSON
 
               ),
-                 !ifHasNested.digestsFoundOnPayload.isEmpty {
+              !ifHasNested.digestsFoundOnPayload.isEmpty {
                 foundDigests += ifHasNested.digestsFoundOnPayload
                 json[key].arrayObject?[index] = ifHasNested.recreatedClaims
               }
@@ -114,6 +123,6 @@ public class ClaimExtractor {
         }
       }
     }
-    return (foundDigests, json)
+    return (foundDigests, json, visitor?.disclosuresPerClaim)
   }
 }

@@ -54,9 +54,9 @@ final class BuilderTest: XCTestCase {
     let unsignedJwt = factory.createSDJWTPayload(sdJwtObject: sdObject.asObject)
 
     switch unsignedJwt {
-    case .success((let json, let disclosures)):
+    case .success:
       XCTAssert(true)
-    case .failure(let err):
+    case .failure:
       XCTFail("Failed to Create SDJWT")
     }
 
@@ -111,8 +111,6 @@ final class BuilderTest: XCTestCase {
       FlatDisclosedClaim("bool", true)
       FlatDisclosedClaim("array", ["GR", "DE"])
     }
-
-    let json = plainJWT.asJSON
 
     @SDJWTBuilder
     var objects: SdElement {

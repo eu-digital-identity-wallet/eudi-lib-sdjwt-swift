@@ -72,7 +72,7 @@ func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expect
     }
     XCTAssert(expectedDigests + numberOfDecoys <= expectedDigests + decoysLimit)
     return (json, disclosures)
-  case .failure(let err):
+  case .failure:
     XCTFail("Failed to Create SDJWT")
     return(.empty, [])
   }

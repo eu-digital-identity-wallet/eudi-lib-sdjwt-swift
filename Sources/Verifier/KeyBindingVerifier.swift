@@ -53,6 +53,8 @@ public class KeyBindingVerifier: VerifierProtocol {
     
     try verifyIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(timeInterval)))
     try verifyAud(aud: aud, expectedAudience: expectedAudience)
+    
+    try verify()
   }
   
   public func verify(
@@ -70,6 +72,8 @@ public class KeyBindingVerifier: VerifierProtocol {
     }
     
     self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
+    
+    try verify()
   }
   
   @discardableResult

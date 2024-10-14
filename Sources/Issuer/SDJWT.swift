@@ -54,7 +54,7 @@ public struct SDJWT {
     }
   }
   
-  func recreateClaims() throws -> ClaimExtractorResult {
+  func recreateClaims(visitor: Visitor? = nil) throws -> ClaimExtractorResult {
     let digestCreator = try extractDigestCreator()
     var digestsOfDisclosuresDict = [DisclosureDigest: Disclosure]()
     for disclosure in self.disclosures {
@@ -66,7 +66,6 @@ public struct SDJWT {
       }
     }
     
-    let visitor = Visitor()
     return try ClaimExtractor(
       digestsOfDisclosuresDict: digestsOfDisclosuresDict
     ).findDigests(

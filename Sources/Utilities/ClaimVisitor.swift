@@ -29,7 +29,10 @@ public final class Visitor: ClaimVisitor {
   public init() {
   }
   
-  public func call(pointer: JSONPointer, disclosure: Disclosure) {
+  public func call(
+    pointer: JSONPointer,
+    disclosure: Disclosure
+  ) {
     // Ensure that the path (pointer) does not already exist in disclosuresPerClaim
     guard disclosuresPerClaim[pointer] == nil else {
       fatalError("Disclosures for \(pointer.pointer) have already been calculated.")

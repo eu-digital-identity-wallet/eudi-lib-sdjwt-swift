@@ -84,8 +84,8 @@ final class SpecExamples: XCTestCase {
         PlainClaim("date_of_issuance", "2010-03-23")
         PlainClaim("date_of_expiry", "2020-03-22")
       }
-
     }
+    
     // .......
     @SDJWTBuilder
     var complex: SdElement {

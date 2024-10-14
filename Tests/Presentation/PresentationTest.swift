@@ -38,7 +38,14 @@ final class PresentationTest: XCTestCase {
     let visitor = Visitor()
     let holdersKey = holdersKeyPair.public
     let holdersJwk = try holdersKey.jwk
-    var verifier: KeyBindingVerifier = KeyBindingVerifier()
+    let verifier: KeyBindingVerifier = KeyBindingVerifier()
+    
+    @SDJWTBuilder
+    var evidenceObject: SdElement {
+      FlatDisclosedClaim("type", "document")
+      FlatDisclosedClaim("method", "pipp")
+      FlatDisclosedClaim("time", "2012-04-22T11:30Z")
+    }
     
     let issuerSignedSDJWT = try SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
@@ -74,14 +81,21 @@ final class PresentationTest: XCTestCase {
       RecursiveObject("test_recursive") {
         FlatDisclosedClaim("recursive_address", "東京都港区芝公園４丁目２−８")
       }
+      ArrayClaim("evidence", array: [
+        evidenceObject
+      ])
     }
     
     // When
     let query: Set<JSONPointer> = Set(
-      ["/address/region", "/address/country", "/test_recursive/recursive_address"]
-        .compactMap {
-          JSONPointer(pointer: $0)
-        }
+      [
+        "/address/region",
+        "/address/country",
+        "/test_recursive/recursive_address",
+        "/evidence/0/time"
+      ].compactMap {
+        JSONPointer(pointer: $0)
+      }
     )
     
     let presentedSdJwt = try await issuerSignedSDJWT.present(
@@ -136,7 +150,7 @@ final class PresentationTest: XCTestCase {
     )
     
     XCTAssertNotNil(kbJwt)
-    XCTAssertEqual(presentedSdJwt.disclosures.count, 4)
+    XCTAssertEqual(presentedSdJwt.disclosures.count, 5)
     
     let presentedDisclosures = Set(presentedSdJwt.disclosures)
     let visitedDisclosures = Set(visitor.disclosures)

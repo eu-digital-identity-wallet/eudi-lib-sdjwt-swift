@@ -119,7 +119,6 @@ class SDJWTFactory {
       switch element {
       case .plain(let json):
         partialResult.arrayObject?.append(json)
-        // //............
       case .object(let object):
         let claimSet = try self.encodeObject(sdJwtObject: object)
         disclosures.append(contentsOf: claimSet.disclosures)
@@ -127,21 +126,17 @@ class SDJWTFactory {
         let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
         partialResult.arrayObject?.append(dottedKeyJson)
         disclosures.append(disclosure)
-        // //............
       case .array(let array):
         let claims = try encodeClaim(key: Keys.dots.rawValue, value: .array(array))
         partialResult.arrayObject?.append(claims.value)
         disclosures.append(contentsOf: claims.disclosures)
-        // //............
       default:
         let (disclosure, digest) = try self.discloseArrayElement(value: element.asJSON)
         let dottedKeyJson: JSON = [Keys.dots.rawValue: digest]
         partialResult.arrayObject?.append(dottedKeyJson)
         disclosures.append(disclosure)
       }
-      // //............
     }
-
     return (output, disclosures)
   }
 

@@ -29,6 +29,18 @@ public struct SignedSDJWT {
   public internal(set) var kbJwt: JWS?
   public internal(set) var claimSet: JSON
   
+  public var serialisation: String {
+    let separator = "~"
+    let kbJwtSerialization = kbJwt?.compactSerialization ?? ""
+    let jwtAndDisclosures: [String] = ([jwt.compactSerialization] + disclosures)
+    return jwtAndDisclosures
+      .reduce("") {
+        $0.isEmpty ? $1 : $0 + separator + $1
+      }
+    + separator
+    + kbJwtSerialization
+  }
+  
   var delineatedCompactSerialisation: String {
     let separator = "~"
     let input = ([jwt.compactSerialization] + disclosures).reduce("") { $0.isEmpty ? $1 : $0 + separator + $1 } + separator

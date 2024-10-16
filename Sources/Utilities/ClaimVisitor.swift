@@ -16,7 +16,11 @@
 import Foundation
 
 public protocol ClaimVisitor: Sendable {
-  func call(pointer: JSONPointer, disclosure: Disclosure)
+  func call(
+    pointer: JSONPointer,
+    disclosure: Disclosure,
+    value: String?
+  )
 }
 
 public final class Visitor: ClaimVisitor {
@@ -31,7 +35,8 @@ public final class Visitor: ClaimVisitor {
   
   public func call(
     pointer: JSONPointer,
-    disclosure: Disclosure
+    disclosure: Disclosure,
+    value: String? = nil
   ) {
     // Ensure that the path (pointer) does not already exist in disclosuresPerClaim
     guard disclosuresPerClaim[pointer] == nil else {
@@ -40,17 +45,13 @@ public final class Visitor: ClaimVisitor {
     
     // Calculate claimDisclosures
     let claimDisclosures: [Disclosure] = {
-      let containerPath = pointer.parent() // Assuming pointer has a parent() method
+      let containerPath = pointer.parent()
       let containerDisclosures = containerPath.flatMap { disclosuresPerClaim[$0] } ?? []
-      
       return containerDisclosures + [disclosure]
     }()
     
     // Insert the claimDisclosures only if the pointer doesn't already exist
     disclosuresPerClaim[pointer] = disclosuresPerClaim[pointer] ?? claimDisclosures
-    
-    
-    print("Visitor: \(pointer.pointer) \(disclosure)")
   }
 }
 

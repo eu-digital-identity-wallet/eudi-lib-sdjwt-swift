@@ -36,7 +36,7 @@ final class SerialiserTest: XCTestCase {
     let serialisedString = try testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
     let parser = CompactParser()
     let jwt = try parser.getSignedSdJwt(serialisedString: serialisedString).toSDJWT()
-    print(jwt.disclosures)
+    TestLogger.log(jwt.disclosures.joined(separator: ", "))
   }
 
   func testSerialiseWhenChosingEnvelopeFormat_AppylingNoKeyBinding_ThenExpectACorrectJWT() throws {
@@ -57,7 +57,7 @@ final class SerialiserTest: XCTestCase {
       ClaimsVerifier()
     }.get()
 
-    print(verifier)
+    XCTAssertNotNil(verifier)
   }
 
 }

@@ -234,7 +234,6 @@ private extension SignedSDJWT {
   func recreateClaimsAndDisclosuresPerClaim(visitor: Visitor?) throws -> (JSON, DisclosuresPerClaim) {
     
     let claims = try recreateClaims(visitor: visitor)
-    print(claims)
     
     return (
       claims.recreatedClaims,

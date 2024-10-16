@@ -63,12 +63,12 @@ public class ClaimExtractor {
           
           if let disclosure = digestsOfDisclosures[foundDigest] {
             let currentJsonPointer = "/" + (currentPath + [foundDisclosure.key]).joined(separator: "/")
-            // visitor?.call(key: foundDisclosure.key, disclosure: foundDisclosure.value.stringValue + " " + foundDigest + " " + d + " " + currentJsonPointer)
             visitor?.call(
               pointer: .init(
                 pointer: currentJsonPointer
               ),
-              disclosure: disclosure
+              disclosure: disclosure,
+              value: foundDisclosure.value.string
             )
           }
           foundDigests.append(.object(foundDigest))

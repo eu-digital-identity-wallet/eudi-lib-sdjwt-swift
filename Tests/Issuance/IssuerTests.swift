@@ -66,6 +66,6 @@ final class IssuerTest: XCTestCase {
                                               jwTpayload: payload)
 
     let jwt = try JWT(header: DefaultJWSHeaderImpl(algorithm: .ES256), payload: JSON(envelopedFormat.data))
-    print(jwt.payload)
+    TestLogger.log((try? jwt.payload.toJSONString()) ?? "")
   }
 }

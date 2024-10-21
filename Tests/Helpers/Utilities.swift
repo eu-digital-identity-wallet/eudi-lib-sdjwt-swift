@@ -65,14 +65,14 @@ func validateObjectResults(factoryResult result: Result<ClaimSet, Error>, expect
     TestLogger.log("==============================")
     disclosures
       .compactMap { $0.base64URLDecode()}
-      .forEach {print($0)}
-    print("==============================")
+      .forEach { TestLogger.log($0) }
+    TestLogger.log("==============================")
     if numberOfDecoys == 0 && decoysLimit == 0 {
       XCTAssert(disclosures.count == expectedDigests)
     }
     XCTAssert(expectedDigests + numberOfDecoys <= expectedDigests + decoysLimit)
     return (json, disclosures)
-  case .failure(let err):
+  case .failure:
     XCTFail("Failed to Create SDJWT")
     return(.empty, [])
   }
@@ -131,9 +131,7 @@ class MockSaltProvider: SaltProvider {
 class TestLogger {
     static func log(_ message: String) {
         #if DEBUG
-//        if isRunningTests() {
             print(message)
-//        }
         #endif
     }
 

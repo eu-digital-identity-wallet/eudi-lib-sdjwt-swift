@@ -81,26 +81,22 @@ extension String {
     
     // Decode the Base64-encoded string
     guard let keyData = Data(base64Encoded: keyString) else {
-      print("Invalid Base64 string")
       return nil
     }
     
     // First, try RSA
     if let secKey = String.createSecKey(from: keyData, keyType: kSecAttrKeyTypeRSA) {
-      print("Key identified as RSA.")
       return secKey
     }
     
     // If RSA fails, try EC
     if let secKey = String.createSecKey(from: keyData, keyType: kSecAttrKeyTypeEC) {
-      print("Key identified as EC.")
       return secKey
     }
     
     // Add more key types if needed (e.g., DSA, etc.)
     
     // If neither RSA nor EC works, return nil
-    print("Unable to identify key type.")
     return nil
   }
   
@@ -122,9 +118,6 @@ extension String {
     if let secKey = SecKeyCreateWithData(keyData as CFData, attributes as CFDictionary, &error) {
       return secKey
     } else {
-      if let err = error?.takeRetainedValue() {
-        print("Error creating SecKey: \(err.localizedDescription)")
-      }
       return nil
     }
   }

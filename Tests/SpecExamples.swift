@@ -84,8 +84,8 @@ final class SpecExamples: XCTestCase {
         PlainClaim("date_of_issuance", "2010-03-23")
         PlainClaim("date_of_expiry", "2020-03-22")
       }
-
     }
+    
     // .......
     @SDJWTBuilder
     var complex: SdElement {
@@ -124,12 +124,12 @@ final class SpecExamples: XCTestCase {
     }
 
     let output = factory.createSDJWTPayload(sdJwtObject: complex.asObject)
-    let digestCount = try XCTUnwrap(try? output.get().value.findDigestCount())
+    let _ = try XCTUnwrap(try? output.get().value.findDigestCount())
     validateObjectResults(factoryResult: output, expectedDigests: 16)
 
     try output.get().disclosures.forEach { disclosure in
-      print(disclosure.base64URLDecode())
+      TestLogger.log(disclosure.base64URLDecode() ?? "")
     }
-    let findDigest = try? XCTUnwrap(output.get())
+    let _ = try? XCTUnwrap(output.get())
   }
 }

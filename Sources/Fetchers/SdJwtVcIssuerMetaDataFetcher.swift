@@ -15,7 +15,7 @@
  */
 import Foundation
 import SwiftyJSON
-@preconcurrency import JSONWebKey
+import JSONWebKey
 
 public protocol SdJwtVcIssuerMetaDataFetching {
   var session: Networking { get }

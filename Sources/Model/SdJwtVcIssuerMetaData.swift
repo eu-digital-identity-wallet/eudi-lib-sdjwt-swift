@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 import Foundation
-@preconcurrency import JSONWebKey
+import JSONWebKey
 import SwiftyJSON
+
+extension JWKSet: @unchecked @retroactive Sendable {}
 
 struct SdJwtVcIssuerMetadataTO: Decodable, Sendable {
   let issuer: String

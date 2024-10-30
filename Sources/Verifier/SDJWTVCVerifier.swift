@@ -15,7 +15,7 @@
  */
 import Foundation
 import X509
-@preconcurrency import JSONWebKey
+import JSONWebKey
 @preconcurrency import SwiftyJSON
 import JSONWebSignature
 import JSONWebToken

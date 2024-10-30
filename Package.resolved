@@ -1,4 +1,5 @@
 {
+  "originHash" : "110c9bbb9786f3d00e048b52094ab676dc409d4a01fd174b974a198c2601f066",
   "pins" : [
     {
       "identity" : "cryptoswift",
@@ -14,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/beatt83/jose-swift.git",
       "state" : {
-        "revision" : "c289a01f895501257e170d422a57a6edc593bbcd",
-        "version" : "4.0.0"
+        "revision" : "420fc3331f79f04ad386cd8baea48a4c759fdd58",
+        "version" : "4.0.1"
       }
     },
     {
@@ -64,5 +65,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

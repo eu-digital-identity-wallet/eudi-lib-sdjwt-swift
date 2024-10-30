@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import Foundation
-@preconcurrency import JSONWebKey
-@preconcurrency import JSONWebSignature
+import JSONWebKey
+import JSONWebSignature
 
 // To Constraint What can be passed as a key
 // JOSE Supports SecKey for RSA and EC and Data for HMAC

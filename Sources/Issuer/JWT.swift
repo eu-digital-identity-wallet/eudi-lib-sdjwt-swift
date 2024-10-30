@@ -15,7 +15,7 @@
  */
 import Foundation
 import JSONWebAlgorithms
-@preconcurrency import JSONWebSignature
+import JSONWebSignature
 import SwiftyJSON
 
 public struct JWT: JWTRepresentable, Sendable {

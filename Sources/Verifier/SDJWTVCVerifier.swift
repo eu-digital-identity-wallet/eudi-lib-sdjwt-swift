@@ -75,6 +75,49 @@ protocol SdJwtVcVerifierType {
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?
   ) async throws -> Result<SignedSDJWT, any Error>
+  
+  /**
+   * Creates a new verifier instance with SD-JWT-VC issuer metadata resolution enabled.
+   *
+   * - Parameter session: A `URLSession` instance used for HTTP communication.
+   * - Returns: An instance of the conforming type.
+   */
+  static func usingIssuerMetadata(
+    session: Networking
+  ) -> SdJwtVcVerifierType
+  
+  /**
+   * Creates a new verifier instance with X.509 certificate trust enabled.
+   *
+   * - Parameter x509CertificateTrust: The X.509 certificate trust configuration.
+   * - Returns: An instance of the conforming type.
+   */
+  static func usingX5c(
+    x509CertificateTrust: X509CertificateTrust
+  ) -> SdJwtVcVerifierType
+  
+  /**
+   * Creates a new verifier instance with DID resolution enabled.
+   *
+   * - Parameter didLookup: A service for looking up public keys from DID documents.
+   * - Returns: An instance of the conforming type.
+   */
+  static func usingDID(
+    didLookup: LookupPublicKeysFromDIDDocument
+  ) -> SdJwtVcVerifierType
+  
+  /**
+   * Creates a new verifier instance with both X.509 certificate trust and SD-JWT-VC issuer metadata resolution enabled.
+   *
+   * - Parameters:
+   *   - x509CertificateTrust: The X.509 certificate trust configuration.
+   *   - session: A `URLSession` instance used for HTTP communication.
+   * - Returns: An instance of the conforming type.
+   */
+  static func usingX5cOrIssuerMetadata(
+    x509CertificateTrust: X509CertificateTrust,
+    session: Networking
+  ) -> SdJwtVcVerifierType
 }
 
 /**
@@ -117,6 +160,40 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     self.fetcher = fetcher
     self.trust = trust
     self.lookup = lookup
+  }
+  
+  static func usingIssuerMetadata(
+    session: Networking
+  ) -> SdJwtVcVerifierType {
+    return SDJWTVCVerifier(
+      fetcher: SdJwtVcIssuerMetaDataFetcher(session: session)
+    )
+  }
+  
+  static func usingX5c(
+    x509CertificateTrust: X509CertificateTrust
+  ) -> SdJwtVcVerifierType {
+    return SDJWTVCVerifier(
+      trust: x509CertificateTrust
+    )
+  }
+  
+  static func usingDID(
+    didLookup: LookupPublicKeysFromDIDDocument
+  ) -> SdJwtVcVerifierType {
+    return SDJWTVCVerifier(
+      lookup: didLookup
+    )
+  }
+  
+  static func usingX5cOrIssuerMetadata(
+    x509CertificateTrust: X509CertificateTrust,
+    session: Networking
+  ) -> SdJwtVcVerifierType {
+    return SDJWTVCVerifier(
+      fetcher: SdJwtVcIssuerMetaDataFetcher(session: session),
+      trust: x509CertificateTrust
+    )
   }
   
   /**

@@ -47,6 +47,22 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
+  func testVerifyIssuance_WithValidSDJWT_Withx509Header_AndConfiguration_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
+    
+    // When
+    let result = try await SDJWTVCVerifier.usingX5c(
+      x509CertificateTrust: X509CertificateChainVerifier()
+    ).verifyIssuance(
+      unverifiedSdJwt: sdJwtString
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
   func testVerifyIssuance_WithValidSDJWT_WithIssuerMetaData_ShouldSucceed() async throws {
     
     // Given
@@ -68,6 +84,25 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
+  func testVerifyIssuance_WithValidSDJWT_WithIssuerMetaData_AndConfiguration_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    
+    // When
+    let result = try await SDJWTVCVerifier.usingIssuerMetadata(
+      session: NetworkingBundleMock(
+        path: "issuer_meta_data",
+        extension: "json"
+      )
+    ).verifyIssuance(
+      unverifiedSdJwt: sdJwtString
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
   func testVerifyIssuance_WithValidSDJWT_WithDID_ShouldSucceed() async throws {
     
     // Given
@@ -76,6 +111,22 @@ final class VcVerifierTest: XCTestCase {
     // When
     let result = try await SDJWTVCVerifier(
       lookup: LookupPublicKeysFromDIDDocumentMock()
+    ).verifyIssuance(
+      unverifiedSdJwt: sdJwtString
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
+  func testVerifyIssuance_WithValidSDJWT_WithDID_AndConfiguration_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.did_sd_jwt.clean()
+    
+    // When
+    let result = try await SDJWTVCVerifier.usingDID(
+      didLookup: LookupPublicKeysFromDIDDocumentMock()
     ).verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )

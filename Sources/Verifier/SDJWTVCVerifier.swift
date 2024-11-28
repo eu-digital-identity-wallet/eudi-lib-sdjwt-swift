@@ -79,7 +79,7 @@ protocol SdJwtVcVerifierType {
   /**
    * Creates a new verifier instance with SD-JWT-VC issuer metadata resolution enabled.
    *
-   * - Parameter session: A `URLSession` instance used for HTTP communication.
+   * - Parameter session: A `Networking` instance used for HTTP communication.
    * - Returns: An instance of the conforming type.
    */
   static func usingIssuerMetadata(
@@ -111,7 +111,7 @@ protocol SdJwtVcVerifierType {
    *
    * - Parameters:
    *   - x509CertificateTrust: The X.509 certificate trust configuration.
-   *   - session: A `URLSession` instance used for HTTP communication.
+   *   - session: A `Networking` instance used for HTTP communication.
    * - Returns: An instance of the conforming type.
    */
   static func usingX5cOrIssuerMetadata(

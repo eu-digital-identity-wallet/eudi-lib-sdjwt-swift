@@ -28,14 +28,14 @@ extension Keys: JSONSubscriptType {
 }
 
 extension JSON {
-
+  
   func findDigestCount() -> Int {
     var foundValues = 0
-
+    
     if !self[Keys.sd.rawValue].arrayValue.isEmpty {
       foundValues = self[Keys.sd.rawValue].arrayValue.count
     }
-
+    
     // Loop through the JSON data
     for (_, subJson): (String, JSON) in self {
       if !subJson.dictionaryValue.isEmpty {
@@ -46,8 +46,43 @@ extension JSON {
         }
       }
     }
-
+    
     return foundValues
+  }
+  
+  /// Collects all JSONPointer paths from the JSON object.
+  ///
+  /// - Returns: An array of `JSONPointer` objects representing the paths to all elements in the tree.
+  func collectJSONPointers() -> [JSONPointer] {
+    var pointers: [JSONPointer] = []
+    
+    // Helper function for recursive traversal
+    func traverse(json: JSON, currentPointer: JSONPointer) {
+      pointers.append(currentPointer)
+      
+      switch json.type {
+      case .dictionary:
+        // Traverse each key in the dictionary
+        for (key, value) in json.dictionaryValue {
+          let childPointer = JSONPointer(tokens: currentPointer.tokenArray + [key])
+          traverse(json: value, currentPointer: childPointer)
+        }
+      case .array:
+        // Traverse each index in the array
+        for (index, value) in json.arrayValue.enumerated() {
+          let childPointer = JSONPointer(tokens: currentPointer.tokenArray + ["\(index)"])
+          traverse(json: value, currentPointer: childPointer)
+        }
+      default:
+        // Base case: Do nothing for non-container types
+        break
+      }
+    }
+    
+    // Start traversal from the root
+    traverse(json: self, currentPointer: JSONPointer(pointer: "/"))
+    
+    return pointers
   }
 }
 

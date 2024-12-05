@@ -176,6 +176,16 @@ public extension SignedSDJWT {
       )
   }
   
+  func disclosedPaths() throws -> [JSONPointer] {
+    let visitor = Visitor()
+    _ = try self.toSDJWT()
+      .recreateClaims(
+        visitor: visitor
+      )
+    let pointers = visitor.disclosuresPerClaim.keys.compactMap { $0 }
+    return pointers
+  }
+  
   func asJwsJsonObject(
     option: JwsJsonSupportOption = .flattened,
     kbJwt: JWTString?,

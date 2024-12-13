@@ -129,8 +129,7 @@ public struct SignedSDJWT {
   static func nonKeyBondedSDJWT<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) throws
     -> SignedSDJWT
   {
-    try .init(sdJwt: sdJwt, issuersPrivateKey: issuersPrivateKey)
-      ?? {
+    try .init(sdJwt: sdJwt, issuersPrivateKey: issuersPrivateKey) ?? {
         throw SDJWTVerifierError.invalidJwt
       }()
   }
@@ -139,7 +138,6 @@ public struct SignedSDJWT {
     signedSDJWT: SignedSDJWT, kbJWT: JWT, holdersPrivateKey: KeyType
   ) async throws -> SignedSDJWT {
     if let asyncSigner = holdersPrivateKey as? AsyncSignerProtocol {
-      //let signedKBJwt = try? SignedSDJWT.createSignedJWT(key: holdersPrivateKey, jwt: kbJWT)
       let unsignedJWT = try kbJWT.asUnsignedJWT()
       let protectedHeaderData = try JSONEncoder.jose.encode(unsignedJWT.header)
       let signingData = try buildSigningData(header: protectedHeaderData, data: unsignedJWT.payload)

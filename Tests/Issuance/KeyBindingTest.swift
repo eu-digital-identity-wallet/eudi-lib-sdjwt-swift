@@ -68,7 +68,7 @@ final class KeyBindingTest: XCTestCase {
     try XCTAssertNoThrow(verifier.verify())
   }
 
-  func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification() throws -> (SignedSDJWT, SignedSDJWT) {
+  func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification() async throws -> (SignedSDJWT, SignedSDJWT) {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
 
@@ -78,7 +78,7 @@ final class KeyBindingTest: XCTestCase {
 
     let claims = try factory.createSDJWTPayload(sdjwtObject: claims.asObject, holdersPublicKey: jwk).get()
 
-    let issuance = try SDJWTIssuer.createSDJWT(
+    let issuance = try await SDJWTIssuer.createSDJWT(
         purpose: .issuance(DefaultJWSHeaderImpl(algorithm: .ES256), claims),
         signingKey: issuersKeyPair.private
     )
@@ -98,7 +98,7 @@ final class KeyBindingTest: XCTestCase {
       ] as [String: Any]
     ), [])
 
-    let presentation = try SDJWTIssuer.createSDJWT(
+    let presentation = try await SDJWTIssuer.createSDJWT(
       purpose: .presentation(
         issuance,
         issuance.disclosures,
@@ -117,7 +117,7 @@ final class KeyBindingTest: XCTestCase {
     return(issuance, presentation)
   }
 
-  func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerificationInvoke() {
-    XCTAssertNoThrow(try testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification())
+  func testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerificationInvoke() async throws {
+    _ = try await testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification()
   }
 }

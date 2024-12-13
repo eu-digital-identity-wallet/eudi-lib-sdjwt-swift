@@ -49,10 +49,10 @@ public class SDJWTIssuer {
     header: JWSRegisteredFieldsHeader,
     decoys: Int = 0,
     @SDJWTBuilder buildSDJWT: () throws -> SdElement
-  ) throws -> SignedSDJWT {
+  ) async throws -> SignedSDJWT {
     let factory = SDJWTFactory(decoysLimit: decoys)
     let claimSet = try factory.createSDJWTPayload(sdJwtObject: SDJWTBuilder.build(builder: buildSDJWT)).get()
-    let signedSDJWT = try self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
+    let signedSDJWT = try await self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
     return signedSDJWT
   }
 
@@ -69,8 +69,8 @@ public class SDJWTIssuer {
     signedSDJWT: SignedSDJWT,
     disclosuresToPresent: [Disclosure],
     keyBindingJWT: KBJWT?
-  ) throws -> SignedSDJWT {
-    try createSDJWT(
+  ) async throws -> SignedSDJWT {
+    try await createSDJWT(
       purpose: .presentation(
         signedSDJWT,
         disclosuresToPresent,
@@ -89,8 +89,8 @@ public class SDJWTIssuer {
   public static func presentation(
     signedSDJWT: SignedSDJWT,
     disclosuresToPresent: [Disclosure]
-  ) throws -> SignedSDJWT {
-    return try createSDJWT(purpose: .presentation(signedSDJWT, disclosuresToPresent, nil), signingKey: Void.self)
+  ) async throws -> SignedSDJWT {
+    return try await createSDJWT(purpose: .presentation(signedSDJWT, disclosuresToPresent, nil), signingKey: Void.self)
 
   }
 
@@ -102,7 +102,7 @@ public class SDJWTIssuer {
   /// - Returns: The signed SDJWT.
   /// - Throws: An error if there's an issue with JWT creation or signing.
   ///
-  static func createSDJWT<KeyType>(purpose: Purpose, signingKey: KeyType) throws -> SignedSDJWT {
+  static func createSDJWT<KeyType>(purpose: Purpose, signingKey: KeyType) async throws -> SignedSDJWT {
     switch purpose {
     case .issuance(let JWSHeader, let claimSet):
       let ungsingedSDJWT = try SDJWT(
@@ -117,7 +117,7 @@ public class SDJWTIssuer {
     case .presentation(let signedJWT, let selectedDisclosures, let KBJWT):
       let signedJWT = signedJWT.disclosuresToPresent(disclosures: selectedDisclosures)
       if let KBJWT {
-        return try createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: KBJWT, holdersPrivateKey: signingKey)
+        return try await createKeyBondedSDJWT(signedSDJWT: signedJWT, kbJWT: KBJWT, holdersPrivateKey: signingKey)
       }
       return signedJWT
     }
@@ -149,8 +149,8 @@ public class SDJWTIssuer {
     signedSDJWT: SignedSDJWT,
     kbJWT: JWT,
     holdersPrivateKey: KeyType
-  ) throws -> SignedSDJWT {
-    try SignedSDJWT.keyBondedSDJWT(
+  ) async throws -> SignedSDJWT {
+    try await SignedSDJWT.keyBondedSDJWT(
         signedSDJWT: signedSDJWT,
         kbJWT: kbJWT,
         holdersPrivateKey: holdersPrivateKey

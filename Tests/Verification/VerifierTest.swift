@@ -206,28 +206,28 @@ final class VerifierTest: XCTestCase {
     }
   }
 
-  func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() throws {
-    let iatJwt = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
+  func testVerifierWhenClaimsContainIatExpNbfClaims_ThenExpectTobeInCorrectTimeRanges() async throws {
+    let iatJwt = try await SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.private,
                                        header: DefaultJWSHeaderImpl(algorithm: .ES256), buildSDJWT: {
       ConstantClaims.iat(time: Date())
       FlatDisclosedClaim("time", "is created at \(Date())")
     })
 
-    let expSdJwt = try SDJWTIssuer.issue(
+    let expSdJwt = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(algorithm: .ES256)) {
         ConstantClaims.exp(time: Date(timeIntervalSinceNow: 36000))
         FlatDisclosedClaim("time", "time runs out")
     }
 
-    let nbfSdJwt = try SDJWTIssuer.issue(
+    let nbfSdJwt = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(algorithm: .ES256)) {
         ConstantClaims.nbf(time: Date(timeIntervalSinceNow: -36000))
         FlatDisclosedClaim("time", "we are ahead of time")
     }
 
-    let nbfAndExpSdJwt = try SDJWTIssuer.issue(
+    let nbfAndExpSdJwt = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(algorithm: .ES256)
     ) {
@@ -255,11 +255,11 @@ final class VerifierTest: XCTestCase {
     }
   }
 
-  func testVerifierWhenProvidingAKeyBindingJWT_WHenProvidedWithAudNonceAndIatClaims_ThenExpectToPassClaimVerificationAndKBVerification () throws {
+  func testVerifierWhenProvidingAKeyBindingJWT_WHenProvidedWithAudNonceAndIatClaims_ThenExpectToPassClaimVerificationAndKBVerification () async throws {
     let holdersJWK = holdersKeyPair.public
     let jwk = try holdersJWK.jwk
 
-    let issuerSignedSDJWT = try SDJWTIssuer.issue(
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
         issuersPrivateKey: issuersKeyPair.private,
         header: DefaultJWSHeaderImpl(algorithm: .ES256)
     ) {
@@ -296,7 +296,7 @@ final class VerifierTest: XCTestCase {
         ).serialised
       ) ?? ""
 
-    let holder = try SDJWTIssuer
+    let holder = try await SDJWTIssuer
       .presentation(
         holdersPrivateKey: holdersKeyPair.private,
         signedSDJWT: issuerSignedSDJWT,
@@ -341,12 +341,12 @@ final class VerifierTest: XCTestCase {
     XCTAssertNoThrow(try verifier.get())
   }
 
-  func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() throws {
+  func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() async throws {
     let serializerTest = SerialiserTest()
 
     let compactParser = CompactParser()
 
-    let envelopeSerializer = try EnvelopedSerialiser(
+    let envelopeSerializer = try await EnvelopedSerialiser(
         SDJWT: compactParser.getSignedSdJwt(
           serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
         ),

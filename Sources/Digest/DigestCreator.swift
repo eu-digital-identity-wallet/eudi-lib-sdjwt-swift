@@ -15,7 +15,7 @@
  */
 import Foundation
 
-class DigestCreator {
+public class DigestCreator {
 
   // MARK: - Properties
 
@@ -25,13 +25,13 @@ class DigestCreator {
 
   // MARK: - LifeCycle
 
-  init(hashingAlgorithm: HashingAlgorithm = SHA256Hashing()) {
+  public init(hashingAlgorithm: HashingAlgorithm = SHA256Hashing()) {
     self.hashingAlgorithm = hashingAlgorithm
   }
 
   // MARK: - Methods
 
-  func hashAndBase64Encode(input: Disclosure) -> DisclosureDigest? {
+  public func hashAndBase64Encode(input: Disclosure) -> DisclosureDigest? {
     guard let disclosureDigest = self.hashingAlgorithm.hash(disclosure: input) else {
       return nil
     }
@@ -41,7 +41,7 @@ class DigestCreator {
     return base64Hash
   }
 
-  func decoy() -> DisclosureDigest? {
+  public func decoy() -> DisclosureDigest? {
     return self.hashAndBase64Encode(input: saltProvider.saltString)
   }
 

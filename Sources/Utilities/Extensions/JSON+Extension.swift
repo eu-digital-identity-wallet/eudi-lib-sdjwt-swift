@@ -22,7 +22,7 @@ extension JSON {
 }
 
 extension Keys: JSONSubscriptType {
-  var jsonKey: SwiftyJSON.JSONKey {
+  public var jsonKey: SwiftyJSON.JSONKey {
     return .key(self.rawValue)
   }
 }

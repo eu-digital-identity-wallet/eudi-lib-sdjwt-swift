@@ -289,7 +289,7 @@ final class VcVerifierTest: XCTestCase {
       ]
     ]
     
-    let issuerSignedSDJWT = try SDJWTIssuer.issue(
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
@@ -329,7 +329,7 @@ final class VcVerifierTest: XCTestCase {
         ).serialised
       )!
     
-    let holder = try SDJWTIssuer
+    let holder = try await SDJWTIssuer
       .presentation(
         holdersPrivateKey: holdersKeyPair.private,
         signedSDJWT: issuerSignedSDJWT,

@@ -24,8 +24,8 @@ import SwiftyJSON
 
 final class IssuerTest: XCTestCase {
 
-  func testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey() throws -> SignedSDJWT {
-    let signedSDJWT = try SDJWTIssuer.issue(
+  func testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey() async throws -> SignedSDJWT {
+    let signedSDJWT = try await SDJWTIssuer.issue(
         issuersPrivateKey: issuersKeyPair.private,
         header: DefaultJWSHeaderImpl(algorithm: .ES256)) {
         ConstantClaims.iat(time: Date())
@@ -37,8 +37,8 @@ final class IssuerTest: XCTestCase {
     return signedSDJWT
   }
 
-  func testCompactFormatSerialisation_WhenProvidedWithABuiltSDJWT() throws {
-    let sdjwt = try self.testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey()
+  func testCompactFormatSerialisation_WhenProvidedWithABuiltSDJWT() async throws {
+    let sdjwt = try await self.testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey()
 
     let compactSerializer = CompactSerialiser(signedSDJWT: sdjwt)
 
@@ -48,14 +48,8 @@ final class IssuerTest: XCTestCase {
     XCTAssertTrue(try jws.verify(key: issuersKeyPair.public))
   }
 
-  func testEnvelopedFormatSerializeation_WhenProvidedWithABuiltSDJWT() throws {
-    let sdjwt = try self.testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey()
-//    let envelopeJWT = try JWT(header: .init(parameters: [Keys.sdAlg.rawValue: SignatureAlgorithm.ES256.rawValue]),
-//                              payload: JSON([
-//                                  "aud": "https://verifier.example.com",
-//                                  "iat": 1580000000,
-//                                  "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"
-//                              ]))
+  func testEnvelopedFormatSerializeation_WhenProvidedWithABuiltSDJWT() async throws {
+    let sdjwt = try await self.testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey()
 
     let payload = try JSON([
         "aud": "https://verifier.example.com",

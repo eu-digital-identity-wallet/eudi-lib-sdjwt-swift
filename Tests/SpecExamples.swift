@@ -23,7 +23,7 @@ import XCTest
 
 final class SpecExamples: XCTestCase {
 
-  func testStructuredClaims_AsProvidedByTheSpec() throws {
+  func testStructuredClaims_AsProvidedByTheSpec() async throws {
 
     let factory = SDJWTFactory(saltProvider: DefaultSaltProvider(), decoysLimit: 6)
 
@@ -50,7 +50,7 @@ final class SpecExamples: XCTestCase {
 
     let keyPair = generateES256KeyPair()
 
-    let sdjwt = try SDJWTIssuer.createSDJWT(purpose: .issuance(DefaultJWSHeaderImpl(algorithm: .ES256), output.get()), signingKey: keyPair.private)
+    let sdjwt = try await SDJWTIssuer.createSDJWT(purpose: .issuance(DefaultJWSHeaderImpl(algorithm: .ES256), output.get()), signingKey: keyPair.private)
 
     let string = CompactSerialiser(signedSDJWT: sdjwt).serialised
 

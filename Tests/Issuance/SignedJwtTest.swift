@@ -22,10 +22,10 @@ import XCTest
 
 final class SignedJwtTest: XCTestCase {
 
-  func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheSDJW_WithNoKeyBidning() throws {
+  func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheSDJW_WithNoKeyBidning() async throws {
 
     let keyPair = generateES256KeyPair()
-    let signedJWT = try SDJWTIssuer.issue(
+    let signedJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: keyPair.private,
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256

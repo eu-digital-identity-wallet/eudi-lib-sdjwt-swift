@@ -19,9 +19,9 @@ import XCTest
 @testable import eudi_lib_sdjwt_swift
 
 final class SerialiserTest: XCTestCase {
-  func testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT() throws -> String {
+  func testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT() async throws -> String {
     let keyBindingTest = KeyBindingTest()
-    let (issuersSDJWT, holdersSDJWT) = try keyBindingTest.testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification()
+    let (issuersSDJWT, holdersSDJWT) = try await keyBindingTest.testKeyBindingCreation_WhenKeybindingIsPresent_ThenExpectCorrectVerification()
 
     let issuersSerialisedFormat = CompactSerialiser(signedSDJWT: issuersSDJWT).serialised
     XCTAssert(issuersSerialisedFormat.components(separatedBy: "~").count >= 2)
@@ -32,16 +32,16 @@ final class SerialiserTest: XCTestCase {
     return holdersSerialisedFormat
   }
 
-  func testPareserWhenReceivingASerialisedFormatJWT_ThenConstructUnsignedSDJWT() throws {
-    let serialisedString = try testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
+  func testPareserWhenReceivingASerialisedFormatJWT_ThenConstructUnsignedSDJWT() async throws {
+    let serialisedString = try await testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
     let parser = CompactParser()
     let jwt = try parser.getSignedSdJwt(serialisedString: serialisedString).toSDJWT()
     TestLogger.log(jwt.disclosures.joined(separator: ", "))
   }
 
-  func testSerialiseWhenChosingEnvelopeFormat_AppylingNoKeyBinding_ThenExpectACorrectJWT() throws {
+  func testSerialiseWhenChosingEnvelopeFormat_AppylingNoKeyBinding_ThenExpectACorrectJWT() async throws {
     let compactParser = CompactParser()
-    let envelopeSerializer = try EnvelopedSerialiser(
+    let envelopeSerializer = try await EnvelopedSerialiser(
         SDJWT: compactParser.getSignedSdJwt(
           serialisedString: testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
         ),

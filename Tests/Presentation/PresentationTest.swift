@@ -47,7 +47,7 @@ final class PresentationTest: XCTestCase {
       FlatDisclosedClaim("time", "2012-04-22T11:30Z")
     }
     
-    let issuerSignedSDJWT = try SDJWTIssuer.issue(
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
@@ -116,10 +116,9 @@ final class PresentationTest: XCTestCase {
       )!
     
     var holderPresentation: SignedSDJWT?
-    XCTAssertNoThrow(
-      holderPresentation = try SDJWTIssuer
+      holderPresentation = try await SDJWTIssuer
         .presentation(
-          holdersPrivateKey: holdersKeyPair.private,
+          holdersPrivateKey: TestP256AsyncSigner(secKey: holdersKeyPair.private),
           signedSDJWT: issuerSignedSDJWT,
           disclosuresToPresent: presentedSdJwt.disclosures,
           keyBindingJWT: KBJWT(
@@ -132,7 +131,6 @@ final class PresentationTest: XCTestCase {
             ])
           )
         )
-    )
     
     let kbJwt = holderPresentation?.kbJwt
     

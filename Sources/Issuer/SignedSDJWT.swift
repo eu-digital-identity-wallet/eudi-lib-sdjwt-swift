@@ -102,7 +102,10 @@ public struct SignedSDJWT {
 
     self.jwt = signedSDJWT.jwt
     self.disclosures = signedSDJWT.disclosures
-    let signedKBJwt = try? SignedSDJWT.createSignedJWT(key: holdersPrivateKey, jwt: kbJWT)
+    let signedKBJwt = try? SignedSDJWT.createSignedJWT(
+      key: holdersPrivateKey,
+      jwt: kbJWT
+    )
     self.kbJwt = signedKBJwt
     self.claimSet = try jwt.payloadJSON()
   }
@@ -126,34 +129,57 @@ public struct SignedSDJWT {
   // expose static func initializers to distinguish between 2 cases of
   // signed SDJWT creation
 
-  static func nonKeyBondedSDJWT<KeyType>(sdJwt: SDJWT, issuersPrivateKey: KeyType) throws
-    -> SignedSDJWT
-  {
+  static func nonKeyBondedSDJWT<KeyType>(
+    sdJwt: SDJWT,
+    issuersPrivateKey: KeyType
+  ) throws -> SignedSDJWT {
     try .init(sdJwt: sdJwt, issuersPrivateKey: issuersPrivateKey) ?? {
         throw SDJWTVerifierError.invalidJwt
       }()
   }
 
   static func keyBondedSDJWT<KeyType>(
-    signedSDJWT: SignedSDJWT, kbJWT: JWT, holdersPrivateKey: KeyType
+    signedSDJWT: SignedSDJWT,
+    kbJWT: JWT,
+    holdersPrivateKey: KeyType
   ) async throws -> SignedSDJWT {
     if let asyncSigner = holdersPrivateKey as? AsyncSignerProtocol {
       let unsignedJWT = try kbJWT.asUnsignedJWT()
-      let protectedHeaderData = try JSONEncoder.jose.encode(unsignedJWT.header)
-      let signingData = try buildSigningData(header: protectedHeaderData, data: unsignedJWT.payload)
+      let protectedHeaderData = try JSONEncoder
+        .jose
+        .encode(
+          unsignedJWT.header
+        )
+      
+      let signingData = try buildSigningData(
+        header: protectedHeaderData,
+        data: unsignedJWT.payload
+      )
+      
       let signature = try await asyncSigner.signAsync(signingData)
-      let signedKBJwt = try? JWS.init(
-        protectedHeaderData: protectedHeaderData, data: unsignedJWT.payload, signature: signature)
-      return try SignedSDJWT.init(signedSDJWT: signedSDJWT, signedKBJwt: signedKBJwt)
-        ?? {
-          throw SDJWTVerifierError.invalidJwt
-        }()
-    }
-    return try SignedSDJWT.init(
-      signedSDJWT: signedSDJWT, kbJWT: kbJWT, holdersPrivateKey: holdersPrivateKey)
-      ?? {
+      let signedKBJwt = try? JWS(
+        protectedHeaderData: protectedHeaderData,
+        data: unsignedJWT.payload,
+        signature: signature
+      )
+      
+      return try .init(
+        signedSDJWT: signedSDJWT,
+        signedKBJwt: signedKBJwt
+      ) ?? {
         throw SDJWTVerifierError.invalidJwt
       }()
+      
+    } else {
+      
+      return try .init(
+        signedSDJWT: signedSDJWT,
+        kbJWT: kbJWT,
+        holdersPrivateKey: holdersPrivateKey
+      ) ?? {
+        throw SDJWTVerifierError.invalidJwt
+      }()
+    }
   }
 
   static func buildSigningData(header: Data, data: Data) throws -> Data {

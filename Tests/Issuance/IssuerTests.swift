@@ -50,12 +50,6 @@ final class IssuerTest: XCTestCase {
 
   func testEnvelopedFormatSerializeation_WhenProvidedWithABuiltSDJWT() async throws {
     let sdjwt = try await self.testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey()
-//    let envelopeJWT = try JWT(header: .init(parameters: [Keys.sdAlg.rawValue: SignatureAlgorithm.ES256.rawValue]),
-//                              payload: JSON([
-//                                  "aud": "https://verifier.example.com",
-//                                  "iat": 1580000000,
-//                                  "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"
-//                              ]))
 
     let payload = try JSON([
         "aud": "https://verifier.example.com",

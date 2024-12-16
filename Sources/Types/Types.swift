@@ -50,7 +50,7 @@ public enum SDJWTVerifierError: Error {
 }
 
 /// Static Keys Used by the JWT
-enum Keys: String {
+public enum Keys: String {
   case sd = "_sd"
   case dots = "..."
   case sdAlg = "_sd_alg"

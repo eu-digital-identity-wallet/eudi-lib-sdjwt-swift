@@ -18,13 +18,13 @@ import Foundation
 public typealias Disclosure = String
 public typealias DisclosureDigest = String
 
-protocol HashingAlgorithm {
+public protocol HashingAlgorithm {
   var identifier: String { get }
 
   func hash(disclosure: Disclosure) -> Data?
 }
 
-enum HashingAlgorithmIdentifier: String, CaseIterable {
+public enum HashingAlgorithmIdentifier: String, CaseIterable {
   case SHA256 = "sha-256"
   case SHA384 = "sha-384"
   case SHA512 = "sha-512"

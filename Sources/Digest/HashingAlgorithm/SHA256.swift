@@ -16,15 +16,17 @@
 import Foundation
 import CryptoKit
 
-class SHA256Hashing: HashingAlgorithm {
+public class SHA256Hashing: HashingAlgorithm {
 
   // MARK: - Properties
+  public init() {
+  }
 
-  var identifier: String = "sha-256"
+  public var identifier: String = "sha-256"
 
   // MARK: - Methods
 
-  func hash(disclosure: Disclosure) -> Data? {
+  public func hash(disclosure: Disclosure) -> Data? {
     guard let inputData = disclosure.data(using: .utf8) else {
       return nil
     }

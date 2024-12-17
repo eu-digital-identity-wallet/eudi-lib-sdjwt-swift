@@ -14,33 +14,25 @@
  * limitations under the License.
  */
 import Foundation
+import CryptoKit
+import CryptoSwift
 
-public typealias Disclosure = String
-public typealias DisclosureDigest = String
+public class SHA3256Hashing: HashingAlgorithm {
 
-public protocol HashingAlgorithm {
-  var identifier: String { get }
+  // MARK: - Properties
+  public init() {
+  }
 
-  func hash(disclosure: Disclosure) -> Data?
-}
+  public var identifier: String = "sha3-256"
 
-public enum HashingAlgorithmIdentifier: String, CaseIterable {
-  case SHA256 = "sha-256"
-  case SHA3256 = "sha3-256"
-  case SHA384 = "sha-384"
-  case SHA512 = "sha-512"
+  // MARK: - Methods
 
-  func hashingAlgorithm() -> HashingAlgorithm {
-
-    switch self {
-    case .SHA3256:
-      return SHA3256Hashing()
-    case .SHA256:
-      return SHA256Hashing()
-    case .SHA384:
-      return SHA384Hashing()
-    case .SHA512:
-      return SHA512Hashing()
+  public func hash(disclosure: Disclosure) -> Data? {
+    guard let inputData = disclosure.data(using: .utf8) else {
+      return nil
     }
+    let hashedData = inputData.sha3(.sha256)
+    return Data(hashedData)
   }
 }
+

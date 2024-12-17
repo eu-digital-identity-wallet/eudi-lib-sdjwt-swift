@@ -26,12 +26,15 @@ public protocol HashingAlgorithm {
 
 public enum HashingAlgorithmIdentifier: String, CaseIterable {
   case SHA256 = "sha-256"
+  case SHA3256 = "sha3-256"
   case SHA384 = "sha-384"
   case SHA512 = "sha-512"
 
   func hashingAlgorithm() -> HashingAlgorithm {
 
     switch self {
+    case .SHA3256:
+      return SHA3256Hashing()
     case .SHA256:
       return SHA256Hashing()
     case .SHA384:

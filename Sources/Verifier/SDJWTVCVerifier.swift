@@ -435,8 +435,7 @@ private extension SDJWTVCVerifier {
       )
     } else if issScheme == HTTPS_URI_SCHEME {
       guard
-        let issUrl = issUrl/*,
-        isIssuerFQDNContained(in: leaf, issuerUrl: issUrl) || isIssuerURIContained(in: leaf, iss: iss)*/
+        let issUrl = issUrl
       else {
         return nil
       }

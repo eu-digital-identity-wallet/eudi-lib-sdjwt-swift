@@ -132,4 +132,78 @@ final class SpecExamples: XCTestCase {
     }
     let _ = try? XCTUnwrap(output.get())
   }
+  
+  func testW3CV2_AsProvidedByTheSpec() throws {
+    
+    let factory = SDJWTFactory(saltProvider: DefaultSaltProvider())
+    let holdersJWK = holdersKeyPair.public
+    let jwk = try holdersJWK.jwk
+    
+    @SDJWTBuilder
+    var w3c: SdElement {
+
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      
+      PlainClaim("name", "COVID-19 Vaccination Certificate")
+      PlainClaim("description", "COVID-19 Vaccination Certificate")
+      
+      ArrayClaim("@context", array: [
+        .plain("https://www.w3.org/2018/credentials/v1"),
+        .plain("https://w3id.org/vaccination/v1")
+      ])
+      
+      ArrayClaim("type", array: [
+        .plain("VerifiableCredential"),
+        .plain("VaccinationCertificate")
+      ])
+      
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", jwk.y?.base64URLEncode())
+          PlainClaim("x", jwk.x?.base64URLEncode())
+          PlainClaim("crv", jwk.curve?.rawValue)
+        }
+      }
+      
+      ObjectClaim("credentialSubject") {
+        PlainClaim("type", "VaccinationEvent")
+        
+        FlatDisclosedClaim("nextVaccinationDate", "2021-08-16T13:40:12Z")
+        FlatDisclosedClaim("countryOfVaccination", "GE")
+        FlatDisclosedClaim("dateOfVaccination", "2021-06-23T13:40:12Z")
+        FlatDisclosedClaim("order", "3/3")
+        FlatDisclosedClaim("administeringCentre", "Praxis Sommergarten")
+        FlatDisclosedClaim("batchNumber", "1626382736")
+        FlatDisclosedClaim("healthProfessional", "883110000015376")
+        
+        ObjectClaim("vaccine") {
+          PlainClaim("type", "Vaccine")
+          FlatDisclosedClaim("atcCode", "J07BX03")
+          FlatDisclosedClaim("medicinalProductName", "COVID-19 Vaccine Moderna")
+          FlatDisclosedClaim("marketingAuthorizationHolder", "Moderna Biotech")
+        }
+        
+        ObjectClaim("recipient") {
+          PlainClaim("type", "VaccineRecipient")
+          
+          FlatDisclosedClaim("gender", "Female")
+          FlatDisclosedClaim("birthDate", "1961-08-17")
+          FlatDisclosedClaim("givenName", "Marion")
+          FlatDisclosedClaim("familyName", "Mustermann")
+        }
+      }
+    }
+
+    let output = factory.createSDJWTPayload(sdJwtObject: w3c.asObject)
+    let _ = try XCTUnwrap(try? output.get().value.findDigestCount())
+    validateObjectResults(factoryResult: output, expectedDigests: 14)
+
+    try output.get().disclosures.forEach { disclosure in
+      TestLogger.log(disclosure.base64URLDecode() ?? "")
+    }
+    let _ = try? XCTUnwrap(output.get())
+  }
 }

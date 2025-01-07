@@ -221,6 +221,7 @@ All examples assume that we have the following claim set
 - [Option 3: SD-JWT with Recursive Disclosures](Docs/examples/option3-recursive-sd-jwt.md)
 - [Example 2a: Handling Structured Claims](Docs/examples/example2a-handling-structure-claims.md)
 - [Example 3: Complex Structured SD-JWT](Docs/examples/example3-complex-structured.md)
+- [Example 4: W3C Verifiable Credentials Data Model v2.0 SD-JWT](Docs/examples/example4-w3c.md)
 
 ## SD-JWT VC support
 

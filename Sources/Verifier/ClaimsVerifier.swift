@@ -19,14 +19,14 @@ import SwiftyJSON
 public class ClaimsVerifier: VerifierProtocol {
   
   // MARK: - Properties
-  var iat: Date?
-  var iatValidWindow: TimeRange?
+  let iat: Date?
+  let iatValidWindow: TimeRange?
   
-  var nbf: Date?
-  var exp: Date?
+  let nbf: Date?
+  let exp: Date?
   
-  var audClaim: JSON?
-  var expectedAud: String?
+  let auds: [String]?
+  let expectedAud: String?
   
   let currentDate: Date
   
@@ -40,28 +40,25 @@ public class ClaimsVerifier: VerifierProtocol {
     audClaim: String? = nil,
     expectedAud: String? = nil,
     currentDate: Date = Date()) {
-    
-    if let iat {
-      self.iat = Date(timeIntervalSince1970: TimeInterval(iat))
+      self.iat = Date(timestamp: iat)
+      self.iatValidWindow = iatValidWindow
+      self.nbf = Date(timestamp: nbf)
+      self.exp = Date(timestamp: exp)
+      self.auds = {
+        guard let audClaim else { return nil }
+        let audArray = JSON(parseJSON: audClaim)
+        return audArray == JSON.null ? [audClaim] : audArray.array?.compactMap { $0.stringValue }
+      }()
+      self.expectedAud = expectedAud
+      self.currentDate = currentDate
     }
-    if let nbf {
-      self.nbf = Date(timeIntervalSince1970: TimeInterval(nbf))
-    }
-    if let exp {
-      self.exp = Date(timeIntervalSince1970: TimeInterval(exp))
-    }
-    
-    self.audClaim = JSON(parseJSON: audClaim ?? "")
-    self.expectedAud = expectedAud
-    self.currentDate = currentDate
-  }
   
   // MARK: - Methods
   @discardableResult
   public func verify() throws -> Bool {
     if let iat,
        let iatValidWindow,
-       iatValidWindow.contains(date: iat) {
+       !iatValidWindow.contains(date: iat) {
       throw SDJWTVerifierError.invalidJwt
     }
     
@@ -74,8 +71,8 @@ public class ClaimsVerifier: VerifierProtocol {
     }
     
     if let expectedAud,
-       let audClaim {
-      try self.verifyAud(aud: audClaim, expectedAudience: expectedAud)
+       let auds {
+      try self.verifyAud(audiences: auds, expectedAudience: expectedAud)
     }
     
     return true
@@ -99,18 +96,18 @@ public class ClaimsVerifier: VerifierProtocol {
     }
   }
   
-  func verifyAud(aud: JSON, expectedAudience: String) throws {
-    if let array = aud.array {
-      guard array
-        .compactMap({$0.stringValue})
-        .contains(where: { $0 == expectedAudience})
-      else {
-        throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
-      }
-    } else if let string = aud.string {
-      guard string == expectedAudience else {
-        throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
-      }
+  func verifyAud(audiences: [String], expectedAudience: String) throws {
+    guard audiences.contains(where: { $0 == expectedAudience}) else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
     }
+  }
+}
+
+private extension Date {
+  init?(timestamp: Int?) {
+    guard let timestamp else {
+      return nil
+    }
+    self.init(timeIntervalSince1970: TimeInterval(timestamp))
   }
 }

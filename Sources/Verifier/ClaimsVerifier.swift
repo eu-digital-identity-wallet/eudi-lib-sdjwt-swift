@@ -46,6 +46,9 @@ public class ClaimsVerifier: VerifierProtocol {
       self.exp = Date(timestamp: exp)
       self.auds = {
         guard let audClaim else { return nil }
+        /**
+         Try to parse string as JSON array of strings, which may come from `JWS.aud()` function.
+         */
         let audArray = JSON(parseJSON: audClaim)
         return audArray == JSON.null ? [audClaim] : audArray.array?.compactMap { $0.stringValue }
       }()
@@ -97,7 +100,7 @@ public class ClaimsVerifier: VerifierProtocol {
   }
   
   func verifyAud(audiences: [String], expectedAudience: String) throws {
-    guard audiences.contains(where: { $0 == expectedAudience}) else {
+    guard audiences.contains(expectedAudience) else {
       throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
     }
   }
@@ -105,9 +108,7 @@ public class ClaimsVerifier: VerifierProtocol {
 
 private extension Date {
   init?(timestamp: Int?) {
-    guard let timestamp else {
-      return nil
-    }
+    guard let timestamp else { return nil }
     self.init(timeIntervalSince1970: TimeInterval(timestamp))
   }
 }

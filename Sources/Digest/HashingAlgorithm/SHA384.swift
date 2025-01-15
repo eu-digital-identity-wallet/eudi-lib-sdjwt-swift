@@ -16,15 +16,15 @@
 import Foundation
 import CryptoKit
 
-class SHA384Hashing: HashingAlgorithm {
+public class SHA384Hashing: HashingAlgorithm {
 
   // MARK: - Properties
 
-  var identifier: String = "sha-384"
+  public var identifier: String = "sha-384"
 
   // MARK: - Methods
 
-  func hash(disclosure: Disclosure) -> Data? {
+  public func hash(disclosure: Disclosure) -> Data? {
     guard let inputData = disclosure.data(using: .utf8) else {
       return nil
     }

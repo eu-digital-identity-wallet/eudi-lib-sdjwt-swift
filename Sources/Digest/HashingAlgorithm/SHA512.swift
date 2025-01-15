@@ -16,15 +16,15 @@
 import Foundation
 import CryptoKit
 
-class SHA512Hashing: HashingAlgorithm {
+public class SHA512Hashing: HashingAlgorithm {
 
   // MARK: - Properties
 
-  var identifier: String = "sha-512"
+  public var identifier: String = "sha-512"
 
   // MARK: - Methods
 
-  func hash(disclosure: Disclosure) -> Data? {
+  public func hash(disclosure: Disclosure) -> Data? {
     guard let inputData = disclosure.data(using: .utf8) else {
       return nil
     }

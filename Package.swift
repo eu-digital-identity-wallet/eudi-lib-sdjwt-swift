@@ -36,7 +36,7 @@ let package = Package(
     ),
     .package(
       url: "https://github.com/krzyzanowskim/CryptoSwift.git",
-      from: "1.8.3"
+      from: "1.8.4"
     )
   ],
   targets: [

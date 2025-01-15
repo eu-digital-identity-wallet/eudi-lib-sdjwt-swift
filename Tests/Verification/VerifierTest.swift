@@ -24,6 +24,17 @@ import XCTest
 
 final class VerifierTest: XCTestCase {
 
+  func test_issuer_signed_jwt() throws {
+
+    let recreatedClaimsResult = try CompactParser()
+      .getSignedSdJwt(serialisedString: SDJWTConstants.issuer_signed_sdjwt)
+      .recreateClaims()
+
+    XCTAssertTrue(recreatedClaimsResult.recreatedClaims.exists())
+    XCTAssertTrue(recreatedClaimsResult.digestsFoundOnPayload.count == 23)
+
+  }
+  
   func testVerifierBehaviour_WhenPassedValidSignatures_ThenExpectToPassAllCriterias() throws {
 
     let pk = try JSONDecoder.jwt.decode(JWK.self, from: key.tryToData())
@@ -236,15 +247,16 @@ final class VerifierTest: XCTestCase {
       FlatDisclosedClaim("time", "time runs out or maybe not")
     }
 
+    let iat = Int(Date().timeIntervalSince1970.rounded())
     for sdjwt in [iatJwt, expSdJwt, nbfSdJwt, nbfAndExpSdJwt] {
       let result = try SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
       } claimVerifier: { nbf, exp in
         ClaimsVerifier(
-          iat: Int(Date().timeIntervalSince1970.rounded()),
+          iat: iat,
           iatValidWindow: TimeRange(
-            startTime: Date(),
-            endTime: Date(timeIntervalSinceNow: 10)
+            startTime: Date(timeIntervalSinceNow: -3600),
+            endTime: Date(timeIntervalSinceNow: 3600)
           ),
           nbf: nbf,
           exp: exp

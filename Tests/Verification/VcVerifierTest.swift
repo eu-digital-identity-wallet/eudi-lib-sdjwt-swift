@@ -47,6 +47,38 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
+  func testVerifyIssuance_WithValidSDJWT_Withx509Header_PrimaryIssuer_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.primary_issuer_sd_jwt.clean()
+    
+    // When
+    let result = try await SDJWTVCVerifier(
+      trust: X509CertificateChainVerifier()
+    ).verifyIssuance(
+      unverifiedSdJwt: sdJwtString
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
+  func testVerifyIssuance_WithValidSDJWT_Withx509Header_SecondaryIssuer_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+    
+    // When
+    let result = try await SDJWTVCVerifier(
+      trust: X509CertificateChainVerifier()
+    ).verifyIssuance(
+      unverifiedSdJwt: sdJwtString
+    )
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
   func testVerifyIssuance_WithValidSDJWT_Withx509Header_AndConfiguration_ShouldSucceed() async throws {
     
     // Given

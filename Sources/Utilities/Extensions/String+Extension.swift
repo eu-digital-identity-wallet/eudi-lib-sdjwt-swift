@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 import Foundation
+import CryptorECC
+import JSONWebKey
 
 extension String {
   func base64ToUTF8() -> String? {
@@ -91,6 +93,11 @@ extension String {
     
     // If RSA fails, try EC
     if let secKey = String.createSecKey(from: keyData, keyType: kSecAttrKeyTypeEC) {
+      return secKey
+    }
+    
+    // If EC fails, try alternative EC
+    if let secKey = try? ECPublicKey(key: self).nativeKey {
       return secKey
     }
     

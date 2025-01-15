@@ -29,6 +29,14 @@ let package = Package(
     .package(
       url: "https://github.com/apple/swift-certificates.git",
       from: "1.0.0"
+    ),
+    .package(
+      url: "https://github.com/niscy-eudiw/BlueECC.git",
+      .upToNextMajor(from: "1.2.4")
+    ),
+    .package(
+      url: "https://github.com/krzyzanowskim/CryptoSwift.git",
+      from: "1.8.4"
     )
   ],
   targets: [
@@ -36,8 +44,13 @@ let package = Package(
       name: "eudi-lib-sdjwt-swift",
       dependencies: [
         "jose-swift",
+        "CryptoSwift",
         .product(name: "SwiftyJSON", package: "swiftyjson"),
         .product(name: "X509", package: "swift-certificates"),
+        .product(
+          name: "CryptorECC",
+          package: "BlueECC"
+        ),
       ],
       path: "Sources",
       plugins: [

@@ -35,9 +35,9 @@ final class EndToEndTest: XCTestCase {
   func testEndToEndWithPrimaryIssuerSdJWT() async throws {
     
     // Given
-    let visitor = Visitor()
+    let visitor = ClaimVisitor()
     let verifier: KeyBindingVerifier = KeyBindingVerifier()
-    let sdJwtString = SDJWTConstants.primary_issuer_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let query: Set<JSONPointer> = Set(
       [
         "/family_name",
@@ -114,7 +114,7 @@ final class EndToEndTest: XCTestCase {
   func testEndToEndWithSecondaryIssuerSdJWT() async throws {
     
     // Given
-    let visitor = Visitor()
+    let visitor = ClaimVisitor()
     let verifier: KeyBindingVerifier = KeyBindingVerifier()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let query: Set<JSONPointer> = Set(

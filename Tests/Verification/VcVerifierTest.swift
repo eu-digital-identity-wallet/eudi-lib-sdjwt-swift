@@ -50,7 +50,7 @@ final class VcVerifierTest: XCTestCase {
   func testVerifyIssuance_WithValidSDJWT_Withx509Header_PrimaryIssuer_ShouldSucceed() async throws {
     
     // Given
-    let sdJwtString = SDJWTConstants.primary_issuer_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     // When
     let result = try await SDJWTVCVerifier(

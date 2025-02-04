@@ -18,33 +18,35 @@ import SwiftyJSON
 public typealias ClaimExtractorResult = (
   digestsFoundOnPayload: [DigestType],
   recreatedClaims: JSON,
-  disclosuresPerClaim: DisclosuresPerClaim?
+  disclosuresPerClaim: DisclosuresPerClaim?,
+  disclosuresPerClaimPath: DisclosuresPerClaimPath?
 )
 
 public class ClaimExtractor {
-
+  
   // MARK: - Properties
-
+  
   var digestsOfDisclosures: [DisclosureDigest: Disclosure]
-
+  
   // MARK: - Lifecycle
-
+  
   public init(digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]) {
     self.digestsOfDisclosures = digestsOfDisclosuresDict
   }
-
+  
   // MARK: - Methods
-
+  
   public func findDigests(
     payload json: JSON,
     disclosures: [Disclosure],
-    visitor: Visitor? = nil,
+    visitor: ClaimVisitor? = nil,
     currentPath: [String] = []
   ) throws -> ClaimExtractorResult {
+    
     var json = json
     json.dictionaryObject?.removeValue(forKey: Keys.sdAlg.rawValue)
     var foundDigests: [DigestType] = []
-
+    
     // try to find sd keys on the top level
     if let sdArray = json[Keys.sd.rawValue].array, !sdArray.isEmpty {
       var sdArray = sdArray.compactMap(\.string)
@@ -54,11 +56,11 @@ public class ClaimExtractor {
         if let foundDigest,
            let foundDisclosure = digestsOfDisclosures[foundDigest]?.base64URLDecode()?.objectProperty {
           json[Keys.sd.rawValue].arrayObject = updatedSdArray
-
+          
           guard !json[foundDisclosure.key].exists() else {
             throw SDJWTVerifierError.nonUniqueDisclosures
           }
-
+          
           json[foundDisclosure.key] = foundDisclosure.value
           
           if let disclosure = digestsOfDisclosures[foundDigest] {
@@ -67,19 +69,22 @@ public class ClaimExtractor {
               pointer: .init(
                 pointer: currentJsonPointer
               ),
+              path: .init(
+                jsonPointer: currentJsonPointer
+              ),
               disclosure: disclosure,
               value: foundDisclosure.value.string
             )
           }
           foundDigests.append(.object(foundDigest))
-
+          
         } else {
           json.dictionaryObject?.removeValue(forKey: Keys.sd.rawValue)
           break
         }
       }
     }
-
+    
     // Loop through the inner JSON data
     for (key, subJson): (String, JSON) in json {
       if !subJson.dictionaryValue.isEmpty {
@@ -101,7 +106,7 @@ public class ClaimExtractor {
             if let foundDisclosedArrayElement = digestsOfDisclosures[object[Keys.dots].stringValue]?
               .base64URLDecode()?
               .arrayProperty {
-
+              
               foundDigests.appendOptional(.array(object[Keys.dots].stringValue))
               
               // If the object is a json we should further process it and replace
@@ -112,9 +117,9 @@ public class ClaimExtractor {
                 disclosures: disclosures,
                 visitor: visitor,
                 currentPath: newPath  // Pass the updated path for the nested JSON
-
+                
               ),
-              !ifHasNested.digestsFoundOnPayload.isEmpty {
+                 !ifHasNested.digestsFoundOnPayload.isEmpty {
                 foundDigests += ifHasNested.digestsFoundOnPayload
                 json[key].arrayObject?[index] = ifHasNested.recreatedClaims
               }
@@ -123,6 +128,38 @@ public class ClaimExtractor {
         }
       }
     }
-    return (foundDigests, json, visitor?.disclosuresPerClaim)
+    return (
+      foundDigests,
+      json,
+      visitor?.disclosuresPerClaim,
+      visitor?.disclosuresPerClaimPath
+    )
+  }
+}
+
+extension ClaimPath {
+  /// Initializes a `ClaimPath` from a JSON Pointer string.
+  /// - Parameter jsonPointer: The JSON Pointer string (e.g., `"/user/name"`, `"/items/0"`, `"/items/1/child"`).
+  init?(jsonPointer: String) {
+    guard jsonPointer.hasPrefix("/") else { return nil } // JSON Pointers must start with "/"
+    
+    let components = jsonPointer
+      .dropFirst() // Remove leading "/"
+      .split(separator: "/") // Split by "/"
+      .map { String($0).replacingOccurrences(of: "~1", with: "/").replacingOccurrences(of: "~0", with: "~") } // Decode JSON Pointer escape sequences
+    
+    guard !components.isEmpty else { return nil }
+    
+    let elements = components.map { component in
+      if let index = Int(component) {
+        // If the component is an integer, treat it as an array element
+        return ClaimPathElement.arrayElement(index: index)
+      } else {
+        // Otherwise, treat it as a claim name
+        return ClaimPathElement.claim(name: component)
+      }
+    }
+    
+    self.init(elements)
   }
 }

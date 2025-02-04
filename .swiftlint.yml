@@ -1,2 +1,4 @@
 identifier_name:
   allowed_symbols: [_]
+trailing_whitespace:
+  ignores_empty_lines: false

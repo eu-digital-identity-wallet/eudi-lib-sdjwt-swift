@@ -47,10 +47,9 @@ public struct ClaimPath: Equatable, Hashable {
   /// - Parameter that: The `ClaimPath` to compare against.
   /// - Returns: `true` if `that` is contained within `self`, otherwise `false`.
   public func contains(_ that: ClaimPath) -> Bool {
-    guard self.value.count <= that.value.count else { return false }
-    return self.value.enumerated().allSatisfy { index, element in
-      guard index < that.value.count else { return false }
-      return element.contains(that.value[index])
+    guard that.value.count <= self.value.count else { return false }
+    return zip(self.value, that.value).allSatisfy { (selfElement, thatElement) in
+      selfElement.contains(thatElement)
     }
   }
   

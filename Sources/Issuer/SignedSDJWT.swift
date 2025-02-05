@@ -296,12 +296,33 @@ extension SignedSDJWT {
     query: Set<JSONPointer>,
     visitor: ClaimVisitor? = ClaimVisitor()
   ) async throws -> SignedSDJWT? {
-    return try await present(
-      query: { jsonPointer in
-        return query.contains(jsonPointer)
-      },
+    let (_, disclosuresPerClaim) = try recreateClaimsAndDisclosuresPerClaim(
       visitor: visitor
     )
+    let keys = disclosuresPerClaim.keys.filter { jsonPointer in
+      return query.contains(jsonPointer)
+    }
+    
+    if keys.isEmpty {
+      return try .init(
+        serializedJwt: jwt.compactSerialization,
+        disclosures: []
+      )
+      
+    } else {
+      let disclosures = Set(
+        disclosuresPerClaim
+          .filter {
+            keys.contains($0.key)
+          }
+          .values
+          .flatMap { $0 }
+      )
+      return try .init(
+        serializedJwt: jwt.compactSerialization,
+        disclosures: Array(disclosures)
+      )
+    }
   }
   
   public func present(
@@ -323,36 +344,13 @@ extension SignedSDJWT {
     }
     
     if keys.isEmpty {
-      return nil
+      return try .init(
+        serializedJwt: jwt.compactSerialization,
+        disclosures: []
+      )
     } else {
       let disclosures = Set(
         disclosuresPerClaimPath
-          .filter {
-            keys.contains($0.key)
-          }
-          .values
-          .flatMap { $0 }
-      )
-      return try SignedSDJWT(
-        serializedJwt: jwt.compactSerialization,
-        disclosures: Array(disclosures)
-      )
-    }
-  }
-  
-  private func present(
-    query: @escaping (JSONPointer) -> Bool,
-    visitor: ClaimVisitor?
-  ) async throws -> SignedSDJWT? {
-    let (_, disclosuresPerClaim) = try recreateClaimsAndDisclosuresPerClaim(
-      visitor: visitor
-    )
-    let keys = disclosuresPerClaim.keys.filter(query)
-    if keys.isEmpty {
-      return nil
-    } else {
-      let disclosures = Set(
-        disclosuresPerClaim
           .filter {
             keys.contains($0.key)
           }

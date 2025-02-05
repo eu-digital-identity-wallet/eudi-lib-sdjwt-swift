@@ -73,10 +73,12 @@ final class EndToEndTest: XCTestCase {
     var holderPresentation: SignedSDJWT?
     holderPresentation = try await SDJWTIssuer
       .presentation(
-        holdersPrivateKey: TestP256AsyncSigner(secKey: holdersKeyPair.private),
+        holdersPrivateKey: TestP256AsyncSigner(
+          secKey: holdersKeyPair.private
+        ),
         signedSDJWT: issuerSignedSDJWT,
         disclosuresToPresent: presentedSdJwt!.disclosures,
-        keyBindingJWT: KBJWT(
+        keyBindingJWT: .init(
           header: DefaultJWSHeaderImpl(algorithm: .ES256),
           kbJwtPayload: .init([
             Keys.nonce.rawValue: "123456789",

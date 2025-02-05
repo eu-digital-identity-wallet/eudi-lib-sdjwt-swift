@@ -15,7 +15,7 @@
  */
 import Foundation
 
-public class DigestCreator {
+public final class DigestCreator {
 
   // MARK: - Properties
 

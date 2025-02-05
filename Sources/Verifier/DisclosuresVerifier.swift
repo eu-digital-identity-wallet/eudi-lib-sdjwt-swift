@@ -22,17 +22,18 @@ public struct DisclosuresVerifierOutput {
   var recreatedClaims: JSON
 }
 
-public class DisclosuresVerifier: VerifierProtocol {
+public final class DisclosuresVerifier: VerifierProtocol {
 
   // MARK: - Properties
 
   let disclosuresReceivedInSDJWT: [Disclosure]
-  var digestsFoundOnPayload: [DigestType] = []
   let digestCreator: DigestCreator
-  var digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]
+  
+  let digestsOfDisclosuresDict: [DisclosureDigest: Disclosure]
+  let digestsFoundOnPayload: [DigestType]
 
   private let sdJwt: SDJWT
-  private var recreatedClaims: JSON = .empty
+  private let recreatedClaims: JSON
 
   // MARK: - Lifecycle
 
@@ -44,19 +45,21 @@ public class DisclosuresVerifier: VerifierProtocol {
 
     self.disclosuresReceivedInSDJWT = sdJwt.disclosures
 
-    digestsOfDisclosuresDict = [:]
+    var dict: [DisclosureDigest: Disclosure] = [:]
     for disclosure in disclosuresReceivedInSDJWT {
       let hashed = digestCreator.hashAndBase64Encode(input: disclosure)
       if let hashed {
-        self.digestsOfDisclosuresDict[hashed] = disclosure
+        dict[hashed] = disclosure
       } else {
         throw SDJWTVerifierError.failedToCreateVerifier
       }
     }
-
+    digestsOfDisclosuresDict = dict
+    
     let claimExtractor =
-    try ClaimExtractor(digestsOfDisclosuresDict: digestsOfDisclosuresDict)
-      .findDigests(payload: sdJwt.jwt.payload, disclosures: sdJwt.disclosures)
+    try ClaimExtractor(
+      digestsOfDisclosuresDict: digestsOfDisclosuresDict
+    ).findDigests(payload: sdJwt.jwt.payload, disclosures: sdJwt.disclosures)
 
     digestsFoundOnPayload = claimExtractor.digestsFoundOnPayload
     recreatedClaims = claimExtractor.recreatedClaims

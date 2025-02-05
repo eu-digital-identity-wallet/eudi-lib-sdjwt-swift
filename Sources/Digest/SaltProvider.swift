@@ -22,7 +22,7 @@ protocol SaltProvider {
   var saltString: Salt { get }
 }
 
-class DefaultSaltProvider: SaltProvider {
+final class DefaultSaltProvider: SaltProvider {
 
   // MARK: - Properties
 

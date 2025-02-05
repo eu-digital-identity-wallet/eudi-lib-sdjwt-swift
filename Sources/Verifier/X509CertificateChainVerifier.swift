@@ -18,7 +18,7 @@ import X509
 import SwiftASN1
 import Security
 
-public protocol X509CertificateTrust {
+public protocol X509CertificateTrust: Sendable {
   func isTrusted(chain: [Certificate]) async -> Bool
 }
 

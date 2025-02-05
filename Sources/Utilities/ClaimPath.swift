@@ -16,15 +16,20 @@
 import Foundation
 import SwiftyJSON
 
+public enum ClaimPathError: Error {
+  case emptyClaimPath
+  case invalidJsonPointerFormat(String)
+  case elementNotFound(ClaimPath)
+}
+
 /// A structure representing a path in a hierarchical claim structure.
-public struct ClaimPath: Equatable, Hashable {
+public struct ClaimPath: Equatable, Hashable, Sendable {
   /// The list of elements representing the path.
   public let value: [ClaimPathElement]
   
   /// Initializes a `ClaimPath` ensuring it is not empty.
   /// - Parameter value: An array of `ClaimPathElement` representing the path.
   public init(_ value: [ClaimPathElement]) {
-    precondition(!value.isEmpty, "ClaimPath cannot be empty")
     self.value = value
   }
   
@@ -106,7 +111,7 @@ public struct ClaimPath: Equatable, Hashable {
   }
 }
 
-public enum ClaimPathElement: Equatable, Hashable {
+public enum ClaimPathElement: Equatable, Hashable, Sendable {
   /// Indicates that all elements of the currently selected array(s) are to be selected.
   /// It is represented as `nil` when serialized.
   case allArrayElements

@@ -65,10 +65,3 @@ struct DefaultSelectPath: SelectPath {
     }
   }
 }
-
-// Safe array indexing extension
-private extension Array {
-  subscript(safe index: Int) -> Element? {
-    return indices.contains(index) ? self[index] : nil
-  }
-}

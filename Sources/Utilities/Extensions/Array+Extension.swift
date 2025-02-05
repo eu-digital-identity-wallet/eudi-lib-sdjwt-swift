@@ -15,6 +15,13 @@
  */
 
 extension Array {
+  /// Safely accesses an element at the given index.
+  /// - Parameter index: The index to access.
+  /// - Returns: The element if within bounds, otherwise `nil`.
+  subscript(safe index: Int) -> Element? {
+      return indices.contains(index) ? self[index] : nil
+  }
+  
   mutating func appendOptional(_ newElement: Element? ) {
     guard let newElement else {
       return
@@ -24,13 +31,13 @@ extension Array {
 }
 
 extension Array {
-    subscript(safe range: Range<Index>) -> [Element]? {
-        if range.lowerBound >= startIndex && range.upperBound <= endIndex {
-            return Array(self[range])
-        } else {
-            return nil
-        }
+  subscript(safe range: Range<Index>) -> [Element]? {
+    if range.lowerBound >= startIndex && range.upperBound <= endIndex {
+      return Array(self[range])
+    } else {
+      return nil
     }
+  }
 }
 
 extension Array where Element == String {

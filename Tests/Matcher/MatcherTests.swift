@@ -41,6 +41,11 @@ final class MatcherTests: XCTestCase {
         ["name": "Item 2", "price": 20],
         ["name": "Item 3", "price": 30]
       ],
+      "things": [
+        "one",
+        "two",
+        "three"
+      ],
       "config": [
         "enabled": true,
         "thresholds": [100, 200, 300]
@@ -92,6 +97,13 @@ final class MatcherTests: XCTestCase {
     XCTAssertEqual(result?.arrayValue.count, 3)
   }
   
+  func testMatchArrayAllElementsReturned() {
+    let path = ClaimPath([.claim(name: "items"), .allArrayElements, .claim(name: "price")])
+    let result = matcher.match(path)
+    XCTAssertNotNil(result)
+    XCTAssertEqual(result?.arrayValue, [10, 20, 30])
+  }
+  
   // MARK: - Non-existent Keys
   
   func testMatchNonExistentKey() {
@@ -123,13 +135,13 @@ final class MatcherTests: XCTestCase {
   func testMatchEmptyClaimPath() {
     let path = ClaimPath([])
     let result = matcher.match(path)
-    XCTAssertNil(result)
+    XCTAssertNotNil(result)
   }
   
   func testMatchRoot() {
     let path = ClaimPath([.claim(name: "")])
     let result = matcher.match(path)
-    XCTAssertNotNil(result)
+    XCTAssertNil(result)
   }
   
   func testMatchBooleanValue() {

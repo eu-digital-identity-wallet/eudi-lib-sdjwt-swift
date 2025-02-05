@@ -49,27 +49,39 @@ private extension JSON {
   func match(_ path: ClaimPath) -> JSON? {
     var currentJson: JSON = self
     
-    for element in path.value {
+    for (index, element) in path.value.enumerated() {
       switch element {
       case .allArrayElements:
-        return currentJson.arrayValue.isEmpty ? nil : currentJson
-        
+        guard let array = currentJson.array, !array.isEmpty else {
+          return nil
+        }
+
+        // If there are more elements in the claim path, apply the remaining path to each element.
+        if index + 1 < path.value.count {
+          let remainingPath = ClaimPath(Array(path.value.dropFirst(index + 1)))
+          let results = array.compactMap { $0.match(remainingPath) }
+          
+          return JSON(results) // Return an array of matched elements
+        }
+
+        return currentJson // If no further path, return the entire array.
+
       case .arrayElement(let index):
         guard let arrayElement = currentJson.array?[safe: index] else {
           return nil
         }
         currentJson = arrayElement
-        
+
       case .claim(let name):
-        if currentJson[name].exists() {
-          currentJson = currentJson[name]
-        } else {
+        guard currentJson[name].exists() else {
           return nil
         }
+        currentJson = currentJson[name]
       }
     }
-    
+
     return currentJson
   }
 }
+
 

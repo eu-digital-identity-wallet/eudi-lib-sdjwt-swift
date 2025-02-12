@@ -65,8 +65,9 @@ public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
 
 private extension SdJwtVcIssuerMetaDataFetcher {
   private func issuerMetadataUrl(for issuer: URL) -> URL {
+    let path = "/.well-known/jwt-vc-issuer"
     var components = URLComponents(url: issuer, resolvingAgainstBaseURL: false)!
-    components.path = "/.well-known/jwt-vc-issuer" + components.path
+    components.path = path + components.path
     return components.url!
   }
   

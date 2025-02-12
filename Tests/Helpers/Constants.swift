@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import Foundation
+@preconcurrency import Foundation
 
 let key =
   """
@@ -25,10 +25,11 @@ let key =
   }
   """
   .clean()
+
 // Key Pairs Used in the examples
 let holdersKeyPair = generateES256KeyPair()
 
-let issuersKeyPair = generateES256KeyPair()
+nonisolated(unsafe) let issuersKeyPair = generateES256KeyPair()
 
 struct SDJWTConstants {
   

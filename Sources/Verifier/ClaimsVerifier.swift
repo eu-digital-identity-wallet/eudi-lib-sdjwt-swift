@@ -16,7 +16,7 @@
 import Foundation
 import SwiftyJSON
 
-public class ClaimsVerifier: VerifierProtocol {
+public final class ClaimsVerifier: VerifierProtocol {
   
   // MARK: - Properties
   let iat: Date?

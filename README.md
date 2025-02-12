@@ -23,8 +23,9 @@ is implemented in Swift.
 ## Use cases supported
 
 - [Issuance](#issuance): As an Issuer use the library to issue a SD-JWT (in Combined Issuance Format)
-- [Holder Verification](#holder-verification): As Holder verify a SD-JWT (in Combined Issuance Format) issued by an
+- [Holder Verification](#holder-verification): As Holder verifies a SD-JWT (in Combined Issuance Format) issued by an
   Issuer
+- [Holder Presentation](#holder-presentation): As Holder creates a presentation
 - [Presentation Verification](#presentation-verification): As a Verifier verify SD-JWT in Combined Presentation Format or in Envelope Format 
 - [Recreate initial claims](#recreate-original-claims): Given a SD-JWT recreate the original claims
 * [SD-JWT VC support](#sd-jwt-vc-support)
@@ -82,6 +83,16 @@ SDJWTVerifier(parser: CompactParser(serialisedString: unverifiedSdJwtString))
     SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
 }
 ```
+
+## Holder Presentation
+
+In this case, a `Holder` of an SD-JWT issued by an `Issuer`, wants to create a presentation for a `Verifier`.
+The `Holder` should know which of the selectively disclosed claims to include in the presentation.
+The selectively disclosed claims to include in the presentation are expressed using Claim Paths as per 
+[SD-JWT VC draft 6](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-06.html#name-claim-path) or JSON Pointers.
+
+You can find comprehensive examples [here](Tests/EndToEnd/EndToEndTest.swift)
+
 ## Presentation Verification
 
 **In simple (not enveloped) format**

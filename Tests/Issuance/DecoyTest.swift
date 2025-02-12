@@ -47,9 +47,6 @@ final class DecoyTest: XCTestCase {
       }
     }
 
-    let asJSON = alrtSdObject.asJSON
-    let asObject = alrtSdObject.asObject
-
     let jwtFactory = SDJWTFactory(decoysLimit: decoysLimit)
     let unsignedJwt = jwtFactory.createSDJWTPayload(sdJwtObject: sdObject.asObject)
 

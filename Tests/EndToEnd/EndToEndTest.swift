@@ -35,9 +35,9 @@ final class EndToEndTest: XCTestCase {
   func testEndToEndWithPrimaryIssuerSdJWT() async throws {
     
     // Given
-    let visitor = Visitor()
+    let visitor = ClaimVisitor()
     let verifier: KeyBindingVerifier = KeyBindingVerifier()
-    let sdJwtString = SDJWTConstants.primary_issuer_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let query: Set<JSONPointer> = Set(
       [
         "/family_name",
@@ -70,18 +70,22 @@ final class EndToEndTest: XCTestCase {
         ).serialised
       )!
     
+    let aud = "example.com"
+    let timestamp = Int(Date().timeIntervalSince1970.rounded())
     var holderPresentation: SignedSDJWT?
     holderPresentation = try await SDJWTIssuer
       .presentation(
-        holdersPrivateKey: TestP256AsyncSigner(secKey: holdersKeyPair.private),
+        holdersPrivateKey: TestP256AsyncSigner(
+          secKey: holdersKeyPair.private
+        ),
         signedSDJWT: issuerSignedSDJWT,
         disclosuresToPresent: presentedSdJwt!.disclosures,
-        keyBindingJWT: KBJWT(
+        keyBindingJWT: .init(
           header: DefaultJWSHeaderImpl(algorithm: .ES256),
           kbJwtPayload: .init([
             Keys.nonce.rawValue: "123456789",
-            Keys.aud.rawValue: "example.com",
-            Keys.iat.rawValue: 1694600000,
+            Keys.aud.rawValue: aud,
+            Keys.iat.rawValue: timestamp,
             Keys.sdHash.rawValue: sdHash
           ])
         )
@@ -94,8 +98,8 @@ final class EndToEndTest: XCTestCase {
     XCTAssertNoThrow(
       try verifier.verify(
         iatOffset: .init(
-          startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
-          endTime: Date(timeIntervalSince1970: 1694600000)
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
         challenge: kbJwt!,
@@ -114,7 +118,7 @@ final class EndToEndTest: XCTestCase {
   func testEndToEndWithSecondaryIssuerSdJWT() async throws {
     
     // Given
-    let visitor = Visitor()
+    let visitor = ClaimVisitor()
     let verifier: KeyBindingVerifier = KeyBindingVerifier()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let query: Set<JSONPointer> = Set(
@@ -173,8 +177,8 @@ final class EndToEndTest: XCTestCase {
     XCTAssertNoThrow(
       try verifier.verify(
         iatOffset: .init(
-          startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
-          endTime: Date(timeIntervalSince1970: 1694600000)
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
         challenge: kbJwt!,

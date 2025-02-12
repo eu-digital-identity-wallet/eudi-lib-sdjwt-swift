@@ -15,17 +15,31 @@
  */
 import Foundation
 
-public protocol ClaimVisitor: Sendable {
+public protocol ClaimVisitorType: Sendable {
   func call(
     pointer: JSONPointer,
     disclosure: Disclosure,
     value: String?
   )
+  
+  func call(
+    path: ClaimPath?,
+    disclosure: Disclosure,
+    value: String?
+  )
+  
+  func call(
+    pointer: JSONPointer,
+    path: ClaimPath?,
+    disclosure: Disclosure,
+    value: String?
+  )
 }
 
-public final class Visitor: ClaimVisitor {
+public final class ClaimVisitor: ClaimVisitorType {
   
   nonisolated(unsafe) var disclosuresPerClaim: [JSONPointer: [Disclosure]] = [:]
+  nonisolated(unsafe) var disclosuresPerClaimPath: [ClaimPath: [Disclosure]] = [:]
   nonisolated(unsafe) var disclosures: [Disclosure] {
     disclosuresPerClaim.flatMap { $0.value }
   }
@@ -35,10 +49,21 @@ public final class Visitor: ClaimVisitor {
   
   public func call(
     pointer: JSONPointer,
+    path: ClaimPath?,
+    disclosure: Disclosure,
+    value: String?
+  ) {
+    call(pointer: pointer, disclosure: disclosure, value: value)
+    call(path: path, disclosure: disclosure, value: value)
+  }
+  
+  public func call(
+    pointer: JSONPointer,
     disclosure: Disclosure,
     value: String? = nil
   ) {
-    // Ensure that the path (pointer) does not already exist in disclosuresPerClaim
+    // Ensure that the path (pointer) does not already
+    // exist in disclosuresPerClaim
     guard disclosuresPerClaim[pointer] == nil else {
       fatalError("Disclosures for \(pointer.pointer) have already been calculated.")
     }
@@ -52,6 +77,30 @@ public final class Visitor: ClaimVisitor {
     
     // Insert the claimDisclosures only if the pointer doesn't already exist
     disclosuresPerClaim[pointer] = disclosuresPerClaim[pointer] ?? claimDisclosures
+  }
+  
+  public func call(
+    path: ClaimPath?,
+    disclosure: Disclosure,
+    value: String?
+  ) {
+    guard let path = path else { return }
+    
+    // Ensure that the path (pointer) does not already
+    // exist in disclosuresPerClaim
+    guard disclosuresPerClaimPath[path] == nil else {
+      fatalError("Disclosures for \(path) have already been calculated.")
+    }
+    
+    // Calculate claimDisclosures
+    let claimDisclosures: [Disclosure] = {
+      let containerPath = path.parent()
+      let containerDisclosures = containerPath.flatMap { disclosuresPerClaimPath[$0] } ?? []
+      return containerDisclosures + [disclosure]
+    }()
+    
+    // Insert the claimDisclosures only if the pointer doesn't already exist
+    disclosuresPerClaimPath[path] = disclosuresPerClaimPath[path] ?? claimDisclosures
   }
 }
 

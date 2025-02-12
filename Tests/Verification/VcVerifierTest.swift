@@ -50,7 +50,7 @@ final class VcVerifierTest: XCTestCase {
   func testVerifyIssuance_WithValidSDJWT_Withx509Header_PrimaryIssuer_ShouldSucceed() async throws {
     
     // Given
-    let sdJwtString = SDJWTConstants.primary_issuer_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     // When
     let result = try await SDJWTVCVerifier(
@@ -361,6 +361,9 @@ final class VcVerifierTest: XCTestCase {
         ).serialised
       )!
     
+    let nonce = UUID().uuidString
+    let aud = "aud"
+    let timestamp = Int(Date().timeIntervalSince1970.rounded())
     let holder = try await SDJWTIssuer
       .presentation(
         holdersPrivateKey: holdersKeyPair.private,
@@ -369,9 +372,9 @@ final class VcVerifierTest: XCTestCase {
         keyBindingJWT: KBJWT(
           header: DefaultJWSHeaderImpl(algorithm: .ES256),
           kbJwtPayload: .init([
-            Keys.nonce.rawValue: "123456789",
-            Keys.aud.rawValue: "example.com",
-            Keys.iat.rawValue: 1694600000,
+            Keys.nonce.rawValue: nonce,
+            Keys.aud.rawValue: aud,
+            Keys.iat.rawValue: timestamp,
             Keys.sdHash.rawValue: sdHash
           ])
         )

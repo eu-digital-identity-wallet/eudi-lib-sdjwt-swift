@@ -339,8 +339,8 @@ final class VerifierTest: XCTestCase {
       let verifier = KeyBindingVerifier()
       try verifier.verify(
         iatOffset: .init(
-          startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
-          endTime: Date(timeIntervalSince1970: 1694600000)
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
         challenge: jws,

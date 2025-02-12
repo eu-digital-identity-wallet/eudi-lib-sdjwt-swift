@@ -51,7 +51,7 @@ public final class KeyBindingVerifier: VerifierProtocol {
     
     self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
     
-    try verifyIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(timeInterval)))
+    try verifyIat(iatOffset: iatOffset, iat: Date())
     try verifyAud(aud: aud, expectedAudience: expectedAudience)
     
     try verify()

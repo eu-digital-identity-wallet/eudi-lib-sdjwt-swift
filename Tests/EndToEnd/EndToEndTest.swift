@@ -70,6 +70,8 @@ final class EndToEndTest: XCTestCase {
         ).serialised
       )!
     
+    let aud = "example.com"
+    let timestamp = Int(Date().timeIntervalSince1970.rounded())
     var holderPresentation: SignedSDJWT?
     holderPresentation = try await SDJWTIssuer
       .presentation(
@@ -82,8 +84,8 @@ final class EndToEndTest: XCTestCase {
           header: DefaultJWSHeaderImpl(algorithm: .ES256),
           kbJwtPayload: .init([
             Keys.nonce.rawValue: "123456789",
-            Keys.aud.rawValue: "example.com",
-            Keys.iat.rawValue: 1694600000,
+            Keys.aud.rawValue: aud,
+            Keys.iat.rawValue: timestamp,
             Keys.sdHash.rawValue: sdHash
           ])
         )
@@ -96,8 +98,8 @@ final class EndToEndTest: XCTestCase {
     XCTAssertNoThrow(
       try verifier.verify(
         iatOffset: .init(
-          startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
-          endTime: Date(timeIntervalSince1970: 1694600000)
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
         challenge: kbJwt!,
@@ -175,8 +177,8 @@ final class EndToEndTest: XCTestCase {
     XCTAssertNoThrow(
       try verifier.verify(
         iatOffset: .init(
-          startTime: Date(timeIntervalSince1970: 1694600000 - 1000),
-          endTime: Date(timeIntervalSince1970: 1694600000)
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
         challenge: kbJwt!,

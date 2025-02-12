@@ -35,8 +35,7 @@ public struct SignedSDJWT {
     let separator = "~"
     let kbJwtSerialization = kbJwt?.compactSerialization ?? ""
     let jwtAndDisclosures: [String] = ([jwt.compactSerialization] + disclosures)
-    return
-    jwtAndDisclosures
+    return jwtAndDisclosures
       .reduce("") {
         $0.isEmpty ? $1 : $0 + separator + $1
       }

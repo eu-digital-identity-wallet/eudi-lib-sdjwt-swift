@@ -39,6 +39,7 @@ public protocol LookupPublicKeysFromDIDDocument {
   func lookup(did: String, didUrl: String?) async throws -> [JWK]?
 }
 
+
 /**
  * A protocol defining methods for verifying SD-JWTs
  */
@@ -54,6 +55,7 @@ protocol SdJwtVcVerifierType {
     unverifiedSdJwt: String
   ) async throws -> Result<SignedSDJWT, any Error>
   
+  
   /**
    * Verifies the issuance of an SD-JWT from a `JSON` object.
    *
@@ -64,60 +66,44 @@ protocol SdJwtVcVerifierType {
     unverifiedSdJwt: JSON
   ) async throws -> Result<SignedSDJWT, any Error>
   
+  
+  /**
+   * Verifies the presentation of an SD-JWT from a serialized string.
+   *
+   * - Parameters:
+   *   - unverifiedSdJwt: The unverified SD-JWT in string format.
+   *   - claimsVerifier: The claims verifier to validate the claims.
+   *   - keyBindingVerifier: An optional key binding verifier.
+   * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
+   */
   func verifyPresentation(
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?
   ) async throws -> Result<SignedSDJWT, any Error>
   
+  
+  /**
+   * Verifies the presentation of an SD-JWT from a `JSON` object.
+   * - Parameters:
+   *   - unverifiedSdJwt: The unverified SD-JWT in `JSON` format.
+   *   - claimsVerifier: The claims verifier to validate the claims.
+   *   - keyBindingVerifier: An optional key binding verifier.
+   * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
+   */
   func verifyPresentation(
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?
   ) async throws -> Result<SignedSDJWT, any Error>
-  
-  /**
-   * Creates a new verifier instance with SD-JWT-VC issuer metadata resolution enabled.
-   *
-   * - Parameter session: A `Networking` instance used for HTTP communication.
-   * - Returns: An instance of the conforming type.
-   */
-  static func usingIssuerMetadata(
-    session: Networking
-  ) -> SdJwtVcVerifierType
-  
-  /**
-   * Creates a new verifier instance with X.509 certificate trust enabled.
-   *
-   * - Parameter x509CertificateTrust: The X.509 certificate trust configuration.
-   * - Returns: An instance of the conforming type.
-   */
-  static func usingX5c(
-    x509CertificateTrust: X509CertificateTrust
-  ) -> SdJwtVcVerifierType
-  
-  /**
-   * Creates a new verifier instance with DID resolution enabled.
-   *
-   * - Parameter didLookup: A service for looking up public keys from DID documents.
-   * - Returns: An instance of the conforming type.
-   */
-  static func usingDID(
-    didLookup: LookupPublicKeysFromDIDDocument
-  ) -> SdJwtVcVerifierType
-  
-  /**
-   * Creates a new verifier instance with both X.509 certificate trust and SD-JWT-VC issuer metadata resolution enabled.
-   *
-   * - Parameters:
-   *   - x509CertificateTrust: The X.509 certificate trust configuration.
-   *   - session: A `Networking` instance used for HTTP communication.
-   * - Returns: An instance of the conforming type.
-   */
-  static func usingX5cOrIssuerMetadata(
-    x509CertificateTrust: X509CertificateTrust,
-    session: Networking
-  ) -> SdJwtVcVerifierType
+}
+
+
+public enum KeyVerificationMethod {
+  case metadata(fetcher: SdJwtVcIssuerMetaDataFetching)
+  case x509(trust: X509CertificateTrust)
+  case did(lookup: LookupPublicKeysFromDIDDocument)
+  case metadataAndX509(fetcher: SdJwtVcIssuerMetaDataFetching, trust: X509CertificateTrust)
 }
 
 /**
@@ -127,14 +113,8 @@ protocol SdJwtVcVerifierType {
  */
 public class SDJWTVCVerifier: SdJwtVcVerifierType {
   
-  /// X.509 certificate trust configuration used for verifying certificates.
-  private let trust: X509CertificateTrust
-  
-  /// Optional service for fetching public keys from DID documents.
-  private let lookup: LookupPublicKeysFromDIDDocument?
-  
-  /// Service for fetching issuer metadata such as public keys.
-  private let fetcher: any SdJwtVcIssuerMetaDataFetching
+  /// Single property handling the source of issuer keys.
+  private let keyVerificationMethod: KeyVerificationMethod
   
   /// A parser conforming to `ParserProtocol`, responsible for parsing SD-JWTs.
   private let parser: ParserProtocol
@@ -144,73 +124,23 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    *
    * - Parameters:
    *   - parser: A parser responsible for parsing SD-JWTs.
-   *   - fetcher: A service responsible for fetching issuer metadata.
-   *   - trust: The X.509 trust configuration.
-   *   - lookup: Optional service for looking up public keys from DIDs or DID URLs.
+   *   - keyVerificationMethod: Enum to handle issuer key sources.
+   *
    */
   public init(
     parser: ParserProtocol = CompactParser(),
-    fetcher: SdJwtVcIssuerMetaDataFetching = SdJwtVcIssuerMetaDataFetcher(
-      session: URLSession.shared
-    ),
-    trust: X509CertificateTrust = X509CertificateTrustFactory.none,
-    lookup: LookupPublicKeysFromDIDDocument? = nil
+    keyVerificationMethod: KeyVerificationMethod
   ) {
     self.parser = parser
-    self.fetcher = fetcher
-    self.trust = trust
-    self.lookup = lookup
+    self.keyVerificationMethod = keyVerificationMethod
   }
   
-  static func usingIssuerMetadata(
-    session: Networking
-  ) -> SdJwtVcVerifierType {
-    return SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(session: session)
-    )
-  }
   
-  static func usingX5c(
-    x509CertificateTrust: X509CertificateTrust
-  ) -> SdJwtVcVerifierType {
-    return SDJWTVCVerifier(
-      trust: x509CertificateTrust
-    )
-  }
-  
-  static func usingDID(
-    didLookup: LookupPublicKeysFromDIDDocument
-  ) -> SdJwtVcVerifierType {
-    return SDJWTVCVerifier(
-      lookup: didLookup
-    )
-  }
-  
-  static func usingX5cOrIssuerMetadata(
-    x509CertificateTrust: X509CertificateTrust,
-    session: Networking
-  ) -> SdJwtVcVerifierType {
-    return SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(session: session),
-      trust: x509CertificateTrust
-    )
-  }
-  
-  /**
-   * Verifies the issuance of an SD-JWT VC.
-   *
-   * - Parameter unverifiedSdJwt: The unverified SD-JWT in string format.
-   * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
-   */
   func verifyIssuance(
     unverifiedSdJwt: String
   ) async throws -> Result<SignedSDJWT, any Error> {
     let jws = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt).jwt
-    let jwk = try await issuerJwsKeySelector(
-      jws: jws,
-      trust: trust,
-      lookup: lookup
-    )
+    let jwk = try await issuerJwsKeySelector(jws: jws)
     
     switch jwk {
     case .success(let jwk):
@@ -228,12 +158,6 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
   }
   
-  /**
-   * Verifies the issuance of an SD-JWT VC.
-   *
-   * - Parameter unverifiedSdJwt: The unverified SD-JWT in `JSON` format.
-   * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
-   */
   func verifyIssuance(
     unverifiedSdJwt: JSON
   ) async throws -> Result<SignedSDJWT, any Error> {
@@ -247,11 +171,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
     
     let jws = sdJwt.jwt
-    let jwk = try await issuerJwsKeySelector(
-      jws: jws,
-      trust: trust,
-      lookup: lookup
-    )
+    let jwk = try await issuerJwsKeySelector(jws: jws)
     
     switch jwk {
     case .success(let jwk):
@@ -274,11 +194,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     keyBindingVerifier: KeyBindingVerifier? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     let jws = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt).jwt
-    let jwk = try await issuerJwsKeySelector(
-      jws: jws,
-      trust: trust,
-      lookup: lookup
-    )
+    let jwk = try await issuerJwsKeySelector(jws: jws)
     
     switch jwk {
     case .success(let jwk):
@@ -318,11 +234,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
     
     let jws = sdJwt.jwt
-    let jwk = try await issuerJwsKeySelector(
-      jws: jws,
-      trust: trust,
-      lookup: lookup
-    )
+    let jwk = try await issuerJwsKeySelector(jws: jws)
     
     switch jwk {
     case .success(let jwk):
@@ -348,6 +260,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   }
 }
 
+
 private extension SDJWTVCVerifier {
   
   /**
@@ -355,26 +268,23 @@ private extension SDJWTVCVerifier {
    *
    * - Parameters:
    *   - jws: The JSON Web Signature object.
-   *   - trust: The X.509 trust configuration.
-   *   - lookup: Optional service for looking up public keys from DID documents.
    * - Returns: A `Result` containing either the selected `JWK` or an error.
    */
   func issuerJwsKeySelector(
-    jws: JWS,
-    trust: X509CertificateTrust,
-    lookup: LookupPublicKeysFromDIDDocument?
+    jws: JWS
   ) async throws -> Result<JWK, any Error> {
     
     guard jws.protectedHeader.algorithm != nil else {
-      throw SDJWTVerifierError.noAlgorithmProvided
+      return .failure(SDJWTVerifierError.noAlgorithmProvided)
     }
     
-    guard let source = try keySource(jws: jws) else {
+    guard let source = try keySource(jws: jws,
+                                     verificationMethod: keyVerificationMethod) else {
       return .failure(SDJWTVerifierError.invalidJwt)
     }
     
     switch source {
-    case .metadata(let iss, let kid):
+    case .metadata(let iss, let kid, let fetcher):
       guard let jwk = try await fetcher.fetchIssuerMetaData(
         issuer: iss
       )?.jwks.first(where: { $0.keyID == kid }) else {
@@ -382,7 +292,7 @@ private extension SDJWTVCVerifier {
       }
       return .success(jwk)
       
-    case .x509CertChain(_, let chain):
+    case .x509CertChain(_, let chain, let trust):
       if await trust.isTrusted(chain: chain) {
         guard let jwk = try chain
           .first?
@@ -396,14 +306,19 @@ private extension SDJWTVCVerifier {
         return .success(jwk)
       }
       return .failure(SDJWTVerifierError.invalidJwt)
-    case .didUrl(let iss, let kid):
-      guard let key = try await lookup?.lookup(
+      
+    case .didUrl(let iss, let kid, let lookup):
+      guard let key = try await lookup.lookup(
         did: iss,
         didUrl: kid
       )?.first(where: { $0.keyID == kid }) else {
         return .failure(SDJWTVerifierError.invalidJwt)
       }
       return .success(key)
+      
+    default:
+      return .failure(SDJWTVerifierError.invalidJwt)
+      
     }
   }
   
@@ -413,7 +328,7 @@ private extension SDJWTVCVerifier {
    * - Parameter jws: The JSON Web Signature object.
    * - Returns: An optional `SdJwtVcIssuerPublicKeySource` object.
    */
-  func keySource(jws: JWS) throws -> SdJwtVcIssuerPublicKeySource? {
+  func keySource(jws: JWS, verificationMethod: KeyVerificationMethod) throws -> SdJwtVcIssuerPublicKeySource? {
     
     guard let iss = try? jws.iss() else {
       throw SDJWTVerifierError.invalidIssuer
@@ -422,36 +337,37 @@ private extension SDJWTVCVerifier {
     let certChain = parseCertificates(from: jws.protectedHeaderData)
     let leaf = certChain.first
     
-    let issUrl = URL(string: iss)
-    let issScheme = issUrl?.scheme
+    guard let issUrl = URL(string: iss) else {
+      return nil
+    }
     
-    if issScheme == HTTPS_URI_SCHEME && certChain.isEmpty {
-      guard let issUrl = issUrl else {
-        return nil
-      }
+    switch verificationMethod {
+    case .metadata(let fetcher):
       return .metadata(
         iss: issUrl,
-        kid: jws.protectedHeader.keyID
+        kid: jws.protectedHeader.keyID,
+        fetcher: fetcher
       )
-    } else if issScheme == HTTPS_URI_SCHEME {
-      guard
-        let issUrl = issUrl,
-        isIssuerFQDNContained(in: leaf, issuerUrl: issUrl) || isIssuerURIContained(in: leaf, iss: iss)
+    case .x509(let trust):
+      guard isIssuerFQDNContained(in: leaf, issuerUrl: issUrl) || isIssuerURIContained(in: leaf, iss: iss)
       else {
         return nil
       }
-      
       return .x509CertChain(
         iss: issUrl,
-        chain: certChain
+        chain: certChain,
+        trust: trust
       )
-    } else if issScheme == DID_URI_SCHEME && certChain.isEmpty {
+      
+    case .did(lookup: let lookup):
       return .didUrl(
         iss: iss,
-        kid: jws.protectedHeader.keyID
+        kid: jws.protectedHeader.keyID,
+        loukup: lookup
       )
+    default:
+      return nil
     }
-    return nil
   }
   
   private func isIssuerFQDNContained(in leaf: Certificate?, issuerUrl: URL) -> Bool {

@@ -98,12 +98,17 @@ protocol SdJwtVcVerifierType {
   ) async throws -> Result<SignedSDJWT, any Error>
 }
 
-
-public enum KeyVerificationMethod {
+/**
+  * Enum to represent the source of issuer keys for verification.
+  * It can be one of the following:
+  * - metadata: Fetch issuer metadata to get keys.
+  * - x509: Use X.509 certificates for verification.
+  * - did: Use DID URLs to look up keys.
+ */
+public enum VerificationMethod {
   case metadata(fetcher: SdJwtVcIssuerMetaDataFetching)
   case x509(trust: X509CertificateTrust)
   case did(lookup: LookupPublicKeysFromDIDDocument)
-  case metadataAndX509(fetcher: SdJwtVcIssuerMetaDataFetching, trust: X509CertificateTrust)
 }
 
 /**
@@ -114,7 +119,7 @@ public enum KeyVerificationMethod {
 public class SDJWTVCVerifier: SdJwtVcVerifierType {
   
   /// Single property handling the source of issuer keys.
-  private let keyVerificationMethod: KeyVerificationMethod
+  private let verificationMethod: VerificationMethod
   
   /// A parser conforming to `ParserProtocol`, responsible for parsing SD-JWTs.
   private let parser: ParserProtocol
@@ -124,15 +129,15 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    *
    * - Parameters:
    *   - parser: A parser responsible for parsing SD-JWTs.
-   *   - keyVerificationMethod: Enum to handle issuer key sources.
+   *   - verificationMethod: Enum to handle issuer key sources.
    *
    */
   public init(
     parser: ParserProtocol = CompactParser(),
-    keyVerificationMethod: KeyVerificationMethod
+    verificationMethod: VerificationMethod
   ) {
     self.parser = parser
-    self.keyVerificationMethod = keyVerificationMethod
+    self.verificationMethod = verificationMethod
   }
   
   
@@ -278,8 +283,9 @@ private extension SDJWTVCVerifier {
       return .failure(SDJWTVerifierError.noAlgorithmProvided)
     }
     
-    guard let source = try keySource(jws: jws,
-                                     verificationMethod: keyVerificationMethod) else {
+    guard let source = try keySource(
+      jws: jws,
+      verificationMethod: verificationMethod) else {
       return .failure(SDJWTVerifierError.invalidJwt)
     }
     
@@ -315,10 +321,6 @@ private extension SDJWTVCVerifier {
         return .failure(SDJWTVerifierError.invalidJwt)
       }
       return .success(key)
-      
-    default:
-      return .failure(SDJWTVerifierError.invalidJwt)
-      
     }
   }
   
@@ -328,7 +330,7 @@ private extension SDJWTVCVerifier {
    * - Parameter jws: The JSON Web Signature object.
    * - Returns: An optional `SdJwtVcIssuerPublicKeySource` object.
    */
-  func keySource(jws: JWS, verificationMethod: KeyVerificationMethod) throws -> SdJwtVcIssuerPublicKeySource? {
+  func keySource(jws: JWS, verificationMethod: VerificationMethod) throws -> SdJwtVcIssuerPublicKeySource? {
     
     guard let iss = try? jws.iss() else {
       throw SDJWTVerifierError.invalidIssuer
@@ -365,8 +367,6 @@ private extension SDJWTVCVerifier {
         kid: jws.protectedHeader.keyID,
         loukup: lookup
       )
-    default:
-      return nil
     }
   }
   

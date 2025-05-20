@@ -25,16 +25,16 @@ import XCTest
 
 final class VcVerifierTest: XCTestCase {
   
-  private let x509Verifier = SDJWTVCVerifier(keyVerificationMethod: .x509(trust: X509CertificateChainVerifier()))
+  private let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(trust: X509CertificateChainVerifier()))
   
   private let metadataVerifier = SDJWTVCVerifier(
-    keyVerificationMethod: .metadata(fetcher: SdJwtVcIssuerMetaDataFetcher(
+    verificationMethod: .metadata(fetcher: SdJwtVcIssuerMetaDataFetcher(
       session: NetworkingBundleMock(
         path: "issuer_meta_data",
         extension: "json"
       ))))
   
-  private let didVerifier = SDJWTVCVerifier( keyVerificationMethod: .did(
+  private let didVerifier = SDJWTVCVerifier( verificationMethod: .did(
     lookup: LookupPublicKeysFromDIDDocumentMock()
   ))
     
@@ -330,7 +330,7 @@ final class VcVerifierTest: XCTestCase {
     let serialized: String = CompactSerialiser(signedSDJWT: holder).serialised
     
     let metadataVerifier = SDJWTVCVerifier(
-      keyVerificationMethod: .metadata(fetcher: SdJwtVcIssuerMetaDataFetcher(
+      verificationMethod: .metadata(fetcher: SdJwtVcIssuerMetaDataFetcher(
         session: NetworkingJSONMock(json: jsonObject)
       )
     )

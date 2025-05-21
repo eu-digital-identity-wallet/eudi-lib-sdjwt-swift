@@ -25,6 +25,21 @@ import XCTest
 
 final class VcVerifierTest: XCTestCase {
   
+  private let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(trust: X509CertificateChainVerifier()))
+  
+  private let metadataVerifier = SDJWTVCVerifier(
+    verificationMethod: .metadata(fetcher: SdJwtVcIssuerMetaDataFetcher(
+      session: NetworkingBundleMock(
+        path: "issuer_meta_data",
+        extension: "json"
+      ))))
+  
+  private let didVerifier = SDJWTVCVerifier( verificationMethod: .did(
+    lookup: LookupPublicKeysFromDIDDocumentMock()
+  ))
+    
+  
+  
   override func setUp() async throws {
   }
   
@@ -37,11 +52,7 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
-    ).verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
+    let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -53,11 +64,7 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
-    ).verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
+    let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -69,11 +76,7 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
-    ).verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
+    let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -85,11 +88,8 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier.usingX5c(
-      x509CertificateTrust: X509CertificateChainVerifier()
-    ).verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
+    let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+    
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -101,14 +101,7 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(
-        session: NetworkingBundleMock(
-          path: "issuer_meta_data",
-          extension: "json"
-        )
-      )
-    ).verifyIssuance(
+    let result = try await metadataVerifier.verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
     
@@ -122,14 +115,7 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier.usingIssuerMetadata(
-      session: NetworkingBundleMock(
-        path: "issuer_meta_data",
-        extension: "json"
-      )
-    ).verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
+    let result = try await metadataVerifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -141,11 +127,7 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.did_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier(
-      lookup: LookupPublicKeysFromDIDDocumentMock()
-    ).verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
+    let result = try await didVerifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -157,11 +139,7 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.did_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier.usingDID(
-      didLookup: LookupPublicKeysFromDIDDocumentMock()
-    ).verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
+    let result = try await didVerifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -181,11 +159,7 @@ final class VcVerifierTest: XCTestCase {
       getParts: parser.extractJWTParts
     )
     
-    let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
-    ).verifyIssuance(
-      unverifiedSdJwt: json
-    )
+    let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: json)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -205,11 +179,7 @@ final class VcVerifierTest: XCTestCase {
       getParts: parser.extractJWTParts
     )
     
-    let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
-    ).verifyIssuance(
-      unverifiedSdJwt: json
-    )
+    let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: json)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -229,16 +199,7 @@ final class VcVerifierTest: XCTestCase {
       getParts: parser.extractJWTParts
     )
     
-    let result = try await SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(
-        session: NetworkingBundleMock(
-          path: "issuer_meta_data",
-          extension: "json"
-        )
-      )
-    ).verifyIssuance(
-      unverifiedSdJwt: json
-    )
+    let result = try await metadataVerifier.verifyIssuance(unverifiedSdJwt: json)
     
     // Then
     XCTAssertNoThrow(try result.get())
@@ -250,14 +211,7 @@ final class VcVerifierTest: XCTestCase {
     let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
     
     // When
-    let result = try await SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(
-        session: NetworkingBundleMock(
-          path: "issuer_meta_data",
-          extension: "json"
-        )
-      )
-    ).verifyPresentation(
+    let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier()
@@ -281,14 +235,7 @@ final class VcVerifierTest: XCTestCase {
       getParts: parser.extractJWTParts
     )
     
-    let result = try await SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(
-        session: NetworkingBundleMock(
-          path: "issuer_meta_data",
-          extension: "json"
-        )
-      )
-    ).verifyPresentation(
+    let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: json,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier()
@@ -382,13 +329,14 @@ final class VcVerifierTest: XCTestCase {
     
     let serialized: String = CompactSerialiser(signedSDJWT: holder).serialised
     
-    let result = try await SDJWTVCVerifier(
-      fetcher: SdJwtVcIssuerMetaDataFetcher(
-        session: NetworkingJSONMock(
-          json: jsonObject
-        )
+    let metadataVerifier = SDJWTVCVerifier(
+      verificationMethod: .metadata(fetcher: SdJwtVcIssuerMetaDataFetcher(
+        session: NetworkingJSONMock(json: jsonObject)
       )
-    ).verifyPresentation(
+    )
+   )
+          
+    let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: serialized,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier()

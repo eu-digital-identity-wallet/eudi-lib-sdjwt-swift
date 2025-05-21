@@ -48,11 +48,9 @@ final class EndToEndTest: XCTestCase {
     )
     
     // When
-    let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
-    ).verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
+    let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(trust: X509CertificateChainVerifier()))
+    let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+                                   
     
     let issuerSignedSDJWT = try CompactParser().getSignedSdJwt(
       serialisedString: sdJwtString
@@ -131,9 +129,8 @@ final class EndToEndTest: XCTestCase {
     )
     
     // When
-    let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
-    ).verifyIssuance(
+    let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(trust: X509CertificateChainVerifier()))
+    let result = try await x509Verifier.verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
     

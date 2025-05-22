@@ -128,7 +128,7 @@ final class EndToEndTest: XCTestCase {
     
     // When
     let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
+      verificationMethod: .x509(trust: X509CertificateChainVerifier())
     ).verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
@@ -286,7 +286,7 @@ final class EndToEndTest: XCTestCase {
     
     // When
     let result = try await SDJWTVCVerifier(
-      trust: X509CertificateChainVerifier()
+      verificationMethod: .x509(trust: X509CertificateChainVerifier())
     ).verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )

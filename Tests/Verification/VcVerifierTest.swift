@@ -59,14 +59,15 @@ final class VcVerifierTest: XCTestCase {
   }
   
   func testVerifyIssuance_WithValidSDJWT__Withx509Header_WithoutDisclosures_ShouldSucceed() async throws {
+    
     // Given
     let sdJwtString = SDJWTConstants.x509_sd_jwt_no_disclosures.clean()
+    
     // When
     let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
     
     // Then
     XCTAssertNoThrow(try result.get())
-    
   }
   
   func testVerifyIssuance_WithValidSDJWT_Withx509Header_PrimaryIssuer_ShouldSucceed() async throws {

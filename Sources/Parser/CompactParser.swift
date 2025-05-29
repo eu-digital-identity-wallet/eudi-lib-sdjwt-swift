@@ -98,8 +98,9 @@ public class CompactParser: ParserProtocol {
    */
   private func parseCombined(_ serialisedString: String) throws -> (String, [Disclosure], String?) {
     let parts = serialisedString
-      .split(separator: "~",
-             omittingEmptySubsequences: false)
+      .split(
+        separator: "~",
+        omittingEmptySubsequences: false)
       .map {String($0)}
     
     guard parts.count > 1 else {

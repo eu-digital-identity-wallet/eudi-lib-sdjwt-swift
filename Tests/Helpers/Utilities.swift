@@ -105,6 +105,19 @@ func generateES256KeyPair() -> KeyPair {
   return KeyPair(publicKey, privateKey)
 }
 
+func extractECKey(from der: Data) -> Data? {
+  var bytes = [UInt8](der)
+
+  // Search for the first OCTET STRING tag (0x04)
+  for i in 0..<bytes.count - 2 {
+    if bytes[i] == 0x04 && bytes[i + 1] == 0x20 {
+      // Found OCTET STRING with length 0x20 (32 bytes)
+      return Data(bytes[(i + 2)..<(i + 2 + 32)])
+      }
+    }
+  return nil
+}
+
 class MockSaltProvider: SaltProvider {
 
   // MARK: - Properties

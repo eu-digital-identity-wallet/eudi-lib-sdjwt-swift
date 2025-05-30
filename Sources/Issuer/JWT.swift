@@ -59,7 +59,7 @@ public struct JWT: JWTRepresentable {
 
   func sign<KeyType>(key: KeyType) throws -> JWS {
     let unsignedJWT = try self.asUnsignedJWT()
-      return try JWS.init(payload: unsignedJWT.payload, protectedHeader: unsignedJWT.header, key: key)
+    return try JWS.init(payload: unsignedJWT.payload, protectedHeader: unsignedJWT.header, key: key)
   }
 
   mutating func addKBTyp() {

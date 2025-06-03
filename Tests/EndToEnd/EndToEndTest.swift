@@ -366,7 +366,8 @@ final class EndToEndTest: XCTestCase {
         .claim("hidden_name"),
         .claim("second_hidden_name"),
         .claim("address").claim("street_address"),
-        .claim("nationalities")
+        .claim("nationalities"),
+        .claim("type").arrayElement(2)
       ]
     )
     
@@ -471,7 +472,7 @@ final class EndToEndTest: XCTestCase {
     )
     
     XCTAssertNotNil(kbJwt)
-    XCTAssertEqual(presentedSdJwt!.disclosures.count, 4)
+    XCTAssertEqual(presentedSdJwt!.disclosures.count, 5)
     
     let presentedDisclosures = Set(presentedSdJwt!.disclosures)
     let visitedDisclosures = Set(visitor.disclosures)

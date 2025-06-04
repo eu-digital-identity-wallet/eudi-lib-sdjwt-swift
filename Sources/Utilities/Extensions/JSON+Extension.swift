@@ -25,6 +25,16 @@ extension JSON {
   
   static let empty = JSON()
   
+  /// Returns true if the JSON is a primitive (string, number, bool)
+  var isPrimitive: Bool {
+    switch self.type {
+    case .string, .number, .bool:
+      return true
+    default:
+      return false
+    }
+  }
+  
   subscript(key: Keys) -> JSON {
     return self[[key]]
   }

@@ -500,7 +500,8 @@ final class EndToEndTest: XCTestCase {
         .claim("type").arrayElement(3),
         .claim("entity").claim("sub_enity").claim("attribute_two"),
         .claim("for_all").allArrayElements(),
-        .claim("entity").claim("sub_enity").claim("for_all").arrayElement(1)
+        .claim("entity").claim("sub_enity").claim("for_all").arrayElement(1),
+        .claim("recursive_nationalities").arrayElement(0)
       ]
     )
     
@@ -528,6 +529,10 @@ final class EndToEndTest: XCTestCase {
         FlatDisclosedClaim("country", "JP")
       }
       FlatDisclosedClaim("nationalities", ["DE", "FR", "EN"])
+      RecursiveArrayClaim("recursive_nationalities") {
+        SdElement.flat("DE")
+        SdElement.plain("GR")
+      }
       ArrayClaim("type", array: [
         .plain("VerifiableCredential"),
         .flat("AnotherTypeOne"),
@@ -626,7 +631,7 @@ final class EndToEndTest: XCTestCase {
     )
     
     XCTAssertNotNil(kbJwt)
-    XCTAssertEqual(presentedSdJwt!.disclosures.count, 11)
+    XCTAssertEqual(presentedSdJwt!.disclosures.count, 13)
     
     let presentedDisclosures = Set(presentedSdJwt!.disclosures)
     let visitedDisclosures = Set(visitor.disclosures)

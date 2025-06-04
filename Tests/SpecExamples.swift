@@ -206,4 +206,104 @@ final class SpecExamples: XCTestCase {
     }
     let _ = try? XCTUnwrap(output.get())
   }
+  
+  func test_issuer_signed_jwt() async throws {
+
+    // Given
+    let keyData = Data(
+      base64Encoded: SDJWTConstants.anIssuerPrivateKey
+    )!
+    
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(
+        from: keyData
+      ),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [
+          SDJWTConstants.anIssuersPrivateKeySignedcertificate
+        ]
+      )
+    ) {
+      ConstantClaims.iat(time: 1749031301)
+      ConstantClaims.sub(subject: "Test Subject")
+      ArrayClaim("name_list", array: [
+        .plain("Tom"),
+        .flat("Richard"),
+        .plain("Harry"),
+        .flat("Giorgos")
+      ])
+      PlainClaim("name", "plain name")
+      FlatDisclosedClaim("hidden_name", "disclosedName")
+      FlatDisclosedClaim("second_hidden_name", "disclosedName")
+      ObjectClaim("address") {
+        FlatDisclosedClaim("street_address", "東京都港区芝公園４丁目２−８")
+        FlatDisclosedClaim("locality", "東京都")
+        FlatDisclosedClaim("region", "港区")
+        FlatDisclosedClaim("country", "JP")
+      }
+      ObjectClaim("entity") {
+        ObjectClaim("sub_enity") {
+          FlatDisclosedClaim("attribute_one", "東京都港区芝公園４丁目２−８")
+          FlatDisclosedClaim("attribute_two", "東京都")
+          PlainClaim("region", "港区")
+          PlainClaim("country", "JP")
+        }
+      }
+      FlatDisclosedClaim("nationalities", ["DE", "FR", "EN"])
+      FlatDisclosedClaim("secondary_nationalities", ["CN", "GR", "PT"])
+      ArrayClaim("type", array: [
+        .plain("VerifiableCredential"),
+        .flat("TypeTwo"),
+        .plain("VaccinationCertificate"),
+        .flat("TypeOne")
+      ])
+    }
+    
+    let sdJwtString = issuerSignedSDJWT.serialisation
+    
+    let recreatedClaimsResult = try CompactParser()
+      .getSignedSdJwt(
+        serialisedString: sdJwtString
+      )
+      .recreateClaims()
+
+    XCTAssertTrue(recreatedClaimsResult.recreatedClaims.exists())
+    
+    XCTAssert(recreatedClaimsResult.recreatedClaims["iat"] == 1749031301)
+    XCTAssert(recreatedClaimsResult.recreatedClaims["nationalities"] == [
+      "DE",
+      "FR",
+      "EN"
+    ])
+    XCTAssert(recreatedClaimsResult.recreatedClaims["second_hidden_name"] == "disclosedName")
+    XCTAssert(recreatedClaimsResult.recreatedClaims["hidden_name"] == "disclosedName")
+    XCTAssert(recreatedClaimsResult.recreatedClaims["type"] == [
+      "VerifiableCredential",
+      "TypeTwo",
+      "VaccinationCertificate",
+      "TypeOne"
+    ])
+    XCTAssert(recreatedClaimsResult.recreatedClaims["name"] == "plain name")
+    XCTAssert(recreatedClaimsResult.recreatedClaims["sub"] == "Test Subject")
+    XCTAssert(recreatedClaimsResult.recreatedClaims["address"] == JSON([
+      "region" : "港区",
+      "street_address" : "東京都港区芝公園４丁目２−８",
+      "country" : "JP",
+      "locality" : "東京都"
+    ]))
+    XCTAssert(recreatedClaimsResult.recreatedClaims["name_list"] ==  [
+      "Tom",
+      "Richard",
+      "Harry",
+      "Giorgos"
+    ])
+    XCTAssert(recreatedClaimsResult.recreatedClaims["secondary_nationalities"] == [
+      "CN",
+      "GR",
+      "PT"
+    ])
+
+    XCTAssertTrue(recreatedClaimsResult.digestsFoundOnPayload.count == 14)
+  }
 }

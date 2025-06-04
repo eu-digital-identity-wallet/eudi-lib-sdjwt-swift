@@ -123,9 +123,7 @@ public class ClaimExtractor {
                 foundDigests += ifHasNested.digestsFoundOnPayload
                 json[key].arrayObject?[index] = ifHasNested.recreatedClaims
                 
-              } else if foundDisclosedArrayElement.type != .null,
-                        foundDisclosedArrayElement.type != .array,
-                        foundDisclosedArrayElement.type != .dictionary,
+              } else if foundDisclosedArrayElement.isPrimitive,
                         let dislosure = digestsOfDisclosures[object[Keys.dots].stringValue] {
                 let found = foundDisclosedArrayElement
                 json[key].arrayObject?[index] = found

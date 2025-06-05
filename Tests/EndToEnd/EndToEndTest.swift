@@ -24,12 +24,19 @@ import XCTest
 
 final class EndToEndTest: XCTestCase {
   
+  var x509CertificateChainVerifier: X509CertificateTrust!
+  
   override func setUp() async throws {
     try await super.setUp()
+
+    x509CertificateChainVerifier = X509CertificateChainVerifier(
+       rootCertificates: try! SDJWTConstants.loadRootCertificates()
+     )
   }
   
   override func tearDown() async throws {
     try await super.tearDown()
+    x509CertificateChainVerifier = nil
   }
   
   func testEndToEndWithPrimaryIssuerSdJWT() async throws {
@@ -49,7 +56,9 @@ final class EndToEndTest: XCTestCase {
     
     // When
     let x509Verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(trust: X509CertificateChainVerifier())
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
     )
     
     let result = try await x509Verifier.verifyIssuance(
@@ -132,7 +141,9 @@ final class EndToEndTest: XCTestCase {
     
     // When
     let result = try await SDJWTVCVerifier(
-      verificationMethod: .x509(trust: X509CertificateChainVerifier())
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
     ).verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
@@ -214,7 +225,12 @@ final class EndToEndTest: XCTestCase {
     )
     
     // When
-    let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(trust: X509CertificateChainVerifier()))
+    let x509Verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
+    )
+    
     let result = try await x509Verifier.verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
@@ -290,7 +306,9 @@ final class EndToEndTest: XCTestCase {
     
     // When
     let result = try await SDJWTVCVerifier(
-      verificationMethod: .x509(trust: X509CertificateChainVerifier())
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
     ).verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
@@ -405,7 +423,9 @@ final class EndToEndTest: XCTestCase {
     let sdJwtString = issuerSignedSDJWT.serialisation
     
     let x509Verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(trust: X509CertificateChainVerifier())
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
     )
     
     // When
@@ -564,7 +584,9 @@ final class EndToEndTest: XCTestCase {
     let sdJwtString = issuerSignedSDJWT.serialisation
     
     let x509Verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(trust: X509CertificateChainVerifier())
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
     )
     
     // When
@@ -693,7 +715,9 @@ final class EndToEndTest: XCTestCase {
     let sdJwtString = issuerSignedSDJWT.serialisation
     
     let x509Verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(trust: X509CertificateChainVerifier())
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
     )
     
     // When
@@ -847,7 +871,9 @@ final class EndToEndTest: XCTestCase {
     let sdJwtString = issuerSignedSDJWT.serialisation
     
     let x509Verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(trust: X509CertificateChainVerifier())
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
     )
     
     // When

@@ -324,18 +324,24 @@ private extension SDJWTVCVerifier {
           .pemString
           .pemToSecKey()?
           .jwk else {
-          return .failure(SDJWTVerifierError.invalidJwt)
+          return .failure(
+            SDJWTVerifierError.invalidJwt
+          )
         }
         return .success(jwk)
       }
-      return .failure(SDJWTVerifierError.invalidJwt)
+      return .failure(
+        SDJWTVerifierError.invalidJwt
+      )
       
     case .didUrl(let iss, let kid, let lookup):
       guard let key = try await lookup.lookup(
         did: iss,
         didUrl: kid
       )?.first(where: { $0.keyID == kid }) else {
-        return .failure(SDJWTVerifierError.invalidJwt)
+        return .failure(
+          SDJWTVerifierError.invalidJwt
+        )
       }
       return .success(key)
     }

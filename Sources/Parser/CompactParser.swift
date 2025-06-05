@@ -87,9 +87,20 @@ public class CompactParser: ParserProtocol {
     
   }
   
+  
+  /**
+   Parses a combined SD-JWT string into its components.
+   - Parameter serialisedString: The combined SD-JWT string to parse.
+   - Returns: A tuple containing the JWT, an array of disclosures, and an optional key binding JWT.
+   - Note:
+   - The serialization format is a tilde ('~') separated string:
+   `<Issuer-signed JWT>~<Disclosure 1>~<Disclosure 2>~...~<Disclosure N>~[<KB-JWT>]`
+   */
   private func parseCombined(_ serialisedString: String) throws -> (String, [Disclosure], String?) {
     let parts = serialisedString
-      .split(separator: "~")
+      .split(
+        separator: "~",
+        omittingEmptySubsequences: false)
       .map {String($0)}
     
     guard parts.count > 1 else {
@@ -97,16 +108,15 @@ public class CompactParser: ParserProtocol {
     }
     
     let jwt = String(parts[0])
-    if serialisedString.hasSuffix("~") == true {
+    if serialisedString.hasSuffix("~") {
       // means no key binding is present
-      let disclosures = parts[safe: 1..<parts.count]?.compactMap({String($0)})
-      
-      return (jwt, disclosures ?? [], nil)
+      let disclosures = parts.count > 2 ? Array(parts[1..<(parts.count - 1)]) : []
+      return (jwt, disclosures, nil)
     } else {
       // means we have key binding jwt
-      let disclosures = parts[safe: 1..<parts.count-1]?.compactMap({String($0)})
-      let kbJwt = String(parts[parts.count - 1])
-      return (jwt, disclosures ?? [], kbJwt)
+      let disclosures = parts.count > 2 ? Array(parts[1..<(parts.count - 1)]) : []
+      let kbJwt = parts.count > 1 ? parts.last : nil
+      return (jwt, disclosures, kbJwt)
     }
   }
 }

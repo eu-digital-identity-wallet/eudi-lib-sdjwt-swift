@@ -15,12 +15,6 @@
  */
 @preconcurrency import SwiftyJSON
 
-extension JSON {
-  subscript(key: Keys) -> JSON {
-    return self[[key]]
-  }
-}
-
 extension Keys: JSONSubscriptType {
   public var jsonKey: SwiftyJSON.JSONKey {
     return .key(self.rawValue)
@@ -28,6 +22,22 @@ extension Keys: JSONSubscriptType {
 }
 
 extension JSON {
+  
+  static let empty = JSON()
+  
+  /// Returns true if the JSON is a primitive (string, number, bool)
+  var isPrimitive: Bool {
+    switch self.type {
+    case .string, .number, .bool:
+      return true
+    default:
+      return false
+    }
+  }
+  
+  subscript(key: Keys) -> JSON {
+    return self[[key]]
+  }
   
   func findDigestCount() -> Int {
     var foundValues = 0
@@ -84,8 +94,4 @@ extension JSON {
     
     return pointers
   }
-}
-
-extension JSON {
-  static let empty = JSON()
 }

@@ -122,6 +122,22 @@ public class ClaimExtractor {
                  !ifHasNested.digestsFoundOnPayload.isEmpty {
                 foundDigests += ifHasNested.digestsFoundOnPayload
                 json[key].arrayObject?[index] = ifHasNested.recreatedClaims
+                
+              } else if foundDisclosedArrayElement.isPrimitive,
+                        let dislosure = digestsOfDisclosures[object[Keys.dots].stringValue] {
+                let found = foundDisclosedArrayElement
+                json[key].arrayObject?[index] = found
+                
+                visitor?.call(
+                  pointer: .init(
+                    pointer: "/" + newPath.joined(separator: "/")
+                  ),
+                  path: .init(
+                    jsonPointer: "/" + newPath.joined(separator: "/")
+                  ),
+                  disclosure: dislosure,
+                  value: found.string
+                )
               }
             }
           }

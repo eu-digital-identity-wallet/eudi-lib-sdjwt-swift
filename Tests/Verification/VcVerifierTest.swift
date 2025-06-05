@@ -37,6 +37,8 @@ final class VcVerifierTest: XCTestCase {
   private let didVerifier = SDJWTVCVerifier( verificationMethod: .did(
     lookup: LookupPublicKeysFromDIDDocumentMock()
   ))
+  
+  
     
   
   
@@ -346,3 +348,4 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
 }
+

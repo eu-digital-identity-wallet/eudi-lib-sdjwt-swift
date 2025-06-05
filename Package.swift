@@ -37,7 +37,9 @@ let package = Package(
     .package(
       url: "https://github.com/krzyzanowskim/CryptoSwift.git",
       from: "1.8.4"
-    )
+    ),
+    .package(url: "https://github.com/kylef/JSONSchema.swift",
+     from: "0.6.0")
   ],
   targets: [
     .target(
@@ -45,6 +47,7 @@ let package = Package(
       dependencies: [
         "jose-swift",
         "CryptoSwift",
+        .product(name: "JSONSchema", package: "JSONSchema.swift"),
         .product(name: "SwiftyJSON", package: "swiftyjson"),
         .product(name: "X509", package: "swift-certificates"),
         .product(

@@ -1,4 +1,5 @@
 {
+  "originHash" : "8e3b6e51a0030f69b86bc4fb2a55b2f8ebd9c9de4ceb9bb42ab7ca030122e70e",
   "pins" : [
     {
       "identity" : "blueecc",
@@ -28,12 +29,39 @@
       }
     },
     {
+      "identity" : "jsonschema.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kylef/JSONSchema.swift",
+      "state" : {
+        "revision" : "d14de4b2d9205068c9db89c00d097ca43c897000",
+        "version" : "0.6.0"
+      }
+    },
+    {
+      "identity" : "pathkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kylef/PathKit.git",
+      "state" : {
+        "revision" : "3bfd2737b700b9a36565a8c94f4ad2b050a5e574",
+        "version" : "1.0.1"
+      }
+    },
+    {
       "identity" : "secp256k1.swift",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/GigaBitcoin/secp256k1.swift.git",
       "state" : {
         "revision" : "4c77c7384768acf1093d66ccaacf298d322b10b7",
         "version" : "0.15.0"
+      }
+    },
+    {
+      "identity" : "spectre",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kylef/Spectre.git",
+      "state" : {
+        "revision" : "26cc5e9ae0947092c7139ef7ba612e34646086c7",
+        "version" : "0.10.1"
       }
     },
     {
@@ -73,5 +101,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

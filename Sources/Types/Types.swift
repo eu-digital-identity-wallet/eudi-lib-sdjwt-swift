@@ -48,6 +48,29 @@ public enum SDJWTVerifierError: Error {
   case failedToCreateVerifier
   case expiredJwt
   case notValidYetJwt
+  case invalidTypeMetadataURL
+}
+
+public enum TypeMetadataError: Error, Equatable {
+  case invalidPayload
+  case missingVCT
+  case duplicateLanguageInDisplay
+  case missingDisplayProperties
+  case invalidTypeMetadataURL
+  case unsupportedRetreivalMethod
+  case vctIntegrityCheckFailed
+  case schemaIntegrityCheckFailed
+  case circularReference
+  case invalidSchemaURL
+  case invalidSchema
+  case invalidDicslosuresDipslay
+  case conflictingSchemaDefinition
+  case missingSchemaUriIntegrity
+  case schemaValidationFailed(description: String)
+  case missingTypeMetadataForDisclosureValidation
+  case missingDisclosuresForValidation
+  case expectedDisclosureMissing(path: ClaimPath)
+  case unexpectedDisclosurePresent(path: ClaimPath)
 }
 
 /// Static Keys Used by the JWT

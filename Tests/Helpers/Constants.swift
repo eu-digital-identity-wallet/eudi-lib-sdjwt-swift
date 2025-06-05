@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @preconcurrency import Foundation
+import X509
 
 let key =
   """
@@ -99,4 +100,31 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
   """.replacingOccurrences(of: "-----BEGIN EC PRIVATE KEY-----", with: "").replacingOccurrences(of: "-----END EC PRIVATE KEY-----", with: "").trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\n", with: "")
   
   static let anIssuersPrivateKeySignedcertificate = "MIIBeDCCAR6gAwIBAgIUVJkRgF8lYkGo9W0ic81Ixi2yBy4wCgYIKoZIzj0EAwIwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wHhcNMjUwNTI5MTIxMzA4WhcNMjYwNTI5MTIxMzA4WjAWMRQwEgYDVQQDDAtleGFtcGxlLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABAyLIYk5bgIjv5pmYRduW5Twl9Kacb8z2Zmene7ry/kW5AXCzZzvK/rd4arBPcRKLXdFrW3KLOXgntW/smFusbKjSjBIMCcGA1UdEQQgMB6CC2V4YW1wbGUuY29tgg93d3cuZXhhbXBsZS5jb20wHQYDVR0OBBYEFKy5/BWnpWcWy9dPs7cJdzBNADf0MAoGCCqGSM49BAMCA0gAMEUCIG9Ew3Ok4eJUpFSLsW7i0U9gkcH0t0tP7/LLlQtd1bpXAiEAqBvnnoIyx9IRKUNbcuTEDKMpdwjl7m8Hrq6QLJ2CUSU="
+  
+  static func loadRootCertificates() throws -> [Certificate] {
+    let certNames = [
+      "pidissuerca02_cz",
+      "pidissuerca02_ee",
+      "pidissuerca02_eu",
+      "pidissuerca02_lu",
+      "pidissuerca02_nl",
+      "pidissuerca02_pt",
+      "pidissuerca02_ut"
+    ]
+    
+    return try certNames.map { name in
+      guard let path = Bundle.module.path(forResource: name, ofType: "der") else {
+        throw NSError(
+          domain: "CertLoadError",
+          code: 1,
+          userInfo: [NSLocalizedDescriptionKey: "Missing certificate: \(name)"]
+        )
+      }
+      
+      let data = try Data(contentsOf: URL(fileURLWithPath: path))
+      
+      // Parse the DER-encoded certificate
+      return try Certificate(derEncoded: Array(data))
+    }
+  }
 }

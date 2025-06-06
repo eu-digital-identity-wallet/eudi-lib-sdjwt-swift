@@ -31,7 +31,7 @@ final class EndToEndTest: XCTestCase {
 
     x509CertificateChainVerifier = X509CertificateChainVerifier(
        rootCertificates: try! SDJWTConstants.loadRootCertificates()
-     )
+    )
   }
   
   override func tearDown() async throws {

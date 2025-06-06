@@ -406,11 +406,11 @@ final class EndToEndTest: XCTestCase {
       PlainClaim("name", "plain name")
       FlatDisclosedClaim("hidden_name", "disclosedName")
       FlatDisclosedClaim("second_hidden_name", "disclosedName")
-      ObjectClaim("address") {
-        FlatDisclosedClaim("street_address", "東京都港区芝公園４丁目２−８")
-        FlatDisclosedClaim("locality", "東京都")
-        FlatDisclosedClaim("region", "港区")
-        FlatDisclosedClaim("country", "JP")
+      RecursiveObject("address") {
+        FlatDisclosedClaim("street_address", "Schulstr. 12")
+        FlatDisclosedClaim("locality", "Schulpforta")
+        FlatDisclosedClaim("region", "Sachsen-Anhalt")
+        FlatDisclosedClaim("country", "DE")
       }
       FlatDisclosedClaim("nationalities", ["DE", "FR", "EN"])
       ArrayClaim("type", array: [
@@ -492,7 +492,7 @@ final class EndToEndTest: XCTestCase {
     )
     
     XCTAssertNotNil(kbJwt)
-    XCTAssertEqual(presentedSdJwt!.disclosures.count, 5)
+    XCTAssertEqual(presentedSdJwt!.disclosures.count, 6)
     
     let presentedDisclosures = Set(presentedSdJwt!.disclosures)
     let visitedDisclosures = Set(visitor.disclosures)

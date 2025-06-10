@@ -18,18 +18,27 @@ import X509
 import SwiftASN1
 import Security
 
+public enum CertificateValidationError: Error {
+  case invalidCertificateData
+  case insufficientCertificates
+  case signatureValidationFailed
+  case certificateExpired
+  case untrustedRoot
+  case invalidChain([VerificationResult.PolicyFailure])
+}
+
 public protocol X509CertificateTrust: Sendable {
+  var rootCertificates: [Certificate] { get }
   func isTrusted(chain: [Certificate]) async -> Bool
 }
 
-struct X509CertificateTrustNone: X509CertificateTrust {
-  func isTrusted(chain: [Certificate]) async -> Bool {
-    return false
-  }
+struct X509CertificateTrustAlways: X509CertificateTrust {
+  let rootCertificates: [Certificate] = []
+  func isTrusted(chain: [Certificate]) async -> Bool { return true }
 }
 
-public struct X509CertificateTrustFactory {
-  public static let none: X509CertificateTrust = X509CertificateTrustNone()
+struct X509CertificateTrustFactory {
+  public static let trust: X509CertificateTrust = X509CertificateTrustAlways()
 }
 
 public typealias Base64Certificate = String
@@ -45,212 +54,66 @@ public enum DataConversionError: Error {
 }
 
 public struct X509CertificateChainVerifier: X509CertificateTrust {
-
-  public init() {}
   
-  public func isChainTrustResultSuccesful(_ result: ChainTrustResult) -> Bool {
-    return result != .failure
+  public let rootCertificates: [Certificate]
+  
+  public init(rootCertificates: [Certificate]) {
+    self.rootCertificates = rootCertificates
   }
   
   public func isTrusted(chain: [Certificate]) async -> Bool {
-    let result = try? verifyCertificateChain(certificates: chain)
-    return result != .failure
-  }
-  
-  public func verifyCertificateChain(base64Certificates: [Base64Certificate]) throws -> ChainTrustResult {
-    
-    let certificates = try convertStringsToData(
-      base64Strings: base64Certificates
-    ).compactMap {
-      SecCertificateCreateWithData(nil, $0 as CFData)
-    }
-    
-    if certificates.isEmpty {
-      return .failure
-    }
-    
-    // Create a certificate trust object
-    var trust: SecTrust?
-    let policy = SecPolicyCreateBasicX509()
-    
-    // Set the certificate chain and policy for trust evaluation
-    SecTrustCreateWithCertificates(certificates as CFTypeRef, policy, &trust)
-    
-    // Evaluate the trust
-    var trustResult: SecTrustResultType = .invalid
-    _ = SecTrustEvaluate(trust!, &trustResult)
-    
-    // Check if the trust evaluation was successful
-    if trustResult == .unspecified {
-      return .success
-      
-    } else if trustResult == .recoverableTrustFailure {
-      var error: CFError?
-      _ = SecTrustEvaluateWithError(trust!, &error)
-      return .recoverableFailure(error?.localizedDescription ?? "Unknown .recoverableFailure")
-      
-    } else {
-      return .failure
-    }
-  }
-  
-  public func verifyCertificateChain(certificates: [Certificate]) throws -> ChainTrustResult {
-    
-    let certificates = certificates.map {
-      convertCertificateToBase64(certificate: $0)
-    }.compactMap {
-      $0
-    }.compactMap {
-      SecCertificateCreateWithData(nil, $0 as CFData)
-    }
-    
-    if certificates.isEmpty {
-      return .failure
-    }
-    
-    // Create a certificate trust object
-    var trust: SecTrust?
-    let policy = SecPolicyCreateBasicX509()
-    
-    // Set the certificate chain and policy for trust evaluation
-    SecTrustCreateWithCertificates(certificates as CFTypeRef, policy, &trust)
-    
-    // Evaluate the trust
-    var trustResult: SecTrustResultType = .invalid
-    _ = SecTrustEvaluate(trust!, &trustResult)
-    
-    // Check if the trust evaluation was successful
-    if trustResult == .unspecified {
-      return .success
-      
-    } else if trustResult == .recoverableTrustFailure {
-      var error: CFError?
-      _ = SecTrustEvaluateWithError(trust!, &error)
-      return .recoverableFailure(error?.localizedDescription ?? "Unknown .recoverableFailure")
-      
-    } else {
-      return .failure
-    }
-  }
-  
-  public func checkCertificateValidAndNotRevoked(base64Certificate: Base64Certificate) throws -> Bool{
-    
-    let certificates = try convertStringsToData(
-      base64Strings: [base64Certificate]
-    ).compactMap {
-      SecCertificateCreateWithData(nil, $0 as CFData)
-    }
-    
-    guard
-      certificates.count == 1
-    else {
+    guard let leaf = chain.first else {
       return false
     }
-    
-    if let certificate = certificates.first {
-      
-      // Create a policy for certificate validation
-      let policy = SecPolicyCreateBasicX509()
-      
-      // Create a trust object with the certificate and policy
-      var trust: SecTrust?
-      if SecTrustCreateWithCertificates(certificate, policy, &trust) == errSecSuccess {
-        
-        // Set the OCSP responder URL
-        let ocspResponderURL = URL(string: "http://ocsp.example.com")!
-        SecTrustSetNetworkFetchAllowed(trust!, true)
-        SecTrustSetOCSPResponse(trust!, ocspResponderURL as CFURL)
-        
-        // Evaluate the trust
-        var trustResult: SecTrustResultType = .invalid
-        if SecTrustEvaluate(trust!, &trustResult) == errSecSuccess {
-          if trustResult == .proceed || trustResult == .unspecified {
-            return true
-          } else if trustResult == .deny || trustResult == .fatalTrustFailure {
-            return false
-          } else {
-            return false
-          }
-        } else {
-          return false
-        }
-      } else {
-        return false
-      }
-      
-    } else {
-      return false
-    }
-  }
-  
-  public func areCertificatesLinked(
-    rootCertificateBase64: String,
-    otherCertificateBase64: String
-  ) -> Bool {
-    guard
-      let rootCertificateData = Data(base64Encoded: rootCertificateBase64),
-      let otherCertificateData = Data(base64Encoded: otherCertificateBase64)
-    else {
-      return false // Invalid Base64-encoded data
-    }
-    
-    // Create SecCertificate objects from DER data
-    if let rootCertificate = SecCertificateCreateWithData(nil, rootCertificateData as CFData),
-       let otherCertificate = SecCertificateCreateWithData(nil, otherCertificateData as CFData) {
-      
-      // Create a trust object and evaluate it
-      var trust: SecTrust?
-      var policy: SecPolicy?
-      
-      policy = SecPolicyCreateBasicX509()
-      let policies = [policy!] as CFArray
-      
-      let status = SecTrustCreateWithCertificates([rootCertificate] as CFArray, policies, &trust)
-      
-      if status == errSecSuccess {
-        SecTrustSetAnchorCertificates(trust!, [rootCertificate] as CFArray)
-        
-        let otherCertificates = [otherCertificate] as CFArray
-        SecTrustSetAnchorCertificatesOnly(trust!, true)
-        SecTrustSetAnchorCertificates(trust!, otherCertificates)
-        
-        var trustResult: SecTrustResultType = .invalid
-        SecTrustEvaluate(trust!, &trustResult)
-        
-        return trustResult == .unspecified || trustResult == .proceed
-      }
-    }
-    
-    return false // The certificates are not linked
+    let result = try? await verifyChain(
+      rootBase64Certificates: rootCertificates,
+      leafBase64Certificate: leaf
+    )
+    return true
   }
 }
 
-private extension X509CertificateChainVerifier {
+public extension X509CertificateChainVerifier {
   
-  func convertCertificateToBase64(certificate: Certificate) -> Data? {
-    do {
-      // Encode the certificate to DER format using SwiftASN1
-      var serializer = DER.Serializer()
-      try serializer.serialize(certificate)
-      let derData = Data(serializer.serializedBytes)
-      return derData
-    } catch {
-      return nil
-    }
+  /// Converts a `SecCertificate` to `X509.Certificate`
+  private func convertToX509Certificate(_ secCert: SecCertificate) throws -> Certificate {
+    let derData = SecCertificateCopyData(secCert) as Data
+    return try Certificate(derEncoded: [UInt8](derData))
   }
   
-  func convertStringsToData(base64Strings: [String]) throws -> [Data] {
-    var dataObjects: [Data] = []
-    for base64String in base64Strings {
-      if let data = Data(base64Encoded: base64String),
-         let string = String(data: data, encoding: .utf8)?.removeCertificateDelimiters(),
-         let encodedData = Data(base64Encoded: string) {
-        dataObjects.append(encodedData)
-      } else {
-        throw DataConversionError.conversionFailed("Failed to convert base64 string: \(base64String)")
-      }
+  func verifyChain(
+    rootBase64Certificates: [Certificate],
+    intermediateBase64Certificates: [Certificate] = [],
+    leafBase64Certificate: Certificate,
+    date: Date = Date(),
+    showDiagnostics: Bool = false
+  ) async throws -> ChainTrustResult {
+        
+    let roots = CertificateStore(rootBase64Certificates)
+    var verifier = Verifier(
+      rootCertificates: roots
+    ) {
+      RFC5280Policy(
+        validationTime: date
+      )
     }
     
-    return dataObjects
+    let result = await verifier.validate(
+      leafCertificate: leafBase64Certificate,
+      intermediates: .init(
+        intermediateBase64Certificates
+      )
+    ) { diagnostic in
+      print(diagnostic)
+    }
+    
+    switch result {
+    case .validCertificate:
+      return .success
+    case .couldNotValidate(let policyFailures):
+      throw CertificateValidationError.invalidChain(
+        policyFailures
+      )
+    }
   }
 }

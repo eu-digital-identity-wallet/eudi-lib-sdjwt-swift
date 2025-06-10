@@ -15,6 +15,7 @@
  */
 @preconcurrency import Foundation
 @testable import eudi_lib_sdjwt_swift
+import X509
 
 let key =
   """
@@ -303,4 +304,31 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
     ]
   )
   
+  
+  static func loadRootCertificates() throws -> [Certificate] {
+    let certNames = [
+      "pidissuerca02_cz",
+      "pidissuerca02_ee",
+      "pidissuerca02_eu",
+      "pidissuerca02_lu",
+      "pidissuerca02_nl",
+      "pidissuerca02_pt",
+      "pidissuerca02_ut"
+    ]
+    
+    return try certNames.map { name in
+      guard let path = Bundle.module.path(forResource: name, ofType: "der") else {
+        throw NSError(
+          domain: "CertLoadError",
+          code: 1,
+          userInfo: [NSLocalizedDescriptionKey: "Missing certificate: \(name)"]
+        )
+      }
+      
+      let data = try Data(contentsOf: URL(fileURLWithPath: path))
+      
+      // Parse the DER-encoded certificate
+      return try Certificate(derEncoded: Array(data))
+    }
+  }
 }

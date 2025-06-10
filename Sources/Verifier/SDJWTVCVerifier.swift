@@ -359,9 +359,6 @@ private extension SDJWTVCVerifier {
       throw SDJWTVerifierError.invalidIssuer
     }
     
-    let certChain = parseCertificates(from: jws.protectedHeaderData)
-    let leaf = certChain.first
-    
     guard let issUrl = URL(string: iss) else {
       return nil
     }
@@ -374,6 +371,9 @@ private extension SDJWTVCVerifier {
         fetcher: fetcher
       )
     case .x509(let trust):
+      let certChain = parseCertificates(from: jws.protectedHeaderData)
+      let leaf = certChain.first
+      
       guard isIssuerFQDNContained(in: leaf, issuerUrl: issUrl) || isIssuerURIContained(in: leaf, iss: iss)
       else {
         return nil

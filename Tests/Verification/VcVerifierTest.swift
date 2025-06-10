@@ -25,7 +25,9 @@ import XCTest
 
 final class VcVerifierTest: XCTestCase {
   
-  private let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(trust: X509CertificateChainVerifier()))
+  private let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(
+    trust: X509CertificateChainVerifier(rootCertificates: try! SDJWTConstants.loadRootCertificates())
+  ))
   
   private let metadataVerifier = SDJWTVCVerifier(
     verificationMethod: .metadata(fetcher: SdJwtVcIssuerMetaDataFetcher(

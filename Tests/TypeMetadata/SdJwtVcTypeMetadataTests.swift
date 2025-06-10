@@ -153,7 +153,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     let metadata = try decoder.decode(SdJwtVcTypeMetadata.self, from: jsonData)
     
     // Then
-    XCTAssertEqual(metadata.vct, "urn:eudi:pid:1")
+    XCTAssertEqual(metadata.vct, "https://mock.local/type_meta_data_pid")
     XCTAssertEqual(metadata.name, "Type Metadata for Person Identification Data")
 
     XCTAssertEqual(metadata.display?.count, 1)

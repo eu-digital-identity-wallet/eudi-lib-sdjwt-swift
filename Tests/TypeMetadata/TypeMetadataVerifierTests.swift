@@ -37,7 +37,7 @@ final class TypeMetadataVerifierTests: XCTestCase {
     let metadataFetcher = TypeMetadataFetcher(session: session)
     let schemafetcher = SchemaFetcher(session: session)
     
-    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid_light")
+    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
     
     let metadataLookup = TypeMetadataLookupDefault(
       vct: vct,
@@ -72,7 +72,7 @@ final class TypeMetadataVerifierTests: XCTestCase {
       ConstantClaims.iat(time: Date())
       ConstantClaims.sub(subject: "123456789")
       
-      PlainClaim("vct", "https://mock.local/type_meta_data_pid_light")
+      PlainClaim("vct", "https://mock.local/type_meta_data_pid")
       
       FlatDisclosedClaim("family_name", "Doe")
       FlatDisclosedClaim("given_name", "John")

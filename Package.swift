@@ -7,9 +7,9 @@ let package = Package(
   name: "eudi-lib-sdjwt-swift",
   platforms: [
     .iOS(.v14),
-    .tvOS(.v12),
+    .tvOS(.v14),
     .watchOS(.v5),
-    .macOS(.v12)
+    .macOS(.v14)
     
   ],
   products: [
@@ -38,8 +38,10 @@ let package = Package(
       url: "https://github.com/krzyzanowskim/CryptoSwift.git",
       from: "1.8.4"
     ),
-    .package(url: "https://github.com/kylef/JSONSchema.swift",
-     from: "0.6.0")
+    .package(
+      url: "https://github.com/ajevans99/swift-json-schema",
+      from: "0.7.0"
+    )
   ],
   targets: [
     .target(
@@ -47,9 +49,10 @@ let package = Package(
       dependencies: [
         "jose-swift",
         "CryptoSwift",
-        .product(name: "JSONSchema", package: "JSONSchema.swift"),
         .product(name: "SwiftyJSON", package: "swiftyjson"),
         .product(name: "X509", package: "swift-certificates"),
+        .product(name: "JSONSchema", package: "swift-json-schema"),
+        .product(name: "JSONSchemaBuilder", package: "swift-json-schema"),
         .product(
           name: "CryptorECC",
           package: "BlueECC"

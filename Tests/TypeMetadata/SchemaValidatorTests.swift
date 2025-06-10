@@ -116,7 +116,7 @@ final class SchemaValidatorTests: XCTestCase {
     } catch let error as TypeMetadataError {
       
       // Then
-      XCTAssertEqual(error, .schemaValidationFailed(description: "Required property 'iss' is missing"))
+      XCTAssertEqual(error, .schemaValidationFailed(description: "Required property 'iss' is missing at #"))
     } catch {
       XCTFail("Unexpected error type: \(error)")
     }
@@ -161,11 +161,12 @@ final class SchemaValidatorTests: XCTestCase {
     } catch let error as TypeMetadataError {
       
       // Then
-      XCTAssertEqual(error, .schemaValidationFailed(description: "'2' is not of type 'string'"))
+      XCTAssertEqual(error, .schemaValidationFailed(description: "Validation failed for keyword 'properties' at #, Validation failed for keyword 'properties' at #/address, Expected type '[JSONSchema.JSONType.string]' but found 'integer' at #/address/street_address"))
     } catch {
       XCTFail("Unexpected error type: \(error)")
     }
   }
+
   
   private func getSchemas() async throws -> [JSON] {
     let fetcher = SchemaFetcher(

@@ -28,23 +28,42 @@ struct SchemaValidator: SchemaValidatorType {
     _ schemas: [JSON]
   ) throws {
     
-    guard let payloadDict = payload.dictionaryObject else {
+    // Convert payload JSON to String
+    guard let payloadString = stringify(json: payload) else {
       throw TypeMetadataError.invalidPayload
     }
     
     for schemaJSON in schemas {
-      guard let schemaDict = schemaJSON.dictionaryObject else {
+      guard let schemaString = stringify(json: schemaJSON) else {
         throw TypeMetadataError.invalidSchema
       }
       
-      let result = try JSONSchema.validate(payloadDict, schema:schemaDict )
+      let schema = try Schema(instance: schemaString)
+      let result = try schema.validate(instance: payloadString)
       
-      switch result {
-      case .valid:
-        continue
-      case .invalid(let errors):
-        throw TypeMetadataError.schemaValidationFailed(description: errors.map(\.description).joined(separator: ", "))
+      if !result.isValid {
+        let descriptions = (result.errors?.flatMap { flattenErrors($0) } ?? [])
+          .map { "\($0.message) at \($0.instanceLocation)" }
+          .joined(separator: ", ")
+        
+        throw TypeMetadataError.schemaValidationFailed(description: descriptions)
       }
     }
+  }
+  
+  private func stringify(json: JSON) -> String? {
+    guard let data = try? json.rawData(),
+          let string = String(data: data, encoding: .utf8) else {
+      return nil
+    }
+    return string
+  }
+  
+  private func flattenErrors(_ error: ValidationError) -> [ValidationError] {
+    var all: [ValidationError] = [error]
+    if let nested = error.errors {
+      all += nested.flatMap(flattenErrors)
+    }
+    return all
   }
 }

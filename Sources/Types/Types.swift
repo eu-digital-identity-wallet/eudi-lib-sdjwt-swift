@@ -53,7 +53,8 @@ public enum SDJWTVerifierError: Error {
 
 public enum TypeMetadataError: Error, Equatable {
   case invalidPayload
-  case missingVCT
+  case missingOrInvalidVCT
+  case vctMismatch
   case duplicateLanguageInDisplay
   case missingDisplayProperties
   case invalidTypeMetadataURL
@@ -67,7 +68,7 @@ public enum TypeMetadataError: Error, Equatable {
   case conflictingSchemaDefinition
   case missingSchemaUriIntegrity
   case schemaValidationFailed(description: String)
-  case missingTypeMetadataForDisclosureValidation
+  case missingTypeMetadata
   case missingDisclosuresForValidation
   case expectedDisclosureMissing(path: ClaimPath)
   case unexpectedDisclosurePresent(path: ClaimPath)

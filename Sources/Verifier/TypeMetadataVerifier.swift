@@ -17,6 +17,7 @@ import Foundation
 import SwiftyJSON
 import JSONSchema
 
+
 public protocol TypeMetadataVerifierType {
   func verifyTypeMetadata(sdJwt: SignedSDJWT) async throws
 }
@@ -28,6 +29,7 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
   let typeMetadataMerger: TypeMetadataMergerType = TypeMetadataMerger()
   let schemaValidator: SchemaValidatorType = SchemaValidator()
   let disclosedValidator: DisclosedValidatorType = DisclosedValidator()
+  let claimsValidator: TypeMetadataClaimsValidatorType = TypeMetadataClaimsValidator()
   
   public init(
     metadataLookup: TypeMetadataLookup,
@@ -44,8 +46,9 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     let result = try sdJwt.recreateClaims()
     let disclosuresPerClaimPath = result.disclosuresPerClaimPath
     let metadataArray = try await metadataLookup.getTypeMetadata()
-    let schemas = try await schemaLookup.getSchemas(metadataArray: metadataArray)
     let finalData = typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
+    try claimsValidator.validate(result.recreatedClaims, finalData)
+    let schemas = try await schemaLookup.getSchemas(metadataArray: metadataArray)
     try schemaValidator.validate(result.recreatedClaims, schemas)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }

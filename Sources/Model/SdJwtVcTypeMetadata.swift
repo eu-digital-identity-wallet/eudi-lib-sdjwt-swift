@@ -127,14 +127,12 @@ public struct SdJwtVcTypeMetadata: Decodable {
   
   
   public struct ClaimMetadata: Decodable {
-    //public let path: [String?]
     public let path: ClaimPath
     public let display: [ClaimDisplay]?
     public let selectivelyDisclosable: ClaimSelectivelyDisclosable
     public let svgId: String?
     
     public init(
-      //path: [String?],
       path: ClaimPath,
       display: [ClaimDisplay]? = nil,
       selectivelyDisclosable: ClaimSelectivelyDisclosable = .allowed,
@@ -185,17 +183,17 @@ public struct SdJwtVcTypeMetadata: Decodable {
     case never
   }
   
-  public struct Display: Decodable {
-    public let value: [DisplayMetadata]
-    
-    public init(value: [DisplayMetadata]) throws {
-      let uniqueLangs = Set(value.map { $0.lang })
-      guard value.count == uniqueLangs.count else {
-        throw TypeMetadataError.duplicateLanguageInDisplay
-      }
-      self.value = value
-    }
-  }
+//  public struct Display: Decodable {
+//    public let value: [DisplayMetadata]
+//    
+//    public init(value: [DisplayMetadata]) throws {
+//      let uniqueLangs = Set(value.map { $0.lang })
+//      guard value.count == uniqueLangs.count else {
+//        throw TypeMetadataError.duplicateLanguageInDisplay
+//      }
+//      self.value = value
+//    }
+//  }
   
   public struct DisplayMetadata: Decodable {
     public let lang: String

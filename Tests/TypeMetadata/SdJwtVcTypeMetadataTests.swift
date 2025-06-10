@@ -35,23 +35,6 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     XCTAssertNil(metadata.schemaSource) // Ensure optional properties default to nil
   }
   
-  //  func testConflictingSchemaThrowsError() {
-  //    let vct = try! SdJwtVcTypeMetadata.Vct(value: "test-vct")
-  //    let schema = JSON(["key": "value"])
-  //    let schemaUri = URL(string: "https://example.com/schema")!
-  //
-  //    XCTAssertThrowsError(
-  //      try SdJwtVcTypeMetadata(vct: vct, schema: schema, schemaUri: schemaUri)
-  //    ) { error in
-  //      XCTAssertEqual(error as? SDJWTError, SDJWTError.error("Conflicting schema definitions"))
-  //    }
-  //  }
-  
-//  func testVctCannotBeEmpty() {
-//    XCTAssertThrowsError(try SdJwtVcTypeMetadata.Vct(value: "")) { error in
-//      XCTAssertEqual(error as? SDJWTError, SDJWTError.error("Vct value must not be blank"))
-//    }
-//  }
   
   func testValidClaimMetadataInitialization() {
     let claimMetadata = SdJwtVcTypeMetadata.ClaimMetadata(
@@ -64,17 +47,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     XCTAssertEqual(claimMetadata.selectivelyDisclosable, .allowed)
     XCTAssertNil(claimMetadata.display)
   }
-  
-//  func testDisplayCannotHaveDuplicateLanguages() {
-//    let displayList = [
-//      SdJwtVcTypeMetadata.DisplayMetadata(lang: "en", name: "English"),
-//      SdJwtVcTypeMetadata.DisplayMetadata(lang: "en", name: "Duplicate English")
-//    ]
-//    
-//    XCTAssertThrowsError(try SdJwtVcTypeMetadata.Display(value: displayList)) { error in
-//      XCTAssertEqual(error as? SDJWTError, SDJWTError.error("Each language must appear only once in the display list"))
-//    }
-//  }
+
   
   func testValidDisplayMetadataInitialization() {
     let displayMetadata = SdJwtVcTypeMetadata.DisplayMetadata(
@@ -88,11 +61,11 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     XCTAssertEqual(displayMetadata.description, "Test Description")
   }
   
-//  func testSvgTemplatePropertiesThrowsErrorWhenEmpty() {
-//    XCTAssertThrowsError(try SdJwtVcTypeMetadata.SvgTemplateProperties()) { error in
-//      XCTAssertEqual(error as? SDJWTError, SDJWTError.error("At least one property must be specified"))
-//    }
-//  }
+  func testSvgTemplatePropertiesThrowsErrorWhenEmpty() {
+    XCTAssertThrowsError(try SdJwtVcTypeMetadata.SvgTemplateProperties()) { error in
+      XCTAssertEqual(error as? TypeMetadataError, TypeMetadataError.missingDisplayProperties)
+    }
+  }
   
   func testValidSvgTemplatePropertiesInitialization() throws {
     let properties = try SdJwtVcTypeMetadata.SvgTemplateProperties(orientation: "portrait")

@@ -27,7 +27,7 @@ final class DisclosedValidatorTests: XCTestCase {
     // When
     XCTAssertThrowsError(try sut.validate(nil, [:])) { error in
       // Then
-      XCTAssertEqual(error as? TypeMetadataError, .missingTypeMetadataForDisclosureValidation)
+      XCTAssertEqual(error as? TypeMetadataError, .missingTypeMetadata)
     }
   }
 

@@ -23,7 +23,7 @@ struct DisclosedValidator: DisclosedValidatorType {
   func validate(_ metadata: ResolvedTypeMetadata?, _ disclosures: DisclosuresPerClaimPath?) throws {
     
     guard let metadata = metadata else {
-      throw TypeMetadataError.missingTypeMetadataForDisclosureValidation
+      throw TypeMetadataError.missingTypeMetadata
     }
     
     guard let disclosures = disclosures else {
@@ -33,12 +33,18 @@ struct DisclosedValidator: DisclosedValidatorType {
     for claim in metadata.claims {
       
       let claimPath = claim.path
-
+      print(claimPath)
       switch claim.selectivelyDisclosable {
       case .always:
-        guard let claimDisclosures = disclosures[claimPath], !claimDisclosures.isEmpty else {
+        let hasDirectDisclosure = disclosures[claimPath]?.isEmpty == false
+        let hasWildcardDisclosure = disclosures.first { disclosedPath, _ in
+          claimPath.contains(disclosedPath)
+        } != nil
+        
+        guard hasDirectDisclosure || hasWildcardDisclosure else {
           throw TypeMetadataError.expectedDisclosureMissing(path: claimPath)
         }
+        
       case .never:
         if disclosures[claimPath] != nil {
           throw TypeMetadataError.unexpectedDisclosurePresent(path: claimPath)

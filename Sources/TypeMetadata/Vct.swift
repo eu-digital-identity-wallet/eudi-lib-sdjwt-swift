@@ -24,7 +24,7 @@ public struct Vct {
     integrityHash: String? = nil
   ) throws {
     guard !uri.isEmpty else {
-      throw TypeMetadataError.missingVCT
+      throw TypeMetadataError.missingOrInvalidVCT
     }
     self.uri = uri
     self.integrityHash = integrityHash

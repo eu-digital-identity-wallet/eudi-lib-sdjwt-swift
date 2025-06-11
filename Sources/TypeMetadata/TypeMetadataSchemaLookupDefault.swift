@@ -16,10 +16,20 @@
 
 import SwiftyJSON
 
+/**
+ A protocol for retrieving JSON Schema definitions associated with type metadata.
+ */
 public protocol TypeMetadataSchemaLookup {
+  
+  /**
+   Retrieves all schema definitions (by value or by reference) from the provided metadata.
+   
+   - Parameter metadataArray: An array of type metadata entries.
+   - Returns: An array of JSON Schema definitions.
+   - Throws: An error if schema fetching fails.
+   */
   func getSchemas(metadataArray: [SdJwtVcTypeMetadata]) async throws -> [JSON]
 }
-
 
 struct TypeMetadataSchemaLookupDefault: TypeMetadataSchemaLookup {
   
@@ -53,7 +63,6 @@ struct TypeMetadataSchemaLookupDefault: TypeMetadataSchemaLookup {
         }
       }
     }
-    
     return schemas
   }
 }

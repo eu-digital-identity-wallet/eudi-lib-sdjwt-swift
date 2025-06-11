@@ -16,11 +16,22 @@
 
 import Foundation
 
+/**
+ A protocol for retrieving  type metadata for a given VCT.
+ */
 public protocol TypeMetadataLookup {
+  
   var vct: Vct { get }
+  
+  /**
+   Retrieves  type metadata using Vct.
+   
+   - Returns: An array of `SdJwtVcTypeMetadata`
+   - Note:
+   - Throws: `TypeMetadataError` if resolution fails or a circular reference is detected.
+   */
   func getTypeMetadata() async throws -> [SdJwtVcTypeMetadata]
 }
-
 
 struct TypeMetadataLookupDefault: TypeMetadataLookup {
   
@@ -47,6 +58,23 @@ struct TypeMetadataLookupDefault: TypeMetadataLookup {
     return metadataArray
   }
   
+  
+  /**
+   Recursively retrieves and resolves type metadata documents starting from the given URL.
+
+   - Parameters:
+     - url: The URL to fetch the initial metadata from.
+     - expectedIntegrityHash: An optional hash to verify the integrity of the fetched metadata.
+     - typeMetadataFetcher: A fetcher used to retrieve the metadata content.
+     - visitedUrls: A set of URLs already visited to detect and prevent circular references.
+     - typeMetadataArray: The array accumulating the resolved metadata in order.
+
+   - Returns: An array of resolved `SdJwtVcTypeMetadata`
+
+   - Note: If the metadata includes an `extends` URL, the function will recursively resolve and append that metadata as well.
+           The integrity check is optional and only applied if a hash is provided.
+   - Throws: `TypeMetadataError.circularReference` if a circular reference is detected.
+   */
   @discardableResult
   private func getTypeMetadata(
     from url: URL,

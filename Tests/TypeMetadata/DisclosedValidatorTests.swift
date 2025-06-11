@@ -22,7 +22,7 @@ final class DisclosedValidatorTests: XCTestCase {
 
   func testValidate_missingMetadata_throwsError() {
     //Given
-    let sut = DisclosedValidator()
+    let sut = DisclosureValidator()
     
     // When
     XCTAssertThrowsError(try sut.validate(nil, [:])) { error in
@@ -34,7 +34,7 @@ final class DisclosedValidatorTests: XCTestCase {
   func testValidate_missingDisclosures_throwsError() {
     
     //Given
-    let sut = DisclosedValidator()
+    let sut = DisclosureValidator()
     let metadata = ResolvedTypeMetadata(
       vct: "type",
       claims: []
@@ -62,7 +62,7 @@ final class DisclosedValidatorTests: XCTestCase {
     )
     
     let disclosures: DisclosuresPerClaimPath = [:]
-    let sut = DisclosedValidator()
+    let sut = DisclosureValidator()
     
     // When
     XCTAssertThrowsError(try sut.validate(metadata, disclosures)) { error in
@@ -85,7 +85,7 @@ final class DisclosedValidatorTests: XCTestCase {
       claims: [claim])
     
     let disclosures: DisclosuresPerClaimPath = [claimPath: ["disclosure_value"]]
-    let sut = DisclosedValidator()
+    let sut = DisclosureValidator()
     
     // When
     XCTAssertThrowsError(try sut.validate(metadata, disclosures)) { error in
@@ -109,7 +109,7 @@ final class DisclosedValidatorTests: XCTestCase {
     )
     
     let disclosures: DisclosuresPerClaimPath = [:]
-    let sut = DisclosedValidator()
+    let sut = DisclosureValidator()
     
     // When/Then
     XCTAssertNoThrow(try sut.validate(metadata, disclosures))
@@ -130,7 +130,7 @@ final class DisclosedValidatorTests: XCTestCase {
     )
     
     let disclosures: DisclosuresPerClaimPath = [claimPath: ["user@example.com"]]
-    let sut = DisclosedValidator()
+    let sut = DisclosureValidator()
     
     // When/Then
     XCTAssertNoThrow(try sut.validate(metadata, disclosures))

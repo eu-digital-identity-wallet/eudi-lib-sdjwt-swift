@@ -19,6 +19,13 @@ import JSONSchema
 
 
 public protocol TypeMetadataVerifierType {
+  
+  /**
+   Verifies that a SignedSDJWT's claims and disclosures match the expected type metadata and schemas.
+   
+   - Parameter sdJwt: The signed SD-JWT to verify.
+   - Throws: Various validation errors depending on the step that fails.
+   */
   func verifyTypeMetadata(sdJwt: SignedSDJWT) async throws
 }
 
@@ -26,10 +33,10 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
   
   let metadataLookup: TypeMetadataLookup
   let schemaLookup: TypeMetadataSchemaLookup
-  let typeMetadataMerger: TypeMetadataMergerType = TypeMetadataMerger()
-  let schemaValidator: SchemaValidatorType = SchemaValidator()
-  let disclosedValidator: DisclosedValidatorType = DisclosedValidator()
-  let claimsValidator: TypeMetadataClaimsValidatorType = TypeMetadataClaimsValidator()
+  var typeMetadataMerger: TypeMetadataMergerType
+  let schemaValidator: SchemaValidatorType
+  let disclosedValidator: DisclosureValidatorType
+  let claimsValidator: TypeMetadataClaimsValidatorType
   
   public init(
     metadataLookup: TypeMetadataLookup,
@@ -37,6 +44,26 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
   ) {
     self.metadataLookup = metadataLookup
     self.schemaLookup = schemaLookup
+    self.typeMetadataMerger = TypeMetadataMerger()
+    self.schemaValidator = SchemaValidator()
+    self.disclosedValidator = DisclosureValidator()
+    self.claimsValidator = TypeMetadataClaimsValidator()
+  }
+  
+  init(
+    metadataLookup: TypeMetadataLookup,
+    schemaLookup: TypeMetadataSchemaLookup,
+    typeMetadataMerger: TypeMetadataMergerType = TypeMetadataMerger(),
+    schemaValidator: SchemaValidatorType = SchemaValidator(),
+    disclosedValidator: DisclosureValidatorType = DisclosureValidator(),
+    claimsValidator: TypeMetadataClaimsValidatorType = TypeMetadataClaimsValidator()
+  ) {
+    self.metadataLookup = metadataLookup
+    self.schemaLookup = schemaLookup
+    self.typeMetadataMerger = typeMetadataMerger
+    self.schemaValidator = schemaValidator
+    self.disclosedValidator = disclosedValidator
+    self.claimsValidator = claimsValidator
   }
   
   public func verifyTypeMetadata(
@@ -53,4 +80,3 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }
 }
-

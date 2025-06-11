@@ -24,25 +24,26 @@ package protocol TypeMetadataClaimsValidatorType {
 struct TypeMetadataClaimsValidator: TypeMetadataClaimsValidatorType {
   
   func validate(_ payload: JSON, _ metadata: ResolvedTypeMetadata?) throws {
-    
 
     guard let metadata = metadata else {
       throw TypeMetadataError.missingTypeMetadata
     }
     
-    guard let payloadVct = payload["vct"].string, !payloadVct.isEmpty else {
-      throw TypeMetadataError.missingOrInvalidVCT
-    }
-    
-    guard payloadVct == metadata.vct else {
-      throw TypeMetadataError.vctMismatch
-    }
+    try validateVCT(payload["vct"].string, expectedVct: metadata.vct)
     
     let langs = metadata.displays.map { $0.lang }
     let uniqueLangs = Set(langs)
     guard langs.count == uniqueLangs.count else {
       throw TypeMetadataError.duplicateLanguageInDisplay
     }
-    
+  }
+  
+  private func validateVCT(_ payloadVct: String?, expectedVct: String) throws {
+    guard let vct = payloadVct, !vct.isEmpty else {
+      throw TypeMetadataError.missingOrInvalidVCT
+    }
+    guard vct == expectedVct else {
+      throw TypeMetadataError.vctMismatch
+    }
   }
 }

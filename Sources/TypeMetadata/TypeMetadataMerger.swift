@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 
+
 package protocol TypeMetadataMergerType {
+  
+  /**
+   * Merges an array of `ResolvedTypeMetadata` objects into a single `ResolvedTypeMetadata`.
+   *
+   * - Parameter metadataArray: An array of `ResolvedTypeMetadata` instances to merge.
+   * - Returns: A merged `ResolvedTypeMetadata` instance if the input array is not empty; otherwise, nil.
+   *
+   * The merging process prioritizes the properties of the first element in the array,
+   * using subsequent elements to fill in missing values or merge collections.
+   */
   func mergeMetadata(from metadataArray: [ResolvedTypeMetadata]) -> ResolvedTypeMetadata?
 }
 
@@ -67,6 +78,22 @@ struct TypeMetadataMerger: TypeMetadataMergerType {
     }
   }
   
+  
+  /**
+   * Merges two arrays of elements by a specified key, preserving the order and handling conflicts.
+   *
+   * This method:
+   * - Adds all elements from the `primary` array first.
+   * - For each element in the `secondary` array, merges with the corresponding element in `primary` if the key matches,
+   *   otherwise appends the element if the key was not seen.
+   *
+   * - Parameters:
+   *   - primary: The primary array whose elements take precedence.
+   *   - secondary: The secondary array to merge into the primary.
+   *   - keySelector: A closure that selects a key from an element for identifying uniqueness.
+   *   - merge: A closure that merges two elements with the same key, prioritizing the primary element.
+   * - Returns: A merged array containing elements from both arrays, merged by key.
+   */
   private func mergeByKey<T, K: Hashable>(
     primary: [T],
     secondary: [T],

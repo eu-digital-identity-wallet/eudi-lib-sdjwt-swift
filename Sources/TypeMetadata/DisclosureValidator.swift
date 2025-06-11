@@ -15,11 +15,22 @@
  */
 
 
-package protocol DisclosedValidatorType {
+package protocol DisclosureValidatorType {
+  
+  /**
+   Validates that the given disclosures satisfy the selectively disclosable constraints
+   defined in the resolved type metadata.
+   
+   - Parameters:
+   - metadata: The resolved type metadata containing claim definitions and constraints.
+   - disclosures: A dictionary of disclosures keyed by claim path.
+   - Throws: A `TypeMetadataError` if any disclosure constraint is violated.
+   */
   func validate(_ metadata: ResolvedTypeMetadata?, _ disclosures: DisclosuresPerClaimPath?) throws
 }
 
-struct DisclosedValidator: DisclosedValidatorType {
+
+struct DisclosureValidator: DisclosureValidatorType {
   func validate(_ metadata: ResolvedTypeMetadata?, _ disclosures: DisclosuresPerClaimPath?) throws {
     
     guard let metadata = metadata else {
@@ -33,7 +44,6 @@ struct DisclosedValidator: DisclosedValidatorType {
     for claim in metadata.claims {
       
       let claimPath = claim.path
-      print(claimPath)
       switch claim.selectivelyDisclosable {
       case .always:
         let hasDirectDisclosure = disclosures[claimPath]?.isEmpty == false
@@ -57,7 +67,3 @@ struct DisclosedValidator: DisclosedValidatorType {
     return
   }
 }
-                                
-                                
-                                
-                              

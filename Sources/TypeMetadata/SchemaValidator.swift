@@ -18,7 +18,17 @@ import SwiftyJSON
 import Foundation
 import JSONSchema
 
+/** A protocol for validating a JSON payload against one or more JSON Schemas. */
 package protocol SchemaValidatorType {
+  
+  /**
+   Validates a payload against a set of JSON schemas.
+   
+   - Parameters:
+   - payload: The JSON document to validate.
+   - schemas: An array of JSON Schema definitions.
+   - Throws: A `TypeMetadataError` if the payload or schemas are invalid or do not match.
+   */
   func validate(_ payload: JSON, _ schemas: [JSON]) throws
 }
 
@@ -29,12 +39,12 @@ struct SchemaValidator: SchemaValidatorType {
   ) throws {
     
     // Convert payload JSON to String
-    guard let payloadString = stringify(json: payload) else {
+    guard let payloadString = payload.stringified else {
       throw TypeMetadataError.invalidPayload
     }
     
     for schemaJSON in schemas {
-      guard let schemaString = stringify(json: schemaJSON) else {
+      guard let schemaString = schemaJSON.stringified else {
         throw TypeMetadataError.invalidSchema
       }
       
@@ -49,14 +59,6 @@ struct SchemaValidator: SchemaValidatorType {
         throw TypeMetadataError.schemaValidationFailed(description: descriptions)
       }
     }
-  }
-  
-  private func stringify(json: JSON) -> String? {
-    guard let data = try? json.rawData(),
-          let string = String(data: data, encoding: .utf8) else {
-      return nil
-    }
-    return string
   }
   
   private func flattenErrors(_ error: ValidationError) -> [ValidationError] {

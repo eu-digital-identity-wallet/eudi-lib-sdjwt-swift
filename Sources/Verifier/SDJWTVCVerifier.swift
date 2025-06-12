@@ -96,6 +96,11 @@ protocol SdJwtVcVerifierType {
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?
   ) async throws -> Result<SignedSDJWT, any Error>
+  
+  
+  func verifyTypeMetadata(
+    unverifiedSdJwt: String
+  ) async throws  -> Result<Bool, any Error>
 }
 
 /**
@@ -124,6 +129,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   /// A parser conforming to `ParserProtocol`, responsible for parsing SD-JWTs.
   private let parser: ParserProtocol
   
+  private let typeMetadataVerifier: TypeMetadataVerifierType?
+  
   /**
    * Initializes the `SDJWTVCVerifier` with dependencies for metadata fetching, certificate trust, and public key lookup.
    *
@@ -134,10 +141,12 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    */
   public init(
     parser: ParserProtocol = CompactParser(),
-    verificationMethod: VerificationMethod
+    verificationMethod: VerificationMethod,
+    typeMetadataVerifier: TypeMetadataVerifierType? = nil
   ) {
     self.parser = parser
     self.verificationMethod = verificationMethod
+    self.typeMetadataVerifier = typeMetadataVerifier
   }
   
   
@@ -262,6 +271,14 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     case .failure(let error):
       throw error
     }
+  }
+  
+  func verifyTypeMetadata(unverifiedSdJwt: String) async throws -> Result<Bool, any Error> {
+    let sdJwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
+    if let typeMetadataVerifier = typeMetadataVerifier {
+      try await typeMetadataVerifier.verifyTypeMetadata(sdJwt: sdJwt)
+    }
+    return .success(true)
   }
 }
 

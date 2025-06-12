@@ -94,4 +94,14 @@ extension JSON {
     
     return pointers
   }
+  
+  
+  /// Converts the JSON object to a UTF-8 encoded String.
+  var stringified: String? {
+    guard let data = try? self.rawData(),
+          let string = String(data: data, encoding: .utf8) else {
+      return nil
+    }
+    return string
+  }
 }

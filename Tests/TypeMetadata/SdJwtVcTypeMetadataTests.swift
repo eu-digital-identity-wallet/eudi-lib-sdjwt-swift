@@ -21,7 +21,7 @@ import SwiftyJSON
 final class SdJwtVcTypeMetadataTests: XCTestCase {
   
   func testValidSdJwtVcTypeMetadataInitialization() throws {
-    let vct = try SdJwtVcTypeMetadata.Vct(value: "test-vct")
+    let vct =  "test-vct"
     
     let metadata = try SdJwtVcTypeMetadata(
       vct: vct,
@@ -29,51 +29,25 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
       description: "Test Description"
     )
     
-    XCTAssertEqual(metadata.vct.value, "test-vct")
+    XCTAssertEqual(metadata.vct, "test-vct")
     XCTAssertEqual(metadata.name, "Test Name")
     XCTAssertEqual(metadata.description, "Test Description")
-    XCTAssertNil(metadata.schema) // Ensure optional properties default to nil
+    XCTAssertNil(metadata.schemaSource) // Ensure optional properties default to nil
   }
   
-  func testConflictingSchemaThrowsError() {
-    let vct = try! SdJwtVcTypeMetadata.Vct(value: "test-vct")
-    let schema = JSON(["key": "value"])
-    let schemaUri = URL(string: "https://example.com/schema")!
-    
-    XCTAssertThrowsError(
-      try SdJwtVcTypeMetadata(vct: vct, schema: schema, schemaUri: schemaUri)
-    ) { error in
-      XCTAssertEqual(error as? SDJWTError, SDJWTError.error("Conflicting schema definitions"))
-    }
-  }
-  
-  func testVctCannotBeEmpty() {
-    XCTAssertThrowsError(try SdJwtVcTypeMetadata.Vct(value: "")) { error in
-      XCTAssertEqual(error as? SDJWTError, SDJWTError.error("Vct value must not be blank"))
-    }
-  }
   
   func testValidClaimMetadataInitialization() {
     let claimMetadata = SdJwtVcTypeMetadata.ClaimMetadata(
-      path: "user.age",
+      path: .claim("user.age"),
       selectivelyDisclosable: .allowed
     )
-    
-    XCTAssertEqual(claimMetadata.path, "user.age")
+
+    let expectedPath = ClaimPath([.claim(name: "user.age")])
+    XCTAssertEqual(claimMetadata.path, expectedPath)
     XCTAssertEqual(claimMetadata.selectivelyDisclosable, .allowed)
     XCTAssertNil(claimMetadata.display)
   }
-  
-  func testDisplayCannotHaveDuplicateLanguages() {
-    let displayList = [
-      SdJwtVcTypeMetadata.DisplayMetadata(lang: "en", name: "English"),
-      SdJwtVcTypeMetadata.DisplayMetadata(lang: "en", name: "Duplicate English")
-    ]
-    
-    XCTAssertThrowsError(try SdJwtVcTypeMetadata.Display(value: displayList)) { error in
-      XCTAssertEqual(error as? SDJWTError, SDJWTError.error("Each language must appear only once in the display list"))
-    }
-  }
+
   
   func testValidDisplayMetadataInitialization() {
     let displayMetadata = SdJwtVcTypeMetadata.DisplayMetadata(
@@ -89,7 +63,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
   
   func testSvgTemplatePropertiesThrowsErrorWhenEmpty() {
     XCTAssertThrowsError(try SdJwtVcTypeMetadata.SvgTemplateProperties()) { error in
-      XCTAssertEqual(error as? SDJWTError, SDJWTError.error("At least one property must be specified"))
+      XCTAssertEqual(error as? TypeMetadataError, TypeMetadataError.missingDisplayProperties)
     }
   }
   
@@ -103,24 +77,24 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
   
   func testValidSvgTemplateInitialization() throws {
     let uri = URL(string: "https://example.com/svg")!
-    let integrity = SdJwtVcTypeMetadata.DocumentIntegrity(value: "hash123")
+    let integrity =  "hash123"
     let properties = try SdJwtVcTypeMetadata.SvgTemplateProperties(orientation: "landscape")
     
     let template = SdJwtVcTypeMetadata.SvgTemplate(uri: uri, uriIntegrity: integrity, properties: properties)
     
     XCTAssertEqual(template.uri, uri)
-    XCTAssertEqual(template.uriIntegrity?.value, "hash123")
+    XCTAssertEqual(template.uriIntegrity, "hash123")
     XCTAssertEqual(template.properties?.orientation, "landscape")
   }
   
   func testValidLogoMetadataInitialization() {
     let uri = URL(string: "https://example.com/logo.png")!
-    let integrity = SdJwtVcTypeMetadata.DocumentIntegrity(value: "hash456")
+    let integrity =  "hash456"
     
     let logoMetadata = SdJwtVcTypeMetadata.LogoMetadata(uri: uri, uriIntegrity: integrity, altText: "Logo Alt Text")
     
     XCTAssertEqual(logoMetadata.uri, uri)
-    XCTAssertEqual(logoMetadata.uriIntegrity?.value, "hash456")
+    XCTAssertEqual(logoMetadata.uriIntegrity, "hash456")
     XCTAssertEqual(logoMetadata.altText, "Logo Alt Text")
   }
   
@@ -137,16 +111,15 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
   }
   
   func testDocumentIntegrityInitialization() {
-    let integrity = SdJwtVcTypeMetadata.DocumentIntegrity(value: "integrity-value")
-    XCTAssertEqual(integrity.value, "integrity-value")
+    let integrity = "integrity-value"
+    XCTAssertEqual(integrity, "integrity-value")
   }
   
   func testComplexInitialization() throws {
-    let vct = try SdJwtVcTypeMetadata.Vct(value: "complex-vct")
-    let integrity = SdJwtVcTypeMetadata.DocumentIntegrity(value: "doc-integrity")
+    let vct = "complex-vct"
+    let integrity = "doc-integrity"
     
-    let displayMetadata = SdJwtVcTypeMetadata.DisplayMetadata(lang: "en", name: "Test Name")
-    let display = try SdJwtVcTypeMetadata.Display(value: [displayMetadata])
+    let displayMetadata = [SdJwtVcTypeMetadata.DisplayMetadata(lang: "en", name: "Test Name")]
     
     let schemaJson = JSON(["title": "Test Schema"])
     
@@ -157,16 +130,50 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
       description: "A more complex test case",
       extends: URL(string: "https://example.com")!,
       extendsIntegrity: integrity,
-      display: display,
+      display: displayMetadata,
       claims: [],
-      schema: schemaJson
+      schemaSource: .byValue(schemaJson)
     )
     
-    XCTAssertEqual(metadata.vct.value, "complex-vct")
+    XCTAssertEqual(metadata.vct, "complex-vct")
     XCTAssertEqual(metadata.name, "Complex Metadata")
     XCTAssertEqual(metadata.description, "A more complex test case")
-    XCTAssertEqual(metadata.extendsIntegrity?.value, "doc-integrity")
-    XCTAssertEqual(metadata.display?.value.first?.name, "Test Name")
+    XCTAssertEqual(metadata.extendsIntegrity, "doc-integrity")
+    XCTAssertEqual(metadata.display?.first?.name, "Test Name")
+  }
+  
+  func testDecodingTypeMetadataFromJSON() throws {
+    
+    // Given
+    let url = Bundle.module.url(forResource: "type_meta_data_pid", withExtension: "json")!
+    let jsonData = try! Data(contentsOf: url)
+    
+    // When
+    let decoder = JSONDecoder()
+    let metadata = try decoder.decode(SdJwtVcTypeMetadata.self, from: jsonData)
+    
+    // Then
+    XCTAssertEqual(metadata.vct, "https://mock.local/type_meta_data_pid")
+    XCTAssertEqual(metadata.name, "Type Metadata for Person Identification Data")
+
+    XCTAssertEqual(metadata.display?.count, 1)
+    XCTAssertEqual(metadata.display?.first?.lang, "en")
+    XCTAssertEqual(metadata.display?.first?.name, "PID")
+    XCTAssertEqual(metadata.display?.first?.description, "Person Identification Data")
+
+    XCTAssertEqual(metadata.claims?.count, 35)
+    XCTAssertEqual(metadata.claims?[0].path.value.first, .claim(name: "family_name"))
+
+    // Verify at least one path includes a null value
+    let containsNullPath = metadata.claims?.contains(where: { $0.path.value.contains(.allArrayElements) }) ?? false
+    XCTAssertTrue(containsNullPath, "Expected at least one claim path to contain null")
+
+    // Verify schema is parsed as byValue and is an object
+    if case let .byValue(schema)? = metadata.schemaSource {
+        XCTAssertEqual(schema["type"].stringValue, "object")
+    } else {
+        XCTFail("Expected schemaSource to be .byValue with a valid schema")
+    }
   }
 }
 

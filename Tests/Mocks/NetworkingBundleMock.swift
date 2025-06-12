@@ -22,29 +22,45 @@ import XCTest
 
 class NetworkingBundleMock: Networking {
   
-  let path: String
-  let `extension`: String
+  let path: String?
+  let `extension`: String?
   let statusCode: Int
+  let filenameResolver: ((URL) -> String)?
   
   init(
-    path: String,
-    `extension`: String,
-    statusCode: Int = 200
+    path: String? = nil,
+    `extension`: String? = nil,
+    statusCode: Int = 200,
+    filenameResolver: ((URL) -> String)? = nil
   ) {
     self.path = path
     self.extension = `extension`
     self.statusCode = statusCode
+    self.filenameResolver = filenameResolver
   }
   
   func data(
     from url: URL
   ) async throws -> (Data, URLResponse) {
-    let path = Bundle.module.path(forResource: self.path, ofType: self.extension)
-    let url = URL(fileURLWithPath: path!)
-    let data = try! Data(contentsOf: url)
+    
+    let filePath: String?
+
+    if let path = self.path, let ext = self.extension {
+      filePath = Bundle.module.path(forResource: path, ofType: ext)
+    } else {
+      let filename = filenameResolver?(url) ?? url.lastPathComponent
+      filePath = Bundle.module.path(forResource: filename, ofType: "json")
+    }
+
+    guard let path = filePath else {
+      throw URLError(.fileDoesNotExist)
+    }
+
+    let fileURL = URL(fileURLWithPath: path)
+    let data = try Data(contentsOf: fileURL)
     let result = Result<Data, Error>.success(data)
     let response = HTTPURLResponse(
-      url: .stub(),
+      url: url,
       statusCode: statusCode,
       httpVersion: nil,
       headerFields: [:]

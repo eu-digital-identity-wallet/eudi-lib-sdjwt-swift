@@ -259,7 +259,7 @@ extension SignedSDJWT {
     serialiser(self).serialised
   }
   
-  public func recreateClaims(visitor: ClaimVisitor? = nil) throws -> ClaimExtractorResult {
+  public func recreateClaims(visitor: ClaimVisitor? = .init()) throws -> ClaimExtractorResult {
     return try self.toSDJWT()
       .recreateClaims(
         visitor: visitor

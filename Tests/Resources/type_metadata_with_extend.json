@@ -1,0 +1,7 @@
+{
+  "vct": "https://mock.local/typeMetadataWithExtend",
+  "name": "Betelgeuse Education Credential - Preliminary Version",
+  "description": "This is our development version of the education credential. Don't panic.",
+  "extends": "https://mock.local/base_type_metadata",
+  "extends#integrity": "sha256-9cLlJNXN-TsMk-PmKjZ5t0WRL5ca_xGgX3c1VLmXfh-WRL5",
+}

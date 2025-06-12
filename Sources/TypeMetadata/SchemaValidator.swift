@@ -38,6 +38,12 @@ struct SchemaValidator: SchemaValidatorType {
     _ schemas: [JSON]
   ) throws {
     
+    guard #available(iOS 16.0, *) else {
+      throw TypeMetadataError.schemaValidationFailed(
+        description: "Schema validation requires iOS 16 and above"
+      )
+    }
+    
     // Convert payload JSON to String
     guard let payloadString = payload.stringified else {
       throw TypeMetadataError.invalidPayload

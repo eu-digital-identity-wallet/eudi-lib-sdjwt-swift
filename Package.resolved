@@ -1,5 +1,5 @@
 {
-  "originHash" : "28bcc5f94aa645f3260127641cf42f0b601ec68e1bf11c731a224dd75ca87ad5",
+  "originHash" : "36c11190773fedd76fce6a4b7cb83424ae8ddd733ecb9f0758207030365c2b29",
   "pins" : [
     {
       "identity" : "blueecc",
@@ -67,19 +67,10 @@
     {
       "identity" : "swift-json-schema",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ajevans99/swift-json-schema",
+      "location" : "https://github.com/niscy-eudiw/swift-json-schema",
       "state" : {
-        "revision" : "fd42799684a3f1cb925995f751b9f6e3b8ed8a26",
-        "version" : "0.7.0"
-      }
-    },
-    {
-      "identity" : "swift-syntax",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swiftlang/swift-syntax",
-      "state" : {
-        "revision" : "0687f71944021d616d34d922343dcef086855920",
-        "version" : "600.0.1"
+        "revision" : "c52f7a46245888f6c533c5006e45a6ad62d76fad",
+        "version" : "0.0.2"
       }
     },
     {

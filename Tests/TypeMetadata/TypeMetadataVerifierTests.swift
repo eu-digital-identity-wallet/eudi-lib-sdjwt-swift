@@ -49,7 +49,8 @@ final class TypeMetadataVerifierTests: XCTestCase {
     
     let sut = TypeMetadataVerifier(
       metadataLookup: metadataLookup,
-      schemaLookup: schemaLookup
+      schemaLookup: schemaLookup,
+      schemaValidator: SchemaValidator()
     )
     
     

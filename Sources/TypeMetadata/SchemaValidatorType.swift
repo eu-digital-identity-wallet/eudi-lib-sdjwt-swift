@@ -14,11 +14,22 @@
  * limitations under the License.
  */
 
+import SwiftyJSON
 import Foundation
+import JSONSchema
 
-extension Networking {
-  func fetch<T: Decodable>(from url: URL) async throws -> T {
-    let (data, _) = try await self.data(from: url)
-    return try JSONDecoder().decode(T.self, from: data)
-  }
+/** A protocol for validating a JSON payload against one or more JSON Schemas. */
+public protocol SchemaValidatorType {
+  
+  /**
+   Validates a payload against a set of JSON schemas.
+   
+   - Parameters:
+   - payload: The JSON document to validate.
+   - schemas: An array of JSON Schema definitions.
+   - Throws: A `TypeMetadataError` if the payload or schemas are invalid or do not match.
+   */
+  func validate(_ payload: JSON, _ schemas: [JSON]) throws
 }
+
+

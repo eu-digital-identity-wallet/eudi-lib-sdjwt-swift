@@ -273,7 +273,9 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
   }
   
-  func verifyTypeMetadata(unverifiedSdJwt: String) async throws -> Result<Bool, any Error> {
+  func verifyTypeMetadata(
+    unverifiedSdJwt: String
+  ) async throws -> Result<Bool, any Error> {
     let sdJwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
     if let typeMetadataVerifier = typeMetadataVerifier {
       try await typeMetadataVerifier.verifyTypeMetadata(sdJwt: sdJwt)

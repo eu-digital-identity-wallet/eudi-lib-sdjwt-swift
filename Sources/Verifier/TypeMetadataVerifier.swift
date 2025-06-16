@@ -15,7 +15,6 @@
  */
 import Foundation
 import SwiftyJSON
-import JSONSchema
 
 
 public protocol TypeMetadataVerifierType {
@@ -40,12 +39,13 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
   
   public init(
     metadataLookup: TypeMetadataLookup,
-    schemaLookup: TypeMetadataSchemaLookup
+    schemaLookup: TypeMetadataSchemaLookup,
+    schemaValidator: SchemaValidatorType
   ) {
     self.metadataLookup = metadataLookup
     self.schemaLookup = schemaLookup
     self.typeMetadataMerger = TypeMetadataMerger()
-    self.schemaValidator = SchemaValidator()
+    self.schemaValidator = schemaValidator
     self.disclosedValidator = DisclosureValidator()
     self.claimsValidator = TypeMetadataClaimsValidator()
   }
@@ -54,7 +54,7 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     metadataLookup: TypeMetadataLookup,
     schemaLookup: TypeMetadataSchemaLookup,
     typeMetadataMerger: TypeMetadataMergerType = TypeMetadataMerger(),
-    schemaValidator: SchemaValidatorType = SchemaValidator(),
+    schemaValidator: SchemaValidatorType,
     disclosedValidator: DisclosureValidatorType = DisclosureValidator(),
     claimsValidator: TypeMetadataClaimsValidatorType = TypeMetadataClaimsValidator()
   ) {

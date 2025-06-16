@@ -38,7 +38,10 @@ struct TypeMetadataLookupDefault: TypeMetadataLookup {
   let vct: Vct
   let fetcher: TypeMetadataFetching
   
-  public init(vct: Vct, fetcher: TypeMetadataFetching) {
+  public init(
+    vct: Vct,
+    fetcher: TypeMetadataFetching
+  ) {
     self.vct = vct
     self.fetcher = fetcher
   }

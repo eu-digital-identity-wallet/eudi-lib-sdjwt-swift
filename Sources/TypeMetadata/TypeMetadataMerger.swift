@@ -120,7 +120,6 @@ struct TypeMetadataMerger: TypeMetadataMergerType {
         merged.append(item)
       }
     }
-      
     return merged
   }
 }

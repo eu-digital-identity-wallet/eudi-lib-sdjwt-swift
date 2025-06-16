@@ -18,12 +18,18 @@ import SwiftyJSON
 
 
 package protocol TypeMetadataClaimsValidatorType {
-  func validate(_ payload: JSON, _ metadata: ResolvedTypeMetadata?) throws
+  func validate(
+    _ payload: JSON,
+    _ metadata: ResolvedTypeMetadata?
+  ) throws
 }
 
 struct TypeMetadataClaimsValidator: TypeMetadataClaimsValidatorType {
   
-  func validate(_ payload: JSON, _ metadata: ResolvedTypeMetadata?) throws {
+  func validate(
+    _ payload: JSON,
+    _ metadata: ResolvedTypeMetadata?
+  ) throws {
 
     guard let metadata = metadata else {
       throw TypeMetadataError.missingTypeMetadata
@@ -38,7 +44,10 @@ struct TypeMetadataClaimsValidator: TypeMetadataClaimsValidatorType {
     }
   }
   
-  private func validateVCT(_ payloadVct: String?, expectedVct: String) throws {
+  private func validateVCT(
+    _ payloadVct: String?,
+    expectedVct: String
+  ) throws {
     guard let vct = payloadVct, !vct.isEmpty else {
       throw TypeMetadataError.missingOrInvalidVCT
     }

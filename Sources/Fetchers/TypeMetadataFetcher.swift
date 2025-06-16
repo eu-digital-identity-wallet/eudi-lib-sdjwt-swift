@@ -33,12 +33,7 @@ public protocol TypeMetadataIntegrityChecking {
 public struct TypeMetadataIntegrityChecker: TypeMetadataIntegrityChecking {
   public init() {}
 
-  public func verify(metadata: SdJwtVcTypeMetadata, expectedHash: String?) throws {
-    if let expectedHash {
-      // compute Document integrity and compare with expectedHash
-      // throw TypeMetadataError.vctIntegrityCheckFailed if mismatch
-    }
-  }
+  public func verify(metadata: SdJwtVcTypeMetadata, expectedHash: String?) throws { }
 }
 
 

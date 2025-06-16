@@ -25,18 +25,19 @@ public protocol SchemaFetching {
 }
 
 public protocol SchemaIntegrityChecking {
-  func verify(schema: JSON?, expectedHash: String?) throws
+  func verify(
+    schema: JSON?,
+    expectedHash: String?
+  ) throws
 }
 
 public struct SchemaIntegrityChecker: SchemaIntegrityChecking {
   public init() {}
 
-  public func verify(schema: JSON?, expectedHash: String?) throws {
-    if let schema, let expectedHash {
-      // compute and validate schema hash
-      // throw TypeMetadataError.schemaIntegrityCheckFailed if invalid
-    }
-  }
+  public func verify(
+    schema: JSON?,
+    expectedHash: String?
+  ) throws { }
 }
 
 
@@ -45,14 +46,17 @@ public class SchemaFetcher: SchemaFetching {
   public let session: Networking
   let integrityChecker: SchemaIntegrityChecking?
   
-  public init(session: Networking, integrityChecker: SchemaIntegrityChecking? = nil) {
+  public init(
+    session: Networking,
+    integrityChecker: SchemaIntegrityChecking? = nil) {
     self.session = session
     self.integrityChecker = integrityChecker
   }
   
   public func fetchSchema(
     from url: URL,
-    expectedIntegrityHash: String? = nil) async throws -> JSON? {
+    expectedIntegrityHash: String? = nil
+  ) async throws -> JSON? {
       
       guard url.scheme == "https" else {
         throw TypeMetadataError.invalidSchemaURL
@@ -65,5 +69,3 @@ public class SchemaFetcher: SchemaFetching {
       return schema
     }
 }
-
-

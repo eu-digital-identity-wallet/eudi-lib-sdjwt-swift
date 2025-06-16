@@ -39,7 +39,9 @@ struct TypeMetadataSchemaLookupDefault: TypeMetadataSchemaLookup {
     self.schemaFetcher = schemaFetcher
   }
   
-  func getSchemas(metadataArray: [SdJwtVcTypeMetadata]) async throws -> [JSON] {
+  func getSchemas(
+    metadataArray: [SdJwtVcTypeMetadata]
+  ) async throws -> [JSON] {
     try await getAllSchemas(from: metadataArray, schemaFetcher: schemaFetcher)
   }
   

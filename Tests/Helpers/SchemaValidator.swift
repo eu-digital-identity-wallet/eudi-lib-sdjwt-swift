@@ -15,22 +15,10 @@
  */
 
 import SwiftyJSON
-import Foundation
 import JSONSchema
 
-/** A protocol for validating a JSON payload against one or more JSON Schemas. */
-package protocol SchemaValidatorType {
-  
-  /**
-   Validates a payload against a set of JSON schemas.
-   
-   - Parameters:
-   - payload: The JSON document to validate.
-   - schemas: An array of JSON Schema definitions.
-   - Throws: A `TypeMetadataError` if the payload or schemas are invalid or do not match.
-   */
-  func validate(_ payload: JSON, _ schemas: [JSON]) throws
-}
+@testable import eudi_lib_sdjwt_swift
+
 
 struct SchemaValidator: SchemaValidatorType {
   func validate(
@@ -66,8 +54,8 @@ struct SchemaValidator: SchemaValidatorType {
       }
     }
   }
-  
-  private func flattenErrors(_ error: ValidationError) -> [ValidationError] {
+
+    private func flattenErrors(_ error: ValidationError) -> [ValidationError] {
     var all: [ValidationError] = [error]
     if let nested = error.errors {
       all += nested.flatMap(flattenErrors)

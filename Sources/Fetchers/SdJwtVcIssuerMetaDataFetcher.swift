@@ -19,7 +19,9 @@ import JSONWebKey
 
 public protocol SdJwtVcIssuerMetaDataFetching {
   var session: Networking { get }
-  func fetchIssuerMetaData(issuer: URL) async throws -> SdJwtVcIssuerMetaData?
+  func fetchIssuerMetaData(
+    issuer: URL
+  ) async throws -> SdJwtVcIssuerMetaData?
 }
 
 public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
@@ -55,7 +57,6 @@ public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
         jwks: jwks.keys
       )
     }
-    
     return nil
   }
 }

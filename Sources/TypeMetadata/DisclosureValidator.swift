@@ -26,12 +26,18 @@ package protocol DisclosureValidatorType {
    - disclosures: A dictionary of disclosures keyed by claim path.
    - Throws: A `TypeMetadataError` if any disclosure constraint is violated.
    */
-  func validate(_ metadata: ResolvedTypeMetadata?, _ disclosures: DisclosuresPerClaimPath?) throws
+  func validate(
+    _ metadata: ResolvedTypeMetadata?,
+    _ disclosures: DisclosuresPerClaimPath?
+  ) throws
 }
 
 
 struct DisclosureValidator: DisclosureValidatorType {
-  func validate(_ metadata: ResolvedTypeMetadata?, _ disclosures: DisclosuresPerClaimPath?) throws {
+  func validate(
+    _ metadata: ResolvedTypeMetadata?,
+    _ disclosures: DisclosuresPerClaimPath?
+  ) throws {
     
     guard let metadata = metadata else {
       throw TypeMetadataError.missingTypeMetadata

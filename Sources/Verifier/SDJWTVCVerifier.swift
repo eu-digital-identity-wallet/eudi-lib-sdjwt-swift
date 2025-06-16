@@ -97,9 +97,12 @@ protocol SdJwtVcVerifierType {
     keyBindingVerifier: KeyBindingVerifier?
   ) async throws -> Result<SignedSDJWT, any Error>
   
-  
   func verifyTypeMetadata(
     unverifiedSdJwt: String
+  ) async throws  -> Result<Bool, any Error>
+  
+  func verifyTypeMetadata(
+    sdJwt: SignedSDJWT
   ) async throws  -> Result<Bool, any Error>
 }
 
@@ -277,6 +280,15 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     unverifiedSdJwt: String
   ) async throws -> Result<Bool, any Error> {
     let sdJwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
+    if let typeMetadataVerifier = typeMetadataVerifier {
+      try await typeMetadataVerifier.verifyTypeMetadata(sdJwt: sdJwt)
+    }
+    return .success(true)
+  }
+  
+  func verifyTypeMetadata(
+    sdJwt: SignedSDJWT
+  ) async throws -> Result<Bool, any Error> {
     if let typeMetadataVerifier = typeMetadataVerifier {
       try await typeMetadataVerifier.verifyTypeMetadata(sdJwt: sdJwt)
     }

@@ -246,7 +246,7 @@ Please check [VcVerifierTest](Tests/Verification/VcVerifierTest.swift) for code 
 ## SD-JWT VC Type Metadata Verification
 
 This library supports verification of [SD-JWT VC Type Metadata](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-08.html#name-sd-jwt-vc-type-metadata)
-Type metadata Verification is support through [SDJWTVCVerifier](Sources/Verifier/SDJWTVCVerifier.swift) and a [TypeMetadataVerifier](Sources/Verifier/SDJWTVCVerifier.swift)
+Type metadata Verification is supported through [SDJWTVCVerifier](Sources/Verifier/SDJWTVCVerifier.swift) and a [TypeMetadataVerifier](Sources/Verifier/SDJWTVCVerifier.swift)
 
 Please check [TypeMetadataVerifierTests](Tests/TypeMetadata/TypeMetadataVerifierTests.swift) for code examples on verifying SD-JWT VC Type Metadata.
 

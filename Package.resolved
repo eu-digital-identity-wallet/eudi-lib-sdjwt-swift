@@ -1,4 +1,5 @@
 {
+  "originHash" : "36c11190773fedd76fce6a4b7cb83424ae8ddd733ecb9f0758207030365c2b29",
   "pins" : [
     {
       "identity" : "blueecc",
@@ -64,6 +65,15 @@
       }
     },
     {
+      "identity" : "swift-json-schema",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/niscy-eudiw/swift-json-schema",
+      "state" : {
+        "revision" : "c52f7a46245888f6c533c5006e45a6ad62d76fad",
+        "version" : "0.0.2"
+      }
+    },
+    {
       "identity" : "swiftyjson",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SwiftyJSON/SwiftyJSON.git",
@@ -73,5 +83,5 @@
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

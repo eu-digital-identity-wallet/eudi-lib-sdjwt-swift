@@ -243,6 +243,23 @@ Please check [PresentationTest](Tests/Presentation/PresentationTest.swift) for c
 
 Please check [VcVerifierTest](Tests/Verification/VcVerifierTest.swift) for code examples on verifying an Issuance SD-JWT VC and a Presentation SD-JWT VC (including verification of the Key Binding JWT).
 
+## SD-JWT VC Type Metadata Verification
+
+This library supports verification of [SD-JWT VC Type Metadata](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-08.html#name-sd-jwt-vc-type-metadata)
+Type metadata Verification is supported through [SDJWTVCVerifier](Sources/Verifier/SDJWTVCVerifier.swift) and a [TypeMetadataVerifier](Sources/Verifier/SDJWTVCVerifier.swift)
+
+Please check [TypeMetadataVerifierTests](Tests/TypeMetadata/TypeMetadataVerifierTests.swift) for code examples on verifying SD-JWT VC Type Metadata.
+
+### How it works
+
+When `TypeMetadataVerifier.verifyTypeMetadata(sdJwt:)` is invoked, it performs the following steps:
+
+1. **Retrieves type metadata** using a user-provided `TypeMetadataLookup`.
+2. **Merges multiple metadata documents** into a unified `ResolvedTypeMetadata`, giving precedence to child metadata entries.
+3. **Fetches referenced schemas** using a user-provided `TypeMetadataSchemaLookup`.
+4. **Validates the SD-JWT claims** against the fetched schemas using a user-provided `SchemaValidatorType`.
+5. **Validates claim disclosures** (e.g. required, allowed, or disallowed).
+
 ## How to contribute
 
 We welcome contributions to this project. To ensure that the process is smooth for everyone

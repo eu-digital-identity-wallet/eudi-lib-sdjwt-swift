@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @preconcurrency import Foundation
+@testable import eudi_lib_sdjwt_swift
 import X509
 
 let key =
@@ -100,6 +101,209 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
   """.replacingOccurrences(of: "-----BEGIN EC PRIVATE KEY-----", with: "").replacingOccurrences(of: "-----END EC PRIVATE KEY-----", with: "").trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\n", with: "")
   
   static let anIssuersPrivateKeySignedcertificate = "MIIBeDCCAR6gAwIBAgIUVJkRgF8lYkGo9W0ic81Ixi2yBy4wCgYIKoZIzj0EAwIwFjEUMBIGA1UEAwwLZXhhbXBsZS5jb20wHhcNMjUwNTI5MTIxMzA4WhcNMjYwNTI5MTIxMzA4WjAWMRQwEgYDVQQDDAtleGFtcGxlLmNvbTBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABAyLIYk5bgIjv5pmYRduW5Twl9Kacb8z2Zmene7ry/kW5AXCzZzvK/rd4arBPcRKLXdFrW3KLOXgntW/smFusbKjSjBIMCcGA1UdEQQgMB6CC2V4YW1wbGUuY29tgg93d3cuZXhhbXBsZS5jb20wHQYDVR0OBBYEFKy5/BWnpWcWy9dPs7cJdzBNADf0MAoGCCqGSM49BAMCA0gAMEUCIG9Ew3Ok4eJUpFSLsW7i0U9gkcH0t0tP7/LLlQtd1bpXAiEAqBvnnoIyx9IRKUNbcuTEDKMpdwjl7m8Hrq6QLJ2CUSU="
+  
+  
+  nonisolated(unsafe) static let childMetadata = ResolvedTypeMetadata(
+    vct: "child_vct",
+    name: "child_name",
+    description: "child_description",
+    displays: [
+      SdJwtVcTypeMetadata.DisplayMetadata(lang: "child_display_1_lang",
+            name: "child_display_1_name",
+            description: "child_display_1_description",
+            rendering: .init(
+              simple: .init(
+                logo: .init(
+                  uri: URL(string: "child_display_1_rendering_simple_logo_uri")!,
+                  uriIntegrity: "child_display_1_rendering_simple_logo_uri_integrity"
+                ),
+                backgroundColor: "child_display_1_rendering_simple_backgroundColor",
+                textColor: "child_display_1_rendering_simple_textColor"
+              ),
+              svgTemplates: [
+                .init(uri: URL(string: "child_display_1_rendering_svgTemplates_uri")!,
+                      uriIntegrity: "child_display_1_rendering_svgTemplates_uriIntegrity",
+                      properties: try? SdJwtVcTypeMetadata.SvgTemplateProperties(
+                        orientation: "child_display_1_rendering_svgTemplates_properties_orientation",
+                        colorScheme: "child_display_1_rendering_svgTemplates_properties_colorScheme",
+                        contrast: "child_display_1_rendering_svgTemplates_properties_contrast"
+                      )
+                     )
+              ]
+            )
+           ),
+      SdJwtVcTypeMetadata.DisplayMetadata(lang: "child_display_2_lang",
+            name: "child_display_2_name",
+            description: "child_display_2_description",
+            rendering: .init(
+              simple: .init(
+                logo: .init(
+                  uri: URL(string: "child_display_2_rendering_simple_logo_uri")!,
+                  uriIntegrity: "child_display_2_rendering_simple_logo_uri_integrity"
+                ),
+                backgroundColor: "child_display_2_rendering_simple_backgroundColor",
+                textColor: "child_display_2_rendering_simple_textColor"
+              ),
+              svgTemplates: [
+                .init(uri: URL(string: "child_display_2_rendering_svgTemplates_uri")!,
+                      uriIntegrity: "child_display_2_rendering_svgTemplates_uriIntegrity",
+                      properties: try? SdJwtVcTypeMetadata.SvgTemplateProperties(
+                        orientation: "child_display_2_rendering_svgTemplates_properties_orientation",
+                        colorScheme: "child_display_2_rendering_svgTemplates_properties_colorScheme",
+                        contrast: "child_display_2_rendering_svgTemplates_properties_contrast"
+                      )
+                     )
+              ]
+            )
+           )
+    ],
+    claims: [
+      SdJwtVcTypeMetadata.ClaimMetadata(
+        path: ClaimPath([.claim(name: "child_claims_1_path")]),
+        display: [
+          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_1_display_1_lang",
+                label: "child_claims_1_display_1_label",
+                description: "child_claims_1_display_1_description"
+               ),
+          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_1_display_2_lang",
+                label: "child_claims_1_display_2_label",
+                description: "child_claims_1_display_2_description"
+               ),
+          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_1_display_3_lang",
+                label: "child_claims_1_display_3_label",
+                description: "child_claims_1_display_3_description"
+               )
+        ],
+        selectivelyDisclosable: .always,
+        svgId: "child_claims_1_svgId"
+       ),
+      SdJwtVcTypeMetadata.ClaimMetadata(
+        path: ClaimPath([.claim(name: "child_claims_2_path")]),
+        display: [
+          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_2_display_1_lang",
+                label: "child_claims_2_display_1_label",
+                description: "child_claims_1_display_1_description"
+               ),
+          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_2_display_2_lang",
+                label: "child_claims_2_display_2_label",
+                description: "child_claims_2_display_2_description"
+               ),
+          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_2_display_3_lang",
+                label: "child_claims_2_display_3_label",
+                description: "child_claims_2_display_3_description"
+               )
+        ],
+        selectivelyDisclosable: .always,
+        svgId: "child_claims_1_svgId"
+       )
+    ])
+  
+  nonisolated(unsafe) static let parentMetadata = ResolvedTypeMetadata(
+    vct: "parent_vct",
+    name: "parent_name",
+    description: "parent_description",
+    displays: [
+      SdJwtVcTypeMetadata.DisplayMetadata(
+        lang: "parent_display_1_lang",
+        name: "parent_display_1_name",
+        description: "parent_display_1_description",
+        rendering: .init(
+          simple: .init(
+            logo: .init(
+              uri: URL(string: "parent_display_1_rendering_simple_logo_uri")!,
+              uriIntegrity: "parent_display_1_rendering_simple_logo_uri_integrity"
+            ),
+            backgroundColor: "parent_display_1_rendering_simple_backgroundColor",
+            textColor: "parent_display_1_rendering_simple_textColor"
+          ),
+          svgTemplates: [
+            .init(
+              uri: URL(string: "parent_display_1_rendering_svgTemplates_uri")!,
+              uriIntegrity: "parent_display_1_rendering_svgTemplates_uriIntegrity",
+              properties: try? SdJwtVcTypeMetadata.SvgTemplateProperties(
+                orientation: "parent_display_1_rendering_svgTemplates_properties_orientation",
+                colorScheme: "parent_display_1_rendering_svgTemplates_properties_colorScheme",
+                contrast: "parent_display_1_rendering_svgTemplates_properties_contrast"
+              )
+            )
+          ]
+        )
+      ),
+      SdJwtVcTypeMetadata.DisplayMetadata(
+        lang: "parent_display_2_lang",
+        name: "parent_display_2_name",
+        description: "parent_display_2_description",
+        rendering: .init(
+          simple: .init(
+            logo: .init(
+              uri: URL(string: "parent_display_2_rendering_simple_logo_uri")!,
+              uriIntegrity: "parent_display_2_rendering_simple_logo_uri_integrity"
+            ),
+            backgroundColor: "parent_display_2_rendering_simple_backgroundColor",
+            textColor: "parent_display_2_rendering_simple_textColor"
+          ),
+          svgTemplates: [
+            .init(
+              uri: URL(string: "parent_display_2_rendering_svgTemplates_uri")!,
+              uriIntegrity: "parent_display_2_rendering_svgTemplates_uriIntegrity",
+              properties: try? SdJwtVcTypeMetadata.SvgTemplateProperties(
+                orientation: "parent_display_2_rendering_svgTemplates_properties_orientation",
+                colorScheme: "parent_display_2_rendering_svgTemplates_properties_colorScheme",
+                contrast: "parent_display_2_rendering_svgTemplates_properties_contrast"
+              )
+            )
+          ]
+        )
+      )
+    ],
+    claims: [
+      SdJwtVcTypeMetadata.ClaimMetadata(
+        path: ClaimPath([.claim(name: "parent_claims_1_path")]),
+        display: [
+          SdJwtVcTypeMetadata.ClaimDisplay(
+            lang: "parent_claims_1_display_1_lang",
+            label: "parent_claims_1_display_1_label",
+            description: "parent_claims_1_display_1_description"
+          ),
+          SdJwtVcTypeMetadata.ClaimDisplay(
+            lang: "parent_claims_1_display_2_lang",
+            label: "parent_claims_1_display_2_label",
+            description: "parent_claims_1_display_2_description"
+          ),
+          SdJwtVcTypeMetadata.ClaimDisplay(
+            lang: "parent_claims_1_display_3_lang",
+            label: "parent_claims_1_display_3_label",
+            description: "parent_claims_1_display_3_description"
+          )
+        ],
+        selectivelyDisclosable: .always,
+        svgId: "parent_claims_1_svgId"
+      ),
+      SdJwtVcTypeMetadata.ClaimMetadata(
+        path: ClaimPath([.claim(name: "parent_claims_2_path")]),
+        display: [
+          SdJwtVcTypeMetadata.ClaimDisplay(
+            lang: "parent_claims_2_display_1_lang",
+            label: "parent_claims_2_display_1_label",
+            description: "parent_claims_2_display_1_description"
+          ),
+          SdJwtVcTypeMetadata.ClaimDisplay(
+            lang: "parent_claims_2_display_2_lang",
+            label: "parent_claims_2_display_2_label",
+            description: "parent_claims_2_display_2_description"
+          ),
+          SdJwtVcTypeMetadata.ClaimDisplay(
+            lang: "parent_claims_2_display_3_lang",
+            label: "parent_claims_2_display_3_label",
+            description: "parent_claims_2_display_3_description"
+          )
+        ],
+        selectivelyDisclosable: .always,
+        svgId: "parent_claims_2_svgId"
+      )
+    ]
+  )
+  
   
   static func loadRootCertificates() throws -> [Certificate] {
     let certNames = [

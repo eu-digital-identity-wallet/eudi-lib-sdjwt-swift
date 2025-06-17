@@ -19,7 +19,9 @@ import JSONWebKey
 
 public protocol SdJwtVcIssuerMetaDataFetching {
   var session: Networking { get }
-  func fetchIssuerMetaData(issuer: URL) async throws -> SdJwtVcIssuerMetaData?
+  func fetchIssuerMetaData(
+    issuer: URL
+  ) async throws -> SdJwtVcIssuerMetaData?
 }
 
 public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
@@ -32,10 +34,8 @@ public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
   
   public func fetchIssuerMetaData(issuer: URL) async throws -> SdJwtVcIssuerMetaData? {
     let issuerMetadataUrl = issuerMetadataUrl(for: issuer)
-    let metadata: SdJwtVcIssuerMetadataTO = try await fetch(
-      from: issuerMetadataUrl,
-      with: session
-    )
+    let metadata: SdJwtVcIssuerMetadataTO = try await session.fetch(
+      from: issuerMetadataUrl)
     
     guard issuer == URL(string: metadata.issuer) else {
       throw SDJWTVerifierError.invalidJwt
@@ -49,16 +49,14 @@ public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
         jwks: jwks.keys
       )
     } else if metadata.jwksUri != nil {
-      let jwks: JWKSet = try await fetch(
-        from: issuerMetadataUrl,
-        with: session
+      let jwks: JWKSet = try await session.fetch(
+        from: issuerMetadataUrl
       )
       return .init(
         issuer: issuer,
         jwks: jwks.keys
       )
     }
-    
     return nil
   }
 }
@@ -71,20 +69,6 @@ private extension SdJwtVcIssuerMetaDataFetcher {
     return components.url!
   }
   
-  func fetch<T: Decodable>(from url: URL, with session: Networking) async throws -> T {
-    
-    let (data, response) = try await session.data(from: url)
-    
-    guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-      throw URLError(.badServerResponse)
-    }
-    
-    // Decode the JSON data into the Codable struct
-    let decoder = JSONDecoder()
-    let metadata = try decoder.decode(T.self, from: data)
-    
-    return metadata
-  }
   
   func xorValues(_ first: Any?, _ second: Any?) throws {
     // Ensure that one is non-nil and the other is nil, but not both non-nil or both nil

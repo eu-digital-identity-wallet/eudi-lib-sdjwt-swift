@@ -42,16 +42,12 @@ public struct SDJWT {
   }
   
   func extractDigestCreator() throws -> DigestCreator {
-    if jwt.payload[Keys.sdAlg.rawValue].exists() {
-      let stringValue = jwt.payload[Keys.sdAlg.rawValue].stringValue
-      let algorithIdentifier = HashingAlgorithmIdentifier.allCases.first(where: {$0.rawValue == stringValue})
-      guard let algorithIdentifier else {
-        throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
-      }
-      return DigestCreator(hashingAlgorithm: algorithIdentifier.hashingAlgorithm())
-    } else {
+    let sdAlg = jwt.payload[Keys.sdAlg.rawValue].string ?? "sha-256"
+    let algorithIdentifier = HashingAlgorithmIdentifier.allCases.first(where: {$0.rawValue == sdAlg})
+    guard let algorithIdentifier else {
       throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
     }
+    return DigestCreator(hashingAlgorithm: algorithIdentifier.hashingAlgorithm())
   }
   
   func recreateClaims(visitor: ClaimVisitor? = nil) throws -> ClaimExtractorResult {

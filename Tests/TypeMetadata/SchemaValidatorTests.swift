@@ -161,7 +161,7 @@ final class SchemaValidatorTests: XCTestCase {
     } catch let error as TypeMetadataError {
       
       // Then
-      XCTAssertEqual(error, .schemaValidationFailed(description: "Validation failed for keyword 'properties' at #, Validation failed for keyword 'properties' at #/address, Expected type '[JSONSchema.JSONType.string]' but found 'integer' at #/address/street_address"))
+      XCTAssertEqual(error, .schemaValidationFailed(description: "Validation failed for keyword 'properties' at #, Validation failed for keyword 'properties' at #/address, Expected type '[SwiftJSONSchema.JSONType.string]' but found 'integer' at #/address/street_address"))
     } catch {
       XCTFail("Unexpected error type: \(error)")
     }

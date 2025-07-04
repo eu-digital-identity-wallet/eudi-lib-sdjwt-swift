@@ -15,7 +15,7 @@
  */
 
 import SwiftyJSON
-import JSONSchema
+import SwiftJSONSchema
 
 @testable import eudi_lib_sdjwt_swift
 

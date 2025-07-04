@@ -16,7 +16,7 @@
 
 import SwiftyJSON
 import Foundation
-import JSONSchema
+import SwiftJSONSchema
 
 /** A protocol for validating a JSON payload against one or more JSON Schemas. */
 public protocol SchemaValidatorType {

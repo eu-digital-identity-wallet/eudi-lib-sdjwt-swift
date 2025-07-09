@@ -15,7 +15,7 @@
  */
 
 
-public struct Vct {
+public struct Vct: Hashable {
   public let uri: String
   public var integrityHash: String? = nil
   

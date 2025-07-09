@@ -26,6 +26,16 @@ public protocol TypeMetadataVerifierType {
    - Throws: Various validation errors depending on the step that fails.
    */
   func verifyTypeMetadata(sdJwt: SignedSDJWT) async throws
+  
+  
+  /**
+   Verifies that a SignedSDJWT's claims and disclosures match the expected type metadata and schemas.
+   
+   - Parameter sdJwt: The signed SD-JWT to verify.
+   - Parameter vcts: Array of required vcts
+   - Throws: Various validation errors depending on the step that fails.
+   */
+  func verifyTypeMetadata(for vcts:Set<String>, sdJwt: SignedSDJWT) async throws
 }
 
 public class TypeMetadataVerifier: TypeMetadataVerifierType {
@@ -76,6 +86,27 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     let finalData = typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
     try claimsValidator.validate(result.recreatedClaims, finalData)
     let schemas = try await schemaLookup.getSchemas(metadataArray: metadataArray)
+    try schemaValidator.validate(result.recreatedClaims, schemas)
+    try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
+  }
+  
+  public func verifyTypeMetadata(
+    for vcts:Set<String>,
+    sdJwt: SignedSDJWT
+  ) async throws {
+    let result = try sdJwt.recreateClaims()
+    let disclosuresPerClaimPath = result.disclosuresPerClaimPath
+    let metadataArray = try await metadataLookup.getTypeMetadata()
+    
+    // Filter only required metadata based on VCTs
+    let requiredMetadata = metadataArray.filter { vcts.contains($0.vct) }
+    
+    // If no required metadata matches, skip validations
+    guard !requiredMetadata.isEmpty else { return }
+    
+    let finalData = typeMetadataMerger.mergeMetadata(from: requiredMetadata.map { $0.toResolvedTypeMetadata() })
+    let schemas = try await schemaLookup.getSchemas(metadataArray: requiredMetadata)
+    try claimsValidator.validate(result.recreatedClaims, finalData)
     try schemaValidator.validate(result.recreatedClaims, schemas)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }

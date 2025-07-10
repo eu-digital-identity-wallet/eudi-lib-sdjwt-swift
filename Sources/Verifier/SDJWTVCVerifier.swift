@@ -96,14 +96,6 @@ protocol SdJwtVcVerifierType {
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?
   ) async throws -> Result<SignedSDJWT, any Error>
-  
-  func verifyTypeMetadata(
-    unverifiedSdJwt: String
-  ) async throws  -> Result<Bool, any Error>
-  
-  func verifyTypeMetadata(
-    sdJwt: SignedSDJWT
-  ) async throws  -> Result<Bool, any Error>
 }
 
 /**
@@ -132,7 +124,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   /// A parser conforming to `ParserProtocol`, responsible for parsing SD-JWTs.
   private let parser: ParserProtocol
   
-  private let typeMetadataVerifier: TypeMetadataVerifierType?
+  private let typeMetadataPolicy: TypeMetadataPolicy
   
   /**
    * Initializes the `SDJWTVCVerifier` with dependencies for metadata fetching, certificate trust, and public key lookup.
@@ -145,19 +137,23 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   public init(
     parser: ParserProtocol = CompactParser(),
     verificationMethod: VerificationMethod,
-    typeMetadataVerifier: TypeMetadataVerifierType? = nil
+    typeMetadataPolicy: TypeMetadataPolicy = .notUsed
+    
   ) {
     self.parser = parser
     self.verificationMethod = verificationMethod
-    self.typeMetadataVerifier = typeMetadataVerifier
+    self.typeMetadataPolicy = typeMetadataPolicy
   }
   
   
   func verifyIssuance(
     unverifiedSdJwt: String
   ) async throws -> Result<SignedSDJWT, any Error> {
-    let jws = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt).jwt
+    let sdjwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
+    let jws = sdjwt.jwt
     let jwk = try await issuerJwsKeySelector(jws: jws)
+    
+    try await verifyTypeMetadata(sdJwt: sdjwt)
     
     switch jwk {
     case .success(let jwk):
@@ -187,6 +183,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       throw SDJWTVerifierError.invalidJwt
     }
     
+    try await verifyTypeMetadata(sdJwt: sdJwt)
+    
     let jws = sdJwt.jwt
     let jwk = try await issuerJwsKeySelector(jws: jws)
     
@@ -210,8 +208,10 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
-    let jws = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt).jwt
+    let sdjwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
+    let jws = sdjwt.jwt
     let jwk = try await issuerJwsKeySelector(jws: jws)
+    try await verifyTypeMetadata(sdJwt: sdjwt)
     
     switch jwk {
     case .success(let jwk):
@@ -252,6 +252,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     
     let jws = sdJwt.jwt
     let jwk = try await issuerJwsKeySelector(jws: jws)
+    try await verifyTypeMetadata(sdJwt: sdJwt)
     
     switch jwk {
     case .success(let jwk):
@@ -276,23 +277,28 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     }
   }
   
-  func verifyTypeMetadata(
-    unverifiedSdJwt: String
-  ) async throws -> Result<Bool, any Error> {
-    let sdJwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
-    if let typeMetadataVerifier = typeMetadataVerifier {
-      try await typeMetadataVerifier.verifyTypeMetadata(sdJwt: sdJwt)
-    }
-    return .success(true)
-  }
   
-  func verifyTypeMetadata(
+  private func verifyTypeMetadata(
     sdJwt: SignedSDJWT
-  ) async throws -> Result<Bool, any Error> {
-    if let typeMetadataVerifier = typeMetadataVerifier {
-      try await typeMetadataVerifier.verifyTypeMetadata(sdJwt: sdJwt)
+  ) async throws {
+    switch typeMetadataPolicy {
+    case .notUsed:
+      return
+      
+    case .optional(let verifier):
+      do {
+        try await verifier.verifyTypeMetadata(sdJwt: sdJwt)
+        return
+      } catch {
+        return
+      }
+      
+    case .alwaysRequired(let verifier):
+        try await verifier.verifyTypeMetadata(sdJwt: sdJwt)
+      
+    case .requiredFor(let vcts, let verifier):
+        try await verifier.verifyTypeMetadata(for: vcts, sdJwt: sdJwt)
     }
-    return .success(true)
   }
 }
 

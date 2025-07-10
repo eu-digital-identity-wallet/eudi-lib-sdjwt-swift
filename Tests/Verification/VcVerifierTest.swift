@@ -361,5 +361,307 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
     XCTAssertNoThrow(try result.get())
   }
+  
+  
+  func testVerifyIssuance_WithPolicyNotUsed_ShouldSucceed() async throws {
+    
+    // Given
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+    
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(
+        trust: X509CertificateChainVerifier(
+          rootCertificates: try! SDJWTConstants.loadRootCertificates()
+        )),
+      typeMetadataPolicy: .notUsed
+    )
+    
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+
+  
+  func testVerifyIssuance_WithPolicyOptional_ShouldSucceed() async throws {
+    
+    // Given
+    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
+    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+    
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(
+      trust: X509CertificateChainVerifier(
+        rootCertificates: try! SDJWTConstants.loadRootCertificates()
+      )),
+      typeMetadataPolicy: .optional(verifier: typeMetadataVerifier)
+      )
+    
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
+  func testVerifyIssuance_WithPolicyAlwaysRequired_InvalidMetadata_ShouldFail() async throws {
+    
+    // Given
+    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
+    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+    
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(
+      trust: X509CertificateChainVerifier(
+        rootCertificates: try! SDJWTConstants.loadRootCertificates()
+      )),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+      )
+    
+    do {
+      // When
+      _ = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+      XCTFail("Verification should not succeeded")
+    } catch {
+      // Then
+      XCTAssertEqual(error as? TypeMetadataError, .vctMismatch)
+    }
+  }
+  
+  func testVerifyIssuance_WithPolicyAlwaysRequired_ValidMetadata_ShouldSucceed() async throws {
+    
+    // Given
+    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
+    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let keyData = Data(
+      base64Encoded: SDJWTConstants.anIssuerPrivateKey
+    )!
+    
+    let issuerSignedSDJWT = try! await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(
+        from: keyData
+      ),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [
+          SDJWTConstants.anIssuersPrivateKeySignedcertificate
+        ]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://www.example.com")
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.sub(subject: "123456789")
+      
+      PlainClaim("vct", "https://mock.local/type_meta_data_pid")
+      
+      FlatDisclosedClaim("family_name", "Doe")
+      FlatDisclosedClaim("given_name", "John")
+      FlatDisclosedClaim("birthdate", "1990-01-01")
+      
+      RecursiveObject("place_of_birth") {
+        FlatDisclosedClaim("locality", "Berlin")
+        FlatDisclosedClaim("region", "Berlin")
+        FlatDisclosedClaim("country", "DE")
+      }
+      
+      RecursiveArrayClaim("nationalities") {
+        SdElement.flat("DE")
+        SdElement.flat("GR")
+      }
+      
+      RecursiveObject("address") {
+        FlatDisclosedClaim("house_number", "12")
+        FlatDisclosedClaim("street_address", "Schulstr.")
+        FlatDisclosedClaim("locality", "Berlin")
+        FlatDisclosedClaim("region", "Berlin")
+        FlatDisclosedClaim("postal_code", "10115")
+        FlatDisclosedClaim("country", "DE")
+        FlatDisclosedClaim("formatted", "Schulstr. 12, 10115 Berlin, Germany")
+      }
+      
+      FlatDisclosedClaim("personal_administrative_number", "1234567890")
+      FlatDisclosedClaim("picture", "testPicture")
+      FlatDisclosedClaim("birth_family_name", "Doe")
+      FlatDisclosedClaim("birth_given_name", "John")
+      FlatDisclosedClaim("sex", 1)
+      FlatDisclosedClaim("email", "john.doe@example.com")
+      FlatDisclosedClaim("phone_number", "+491234567890")
+      FlatDisclosedClaim("date_of_expiry", "2030-01-01")
+      FlatDisclosedClaim("issuing_authority", "Authority XYZ")
+      FlatDisclosedClaim("issuing_country", "DE")
+      FlatDisclosedClaim("document_number", "ABC123456")
+      FlatDisclosedClaim("issuing_jurisdiction", "DE")
+      FlatDisclosedClaim("date_of_issuance", "2020-01-01")
+      
+      RecursiveObject("age_equal_or_over") {
+        FlatDisclosedClaim("18", true)
+      }
+      
+      FlatDisclosedClaim("age_in_years", 34)
+      FlatDisclosedClaim("age_birth_year", "1990")
+      FlatDisclosedClaim("trust_anchor", "https://trust.anchor.de")
+    }
+    
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(
+      trust: X509CertificateChainVerifier(
+        rootCertificates: try! SDJWTConstants.loadRootCertificates()
+      )),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+      )
+    
+    let sdJwtString =  issuerSignedSDJWT.serialisation
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  
+  }
+  
+  func testVerifyIssuance_WithPolicyRequiredForVcts_MissingDisclosure_ShouldFail() async throws {
+    
+    // Given
+    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
+    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let keyData = Data(
+      base64Encoded: SDJWTConstants.anIssuerPrivateKey
+    )!
+    
+    let issuerSignedSDJWT = try! await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(
+        from: keyData
+      ),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [
+          SDJWTConstants.anIssuersPrivateKeySignedcertificate
+        ]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://www.example.com")
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.sub(subject: "123456789")
+      
+      PlainClaim("vct", "https://mock.local/type_meta_data_pid")
+      
+      FlatDisclosedClaim("family_name", "Doe")
+      FlatDisclosedClaim("given_name", "John")
+      FlatDisclosedClaim("birthdate", "1990-01-01")
+      
+      RecursiveObject("place_of_birth") {
+        FlatDisclosedClaim("locality", "Berlin")
+        FlatDisclosedClaim("region", "Berlin")
+        FlatDisclosedClaim("country", "DE")
+      }
+      
+      RecursiveArrayClaim("nationalities") {
+        SdElement.flat("DE")
+        SdElement.flat("GR")
+      }
+      
+      RecursiveObject("address") {
+        FlatDisclosedClaim("house_number", "12")
+        FlatDisclosedClaim("street_address", "Schulstr.")
+        FlatDisclosedClaim("locality", "Berlin")
+        FlatDisclosedClaim("region", "Berlin")
+        FlatDisclosedClaim("postal_code", "10115")
+        FlatDisclosedClaim("country", "DE")
+        FlatDisclosedClaim("formatted", "Schulstr. 12, 10115 Berlin, Germany")
+      }
+      
+      FlatDisclosedClaim("personal_administrative_number", "1234567890")
+      FlatDisclosedClaim("picture", "testPicture")
+      FlatDisclosedClaim("birth_family_name", "Doe")
+      FlatDisclosedClaim("birth_given_name", "John")
+      //FlatDisclosedClaim("sex", 1) // Remove Disclosure
+      FlatDisclosedClaim("email", "john.doe@example.com")
+      FlatDisclosedClaim("phone_number", "+491234567890")
+      FlatDisclosedClaim("date_of_expiry", "2030-01-01")
+      FlatDisclosedClaim("issuing_authority", "Authority XYZ")
+      FlatDisclosedClaim("issuing_country", "DE")
+      FlatDisclosedClaim("document_number", "ABC123456")
+      FlatDisclosedClaim("issuing_jurisdiction", "DE")
+      FlatDisclosedClaim("date_of_issuance", "2020-01-01")
+      
+      RecursiveObject("age_equal_or_over") {
+        FlatDisclosedClaim("18", true)
+      }
+      
+      FlatDisclosedClaim("age_in_years", 34)
+      FlatDisclosedClaim("age_birth_year", "1990")
+      FlatDisclosedClaim("trust_anchor", "https://trust.anchor.de")
+    }
+    
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(
+      trust: X509CertificateChainVerifier(
+        rootCertificates: try! SDJWTConstants.loadRootCertificates()
+      )),
+      typeMetadataPolicy: .requiredFor(vcts: ["https://mock.local/type_meta_data_pid", "other_metadata"], verifier: typeMetadataVerifier))
+    
+    let sdJwtString =  issuerSignedSDJWT.serialisation
+  
+    do {
+      // When
+      _ = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+      XCTFail("Verification should not succeeded")
+    } catch {
+      let missingClaimPath = ClaimPath([.claim(name: "sex")])
+      XCTAssertEqual(error as? TypeMetadataError, .expectedDisclosureMissing(path: missingClaimPath))
+    }
+  }
+  
+  
+  func testVerifyIssuance_WithPolicyRequiredForVcts_EmptyRequiredSet_ShouldSucceed() async throws {
+    
+    // Given
+    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
+    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+    
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(
+      trust: X509CertificateChainVerifier(
+        rootCertificates: try! SDJWTConstants.loadRootCertificates()
+      )),
+      typeMetadataPolicy: .requiredFor(vcts: [], verifier: typeMetadataVerifier)
+      )
+    
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
+  private func typeMetadataVerifierFactory(with vct: Vct) -> TypeMetadataVerifierType {
+    let session = NetworkingBundleMock(
+      filenameResolver: { url in
+      url.lastPathComponent
+    })
+    
+    let metadataFetcher = TypeMetadataFetcher(session: session)
+    let schemafetcher = SchemaFetcher(session: session)
+    
+    let metadataLookup = TypeMetadataLookupDefault(
+      vct: vct,
+      fetcher: metadataFetcher)
+    
+    let schemaLookup = TypeMetadataSchemaLookupDefault(
+      schemaFetcher: schemafetcher
+    )
+    
+    let verifier = TypeMetadataVerifier(
+      metadataLookup: metadataLookup,
+      schemaLookup: schemaLookup,
+      schemaValidator: SchemaValidator()
+    )
+    
+    return verifier
+  }
 }
 

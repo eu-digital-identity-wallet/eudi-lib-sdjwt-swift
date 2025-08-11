@@ -66,10 +66,6 @@ struct SdJwtVcSpec {
   static let wellKnownSuffixJWTVcIssuer = "jwt-vc-issuer"
   static let wellKnownJWTVcIssuer = "/.well-known/\(wellKnownSuffixJWTVcIssuer)"
   
-  /// Deprecated: Removed from SD-JWT-VC
-  @available(*, deprecated, message: "Replaced with SdJwtVcSpec.mediaSubtypeDCSdJWT")
-  static let mediaSubtypeVCSdJWT = "vc+sd-jwt"
-  
   // MARK: - Media Types
   static let mediaSubtypeDCSdJWT = "dc+sd-jwt"
   static let mediaTypeApplicationDCSdJWT = "application/\(mediaSubtypeDCSdJWT)"

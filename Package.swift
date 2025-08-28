@@ -24,7 +24,7 @@ let package = Package(
     ),
     .package(
       url: "https://github.com/beatt83/jose-swift.git",
-      from: "4.0.0"
+      from: "6.0.0"
     ),
     .package(
       url: "https://github.com/apple/swift-certificates.git",
@@ -36,7 +36,7 @@ let package = Package(
     ),
     .package(
       url: "https://github.com/krzyzanowskim/CryptoSwift.git",
-      from: "1.8.4"
+      from: "1.9.0"
     ),
     .package(
       url: "https://github.com/niscy-eudiw/swift-json-schema",

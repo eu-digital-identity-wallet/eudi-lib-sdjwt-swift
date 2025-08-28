@@ -1,5 +1,5 @@
 {
-  "originHash" : "db92dc16facc50a8ac0433878f8d36d748717650acb9e364625cebb9e4944cd5",
+  "originHash" : "e1e24dc7d4c38befed215d707ea5a05bec1a7688a2f964170c14ea1fb6a76374",
   "pins" : [
     {
       "identity" : "blueecc",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/krzyzanowskim/CryptoSwift.git",
       "state" : {
-        "revision" : "729e01bc9b9dab466ac85f21fb9ee2bc1c61b258",
-        "version" : "1.8.4"
+        "revision" : "e45a26384239e028ec87fbcc788f513b67e10d8f",
+        "version" : "1.9.0"
       }
     },
     {
@@ -24,8 +24,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/beatt83/jose-swift.git",
       "state" : {
-        "revision" : "c289a01f895501257e170d422a57a6edc593bbcd",
-        "version" : "4.0.0"
+        "revision" : "52858a5646e6e954ebc1dcd54bedabb5973716bb",
+        "version" : "6.0.0"
       }
     },
     {
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-asn1.git",
       "state" : {
-        "revision" : "df5d2fcd22e3f480e3ef85bf23e277a4a0ef524d",
-        "version" : "1.2.0"
+        "revision" : "f70225981241859eb4aa1a18a75531d26637c8cc",
+        "version" : "1.4.0"
       }
     },
     {
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-certificates.git",
       "state" : {
-        "revision" : "2f797305c1b5b982acaa6005d8a9f970cc4e97ff",
-        "version" : "1.5.0"
+        "revision" : "274f8668d3ec5d2892904d8465635c5ea659f767",
+        "version" : "1.7.0"
       }
     },
     {
@@ -80,6 +80,15 @@
       "state" : {
         "revision" : "af76cf3ef710b6ca5f8c05f3a31307d44a3c5828",
         "version" : "5.0.2"
+      }
+    },
+    {
+      "identity" : "zlib",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/DLTAStudio/zlib.git",
+      "state" : {
+        "revision" : "ad7db0fdde74b88b3ac9b20d412c3129e7eade34",
+        "version" : "1.0.1"
       }
     }
   ],

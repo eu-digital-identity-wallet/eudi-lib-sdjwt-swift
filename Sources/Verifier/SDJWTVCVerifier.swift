@@ -22,7 +22,7 @@ import JSONWebToken
 
 private let HTTPS_URI_SCHEME = "https"
 private let DID_URI_SCHEME = "did"
-private let SD_JWT_VC_TYPE = "vc+sd-jwt"
+private let SD_JWT_DC_TYPE = "dc+sd-jwt"
 
 /**
  * A protocol to look up public keys from DIDs/DID URLs.

@@ -101,3 +101,6 @@ project.json
 
 # Coverage reports
 xcov_output/
+
+# Ignore all xcuserdatad folders
+*.xcuserdatad/

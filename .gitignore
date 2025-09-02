@@ -104,3 +104,4 @@ xcov_output/
 
 # Ignore all xcuserdatad folders
 *.xcuserdatad/
+*.xcuserdata/

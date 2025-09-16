@@ -46,6 +46,78 @@ public class CompactParser: ParserProtocol {
     return try SignedSDJWT(serializedJwt: serialisedJWT, disclosures: disclosuresInBase64, serializedKbJwt: serialisedKBJWT)
   }
   
+  public func fromJwsJsonObject(_ json: JSON) throws -> SignedSDJWT {
+    let compactString = try stringFromJwsJsonObject(json)
+    return try getSignedSdJwt(serialisedString: compactString)
+  }
+  
+  func stringFromJwsJsonObject(_ json: JSON) throws -> String {
+    let payload: String
+    let protected: String
+    let signature: String
+    let disclosures: [String]
+    let kbJwt: String?
+    
+    // Extract payload (same location in both formats)
+    guard let payloadValue = json[JWS_JSON_PAYLOAD].string else {
+      throw SDJWTError.serializationError
+    }
+    payload = payloadValue
+    
+    // Determine format and extract components accordingly
+    if json[JWS_JSON_SIGNATURES].exists() {
+      guard let firstSignature = json[JWS_JSON_SIGNATURES].array?.first else {
+        throw SDJWTError.serializationError
+      }
+      
+      guard
+        let protectedValue = firstSignature[JWS_JSON_PROTECTED].string,
+        let signatureValue = firstSignature[JWS_JSON_SIGNATURE].string
+      else {
+        throw SDJWTError.serializationError
+      }
+      
+      protected = protectedValue
+      signature = signatureValue
+      
+      // Extract disclosures and kb_jwt from header in general format
+      disclosures = firstSignature[JWS_JSON_HEADER][JWS_JSON_DISCLOSURES].arrayValue
+        .compactMap { $0.string }
+      kbJwt = firstSignature[JWS_JSON_HEADER][JWS_JSON_KB_JWT].string
+      
+    } else {
+      // Flattened format: protected/signature at root level
+      guard
+        let protectedValue = json[JWS_JSON_PROTECTED].string,
+        let signatureValue = json[JWS_JSON_SIGNATURE].string
+      else {
+        throw SDJWTError.serializationError
+      }
+      
+      protected = protectedValue
+      signature = signatureValue
+      
+      // Extract disclosures and kb_jwt from header in flattened format
+      disclosures = json[JWS_JSON_HEADER][JWS_JSON_DISCLOSURES].arrayValue
+        .compactMap { $0.string }
+      kbJwt = json[JWS_JSON_HEADER][JWS_JSON_KB_JWT].string
+    }
+    
+    // Reconstruct JWT compact format
+    let jwtString = "\(protected).\(payload).\(signature)"
+    
+    // Reconstruct SD-JWT format: JWT~disclosure1~disclosure2~...~kbJwt
+    var components = [jwtString]
+    components.append(contentsOf: disclosures)
+    
+    if let kbJwt = kbJwt {
+      components.append(kbJwt)
+      return components.joined(separator: "~")
+    } else {
+      return components.joined(separator: "~").appending("~")
+    }
+  }
+  
   func extractJWTParts(_ jwt: String) throws -> (String, String, String) {
     // Split the JWT string into its components: header, payload, signature
     let parts = jwt.split(separator: ".")
@@ -84,9 +156,7 @@ public class CompactParser: ParserProtocol {
     
     // Convert Substring to String just before returning
     return (String(unwrappedHeader), String(unwrappedPayload), String(unwrappedSignature))
-    
   }
-  
   
   /**
    Parses a combined SD-JWT string into its components.

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import Foundation
+import SwiftyJSON
 
 public protocol ParserProtocol {
   // Existing method to support SerialiserProtocol
@@ -21,6 +22,9 @@ public protocol ParserProtocol {
   
   // New method to support String input
   func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT
+  
+  // Get SignedSDJWT from JSON
+  func fromJwsJsonObject(_ json: JSON) throws -> SignedSDJWT
 }
 
 struct NoParser: ParserProtocol {
@@ -32,6 +36,10 @@ struct NoParser: ParserProtocol {
   }
   
   func getSignedSdJwt(serialisedString: String) throws -> SignedSDJWT {
+    return self.sdJWT
+  }
+  
+  func fromJwsJsonObject(_ json: JSON) throws -> SignedSDJWT {
     return self.sdJWT
   }
 }

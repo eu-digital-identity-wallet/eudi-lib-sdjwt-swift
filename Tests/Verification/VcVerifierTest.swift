@@ -384,6 +384,90 @@ final class VcVerifierTest: XCTestCase {
   }
 
   
+  func testVerifyIssuance_WithPolicyOptionalAndRealRemoteUrl_ShouldSucceed() async throws {
+    
+    // Given
+    let keyData = Data(
+      base64Encoded: SDJWTConstants.anIssuerPrivateKey
+    )!
+    
+    let vct = try! Vct(uri: "https://dev.issuer-backend.eudiw.dev/type-metadata/urn:eudi:pid:1")
+    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct, useMock: false)
+    let sdJwtString = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(
+        from: keyData
+      ),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [
+          SDJWTConstants.anIssuersPrivateKeySignedcertificate
+        ]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://www.example.com")
+      PlainClaim("vct", "urn:eudi:pid:1")
+      FlatDisclosedClaim("family_name", "disclosedName")
+      FlatDisclosedClaim("given_name", "disclosedName")
+      FlatDisclosedClaim("birthdate", "birthdate")
+      FlatDisclosedClaim("picture", "birthdate")
+      FlatDisclosedClaim("birth_family_name", "birthdate")
+      FlatDisclosedClaim("birth_given_name", "birthdate")
+      FlatDisclosedClaim("email", "birthdate")
+      FlatDisclosedClaim("phone_number", "birthdate")
+      FlatDisclosedClaim("date_of_expiry", "birthdate")
+      FlatDisclosedClaim("date_of_issuance", "date_of_issuance")
+      FlatDisclosedClaim("sex", 1)
+      RecursiveObject("age_equal_or_over") {
+        FlatDisclosedClaim("18", true)
+      }
+      FlatDisclosedClaim("issuing_authority", "auth")
+      FlatDisclosedClaim("document_number", "auth")
+      FlatDisclosedClaim("issuing_country", "auth")
+      FlatDisclosedClaim("issuing_jurisdiction", "auth")
+      FlatDisclosedClaim("personal_administrative_number", "birthdate")
+      FlatDisclosedClaim("place_of_birth",[
+        "country": "IS",
+        "locality": "Þykkvabæjarklaustur"
+        ]
+      )
+      RecursiveObject("address") {
+        FlatDisclosedClaim("street_address", "Schulstr. 12")
+        FlatDisclosedClaim("locality", "Schulpforta")
+        FlatDisclosedClaim("region", "Sachsen-Anhalt")
+        FlatDisclosedClaim("country", "DE")
+      }
+      FlatDisclosedClaim("nationalities", ["DE", "FR", "EN"])
+      FlatDisclosedClaim("age_in_years", 34)
+      FlatDisclosedClaim("age_birth_year", "1990")
+      FlatDisclosedClaim("trust_anchor", "https://trust.anchor.de")
+    }.serialisation
+    
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: 
+          .x509(
+            trust: X509CertificateChainVerifier(
+              rootCertificates: try! SDJWTConstants
+                .loadRootCertificates()
+            )
+          ),
+      typeMetadataPolicy: 
+          .alwaysRequired(
+            verifier: typeMetadataVerifier
+          )
+      )
+    
+    // When
+    do {
+      let result = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+      
+      // Then
+      XCTAssertNoThrow(try result.get())
+    } catch {
+      XCTExpectFailure()
+      XCTFail()
+    }
+  }
+  
   func testVerifyIssuance_WithPolicyOptional_ShouldSucceed() async throws {
     
     // Given
@@ -638,11 +722,16 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
-  private func typeMetadataVerifierFactory(with vct: Vct) -> TypeMetadataVerifierType {
-    let session = NetworkingBundleMock(
-      filenameResolver: { url in
-      url.lastPathComponent
-    })
+  private func typeMetadataVerifierFactory(
+    with vct: Vct,
+    useMock: Bool = true
+  ) -> TypeMetadataVerifierType {
+    let session: Networking = useMock ? (
+      NetworkingBundleMock(
+        filenameResolver: { url in
+          url.lastPathComponent
+        })
+    ) : URLSession.shared
     
     let metadataFetcher = TypeMetadataFetcher(session: session)
     let schemafetcher = SchemaFetcher(session: session)

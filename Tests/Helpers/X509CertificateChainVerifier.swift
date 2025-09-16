@@ -18,7 +18,9 @@ import X509
 import SwiftASN1
 import Security
 
-public enum CertificateValidationError: Error {
+@testable import eudi_lib_sdjwt_swift
+
+enum CertificateValidationError: Error {
   case invalidCertificateData
   case insufficientCertificates
   case signatureValidationFailed
@@ -27,9 +29,10 @@ public enum CertificateValidationError: Error {
   case invalidChain([VerificationResult.PolicyFailure])
 }
 
-public protocol X509CertificateTrust: Sendable {
-  var rootCertificates: [Certificate] { get }
-  func isTrusted(chain: [Certificate]) async -> Bool
+enum ChainTrustResult: Equatable {
+  case success
+  case recoverableFailure(String)
+  case failure
 }
 
 struct X509CertificateTrustAlways: X509CertificateTrust {
@@ -41,27 +44,15 @@ struct X509CertificateTrustFactory {
   public static let trust: X509CertificateTrust = X509CertificateTrustAlways()
 }
 
-public typealias Base64Certificate = String
-
-public enum ChainTrustResult: Equatable {
-  case success
-  case recoverableFailure(String)
-  case failure
-}
-
-public enum DataConversionError: Error {
-  case conversionFailed(String)
-}
-
-public struct X509CertificateChainVerifier: X509CertificateTrust {
+struct X509CertificateChainVerifier: X509CertificateTrust {
   
-  public let rootCertificates: [Certificate]
+  let rootCertificates: [Certificate]
   
-  public init(rootCertificates: [Certificate]) {
+  init(rootCertificates: [Certificate]) {
     self.rootCertificates = rootCertificates
   }
   
-  public func isTrusted(chain: [Certificate]) async -> Bool {
+  func isTrusted(chain: [Certificate]) async -> Bool {
     guard let leaf = chain.first else {
       return false
     }
@@ -73,7 +64,7 @@ public struct X509CertificateChainVerifier: X509CertificateTrust {
   }
 }
 
-public extension X509CertificateChainVerifier {
+extension X509CertificateChainVerifier {
   
   /// Converts a `SecCertificate` to `X509.Certificate`
   private func convertToX509Certificate(_ secCert: SecCertificate) throws -> Certificate {

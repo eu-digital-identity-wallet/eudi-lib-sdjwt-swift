@@ -17,13 +17,13 @@ import Foundation
 import SwiftyJSON
 import JSONWebSignature
 
-fileprivate let JWS_JSON_HEADER = "header"
-fileprivate let JWS_JSON_DISCLOSURES = "disclosures"
-fileprivate let JWS_JSON_KB_JWT = "kb_jwt"
-fileprivate let JWS_JSON_PROTECTED = "protected"
-fileprivate let JWS_JSON_SIGNATURE = "signature"
-fileprivate let JWS_JSON_SIGNATURES = "signatures"
-fileprivate let JWS_JSON_PAYLOAD = "payload"
+package let JWS_JSON_HEADER = "header"
+package let JWS_JSON_DISCLOSURES = "disclosures"
+package let JWS_JSON_KB_JWT = "kb_jwt"
+package let JWS_JSON_PROTECTED = "protected"
+package let JWS_JSON_SIGNATURE = "signature"
+package let JWS_JSON_SIGNATURES = "signatures"
+package let JWS_JSON_PAYLOAD = "payload"
 
 public enum JwsJsonSupportOption {
   case general, flattened

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import Foundation
+import SwiftyJSON
 
 public class EnvelopedParser: ParserProtocol {
 
@@ -43,6 +44,13 @@ public class EnvelopedParser: ParserProtocol {
       EnvelopedJwt.self, from: serialisedString.data(using: .utf8) ?? Data()
     )
     return try compactParser.getSignedSdJwt(serialisedString: envelopedJwt.sdJwt)
+  }
+  
+  public func fromJwsJsonObject(_ json: JSON) throws -> SignedSDJWT {
+    guard let compactString = try? (compactParser as? CompactParser)?.stringFromJwsJsonObject(json) else {
+      throw SDJWTVerifierError.parsingError
+    }
+    return try compactParser.getSignedSdJwt(serialisedString: compactString)
   }
 }
 

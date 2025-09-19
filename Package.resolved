@@ -24,7 +24,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/beatt83/jose-swift.git",
       "state" : {
-        "revision" : "52858a5646e6e954ebc1dcd54bedabb5973716bb",
+        "revision" : "8d087c7d8333310449aff4c9eb2431fbb4f1eb9f",
         "version" : "6.0.0"
       }
     },
@@ -51,8 +51,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-certificates.git",
       "state" : {
-        "revision" : "274f8668d3ec5d2892904d8465635c5ea659f767",
-        "version" : "1.7.0"
+        "revision" : "4b092f15164144c24554e0a75e080a960c5190a6",
+        "version" : "1.14.0"
       }
     },
     {
@@ -60,8 +60,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-crypto.git",
       "state" : {
-        "revision" : "81bee98e706aee68d39ed5996db069ef2b313d62",
-        "version" : "3.7.1"
+        "revision" : "d1c6b70f7c5f19fb0b8750cb8dcdf2ea6e2d8c34",
+        "version" : "3.15.0"
       }
     },
     {

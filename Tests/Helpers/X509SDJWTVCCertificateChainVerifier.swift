@@ -108,9 +108,6 @@ extension X509SDJWTVCCertificateChainVerifier {
   }
 }
 
-/// Accept a leaf whose *critical* EKU contains the private OID 1.3.130.2.0.0.1.2.
-/// We also declare that we "understand" the EKU extension (2.5.29.37) so a critical EKU
-/// won't cause the default policy to reject the chain.
 struct AcceptPrivateEKUPolicy: VerifierPolicy {
 
   private static let ekuExtOID = ASN1ObjectIdentifier("2.5.29.37")

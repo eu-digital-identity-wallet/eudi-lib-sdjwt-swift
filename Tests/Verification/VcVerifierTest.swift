@@ -26,7 +26,7 @@ import XCTest
 final class VcVerifierTest: XCTestCase {
   
   private let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(
-    trust: X509CertificateChainVerifier(rootCertificates: try! SDJWTConstants.loadRootCertificates())
+    trust: X509SDJWTVCCertificateChainVerifier(rootCertificates: try! SDJWTConstants.loadRootCertificates())
   ))
   
   private let metadataVerifier = SDJWTVCVerifier(
@@ -53,7 +53,7 @@ final class VcVerifierTest: XCTestCase {
   func testVerifyIssuance_WithValidSDJWT_Withx509Header_ShouldSucceed() async throws {
     
     // Given
-    let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     // When
     let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
@@ -62,10 +62,10 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
-  func testVerifyIssuance_WithValidSDJWT__Withx509Header_WithoutDisclosures_ShouldSucceed() async throws {
+  func testVerifyIssuance_WithValidSDJWT_Withx509Header_WithoutDisclosures_ShouldSucceed() async throws {
     
     // Given
-    let sdJwtString = SDJWTConstants.x509_sd_jwt_no_disclosures.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     // When
     let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
@@ -101,7 +101,7 @@ final class VcVerifierTest: XCTestCase {
   func testVerifyIssuance_WithValidSDJWT_Withx509Header_AndConfiguration_ShouldSucceed() async throws {
     
     // Given
-    let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     // When
     let result = try await x509Verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
@@ -164,7 +164,7 @@ final class VcVerifierTest: XCTestCase {
   func testVerifyIssuance_WithValidSDJWTFlattendedJSON_Withx509Header_ShouldSucceed() async throws {
     
     // Given
-    let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let parser = CompactParser()
     let sdJwt = try! parser.getSignedSdJwt(serialisedString: sdJwtString)
     
@@ -184,7 +184,7 @@ final class VcVerifierTest: XCTestCase {
   func testVerifyIssuance_WithValidSDJWTGeneralJSON_Withx509Header_ShouldSucceed() async throws {
     
     // Given
-    let sdJwtString = SDJWTConstants.x509_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let parser = CompactParser()
     let sdJwt = try! parser.getSignedSdJwt(serialisedString: sdJwtString)
     
@@ -370,7 +370,7 @@ final class VcVerifierTest: XCTestCase {
     
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: X509CertificateChainVerifier(
+        trust: X509SDJWTVCCertificateChainVerifier(
           rootCertificates: try! SDJWTConstants.loadRootCertificates()
         )),
       typeMetadataPolicy: .notUsed
@@ -445,10 +445,7 @@ final class VcVerifierTest: XCTestCase {
     let verifier = SDJWTVCVerifier(
       verificationMethod: 
           .x509(
-            trust: X509CertificateChainVerifier(
-              rootCertificates: try! SDJWTConstants
-                .loadRootCertificates()
-            )
+            trust: X509CertificateTrustFactory.trust
           ),
       typeMetadataPolicy: 
           .alwaysRequired(
@@ -477,7 +474,7 @@ final class VcVerifierTest: XCTestCase {
     
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-      trust: X509CertificateChainVerifier(
+      trust: X509SDJWTVCCertificateChainVerifier(
         rootCertificates: try! SDJWTConstants.loadRootCertificates()
       )),
       typeMetadataPolicy: .optional(verifier: typeMetadataVerifier)
@@ -499,7 +496,7 @@ final class VcVerifierTest: XCTestCase {
     
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-      trust: X509CertificateChainVerifier(
+      trust: X509SDJWTVCCertificateChainVerifier(
         rootCertificates: try! SDJWTConstants.loadRootCertificates()
       )),
       typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
@@ -591,9 +588,8 @@ final class VcVerifierTest: XCTestCase {
     
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-      trust: X509CertificateChainVerifier(
-        rootCertificates: try! SDJWTConstants.loadRootCertificates()
-      )),
+        trust: X509CertificateTrustFactory.trust
+      ),
       typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
       )
     
@@ -682,7 +678,7 @@ final class VcVerifierTest: XCTestCase {
     
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-      trust: X509CertificateChainVerifier(
+      trust: X509SDJWTVCCertificateChainVerifier(
         rootCertificates: try! SDJWTConstants.loadRootCertificates()
       )),
       typeMetadataPolicy: .requiredFor(vcts: ["https://mock.local/type_meta_data_pid", "other_metadata"], verifier: typeMetadataVerifier))
@@ -709,7 +705,7 @@ final class VcVerifierTest: XCTestCase {
     
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-      trust: X509CertificateChainVerifier(
+      trust: X509SDJWTVCCertificateChainVerifier(
         rootCertificates: try! SDJWTConstants.loadRootCertificates()
       )),
       typeMetadataPolicy: .requiredFor(vcts: [], verifier: typeMetadataVerifier)

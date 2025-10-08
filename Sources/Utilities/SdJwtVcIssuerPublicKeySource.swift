@@ -18,7 +18,7 @@ import X509
 
 public enum SdJwtVcIssuerPublicKeySource {
   case metadata(iss: URL, kid: String?, fetcher: SdJwtVcIssuerMetaDataFetching)
-  case x509CertChain(iss: URL, chain: [Certificate], trust: X509CertificateTrust)
+  case x509CertChain(iss: URL, chain: [Certificate], trust: X509SDJWTVCCertificateTrust)
   case didUrl(iss: String, kid: String?, loukup: LookupPublicKeysFromDIDDocument)
 }
 

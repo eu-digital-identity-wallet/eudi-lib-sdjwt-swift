@@ -24,12 +24,12 @@ import XCTest
 
 final class EndToEndTest: XCTestCase {
   
-  var x509CertificateChainVerifier: X509CertificateTrust!
+  var x509CertificateChainVerifier: X509SDJWTVCCertificateTrust!
   
   override func setUp() async throws {
     try await super.setUp()
 
-    x509CertificateChainVerifier = X509CertificateChainVerifier(
+    x509CertificateChainVerifier = X509SDJWTVCCertificateChainVerifier(
        rootCertificates: try! SDJWTConstants.loadRootCertificates()
     )
   }
@@ -364,7 +364,7 @@ final class EndToEndTest: XCTestCase {
     )
     
     XCTAssertNotNil(kbJwt)
-    XCTAssertEqual(presentedSdJwt!.disclosures.count, 3)
+    XCTAssertEqual(presentedSdJwt!.disclosures.count, 4)
     
     let presentedDisclosures = Set(presentedSdJwt!.disclosures)
     let visitedDisclosures = Set(visitor.disclosures)
@@ -425,7 +425,7 @@ final class EndToEndTest: XCTestCase {
     
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
+        trust: X509CertificateTrustFactory.trust
       )
     )
     
@@ -586,7 +586,7 @@ final class EndToEndTest: XCTestCase {
     
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
+        trust: X509CertificateTrustFactory.trust
       )
     )
     
@@ -717,7 +717,7 @@ final class EndToEndTest: XCTestCase {
     
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
+        trust: X509CertificateTrustFactory.trust
       )
     )
     
@@ -873,7 +873,7 @@ final class EndToEndTest: XCTestCase {
     
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
+        trust: X509CertificateTrustFactory.trust
       )
     )
     

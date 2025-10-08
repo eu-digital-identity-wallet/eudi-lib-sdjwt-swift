@@ -107,7 +107,7 @@ protocol SdJwtVcVerifierType {
  */
 public enum VerificationMethod {
   case metadata(fetcher: SdJwtVcIssuerMetaDataFetching)
-  case x509(trust: X509CertificateTrust)
+  case x509(trust: X509SDJWTVCCertificateTrust)
   case did(lookup: LookupPublicKeysFromDIDDocument)
 }
 

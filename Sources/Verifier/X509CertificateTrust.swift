@@ -16,7 +16,7 @@
 import Foundation
 import X509
 
-public protocol X509CertificateTrust: Sendable {
+public protocol X509SDJWTVCCertificateTrust: Sendable {
   var rootCertificates: [Certificate] { get }
   func isTrusted(chain: [Certificate]) async -> Bool
 }

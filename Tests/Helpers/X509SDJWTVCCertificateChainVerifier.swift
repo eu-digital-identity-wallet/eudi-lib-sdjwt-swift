@@ -26,7 +26,7 @@ enum CertificateValidationError: Error {
   case signatureValidationFailed
   case certificateExpired
   case untrustedRoot
-  case invalidChain([VerificationResult.PolicyFailure])
+  case invalidChain
 }
 
 enum ChainTrustResult: Equatable {
@@ -35,16 +35,16 @@ enum ChainTrustResult: Equatable {
   case failure
 }
 
-struct X509CertificateTrustAlways: X509CertificateTrust {
+struct X509CertificateTrustAlways: X509SDJWTVCCertificateTrust {
   let rootCertificates: [Certificate] = []
   func isTrusted(chain: [Certificate]) async -> Bool { return true }
 }
 
 struct X509CertificateTrustFactory {
-  public static let trust: X509CertificateTrust = X509CertificateTrustAlways()
+  public static let trust: X509SDJWTVCCertificateTrust = X509CertificateTrustAlways()
 }
 
-struct X509CertificateChainVerifier: X509CertificateTrust {
+struct X509SDJWTVCCertificateChainVerifier: X509SDJWTVCCertificateTrust {
   
   let rootCertificates: [Certificate]
   
@@ -56,21 +56,21 @@ struct X509CertificateChainVerifier: X509CertificateTrust {
     guard let leaf = chain.first else {
       return false
     }
-    let result = try? await verifyChain(
+    let result = await verifyChain(
       rootBase64Certificates: rootCertificates,
       leafBase64Certificate: leaf
     )
-    return true
+    
+    switch result {
+    case .success, .recoverableFailure:
+      return true
+    case .failure:
+      return false
+    }
   }
 }
 
-extension X509CertificateChainVerifier {
-  
-  /// Converts a `SecCertificate` to `X509.Certificate`
-  private func convertToX509Certificate(_ secCert: SecCertificate) throws -> Certificate {
-    let derData = SecCertificateCopyData(secCert) as Data
-    return try Certificate(derEncoded: [UInt8](derData))
-  }
+extension X509SDJWTVCCertificateChainVerifier {
   
   func verifyChain(
     rootBase64Certificates: [Certificate],
@@ -78,19 +78,20 @@ extension X509CertificateChainVerifier {
     leafBase64Certificate: Certificate,
     date: Date = Date(),
     showDiagnostics: Bool = false
-  ) async throws -> ChainTrustResult {
-        
+  ) async -> ChainTrustResult {
+    
     let roots = CertificateStore(rootBase64Certificates)
     var verifier = Verifier(
       rootCertificates: roots
     ) {
       RFC5280Policy(
-        validationTime: date
+        fixedValidationTime: date
       )
+      AcceptPrivateEKUPolicy()
     }
     
     let result = await verifier.validate(
-      leafCertificate: leafBase64Certificate,
+      leaf: leafBase64Certificate,
       intermediates: .init(
         intermediateBase64Certificates
       )
@@ -101,10 +102,27 @@ extension X509CertificateChainVerifier {
     switch result {
     case .validCertificate:
       return .success
-    case .couldNotValidate(let policyFailures):
-      throw CertificateValidationError.invalidChain(
-        policyFailures
-      )
+    case .couldNotValidate:
+      return .failure
     }
+  }
+}
+
+struct AcceptPrivateEKUPolicy: VerifierPolicy {
+
+  private static let ekuExtOID = ASN1ObjectIdentifier("2.5.29.37")
+  private static let privatePurpose = ASN1ObjectIdentifier("1.3.130.2.0.0.1.2")
+  
+  var verifyingCriticalExtensions: [ASN1ObjectIdentifier] { [Self.ekuExtOID] }
+  var understoodCriticalExtensions: Set<ASN1ObjectIdentifier> { [Self.ekuExtOID] }
+  
+  func chainMeetsPolicyRequirements(
+    chain: UnverifiedCertificateChain
+  ) -> PolicyEvaluationResult {
+    evaluate(chain: chain)
+  }
+  
+  private func evaluate(chain: UnverifiedCertificateChain) -> PolicyEvaluationResult {
+    return .meetsPolicy
   }
 }

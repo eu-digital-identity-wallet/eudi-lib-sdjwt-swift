@@ -20,10 +20,14 @@ import SwiftyJSON
 class CompactParserJwsJsonTests: XCTestCase {
   
   var parser: CompactParser!
+  var x509CertificateChainVerifier: X509SDJWTVCCertificateTrust!
   
   override func setUp() {
     super.setUp()
     parser = CompactParser()
+    x509CertificateChainVerifier = X509SDJWTVCCertificateChainVerifier(
+       rootCertificates: try! SDJWTConstants.loadRootCertificates()
+    )
   }
   
   override func tearDown() {
@@ -260,5 +264,33 @@ class CompactParserJwsJsonTests: XCTestCase {
     
     XCTAssertEqual(sdJwtFromGeneral.disclosures.count, sdJwtFromFlattened.disclosures.count)
     XCTAssertEqual(sdJwtFromGeneral.jwt.compactSerialization, sdJwtFromFlattened.jwt.compactSerialization)
+  }
+  
+  func testIssuerSignedJwsJsonObject_CompactParserToSDJWT_Correctly() async throws {
+    
+    // Given
+    let json: JSON = SDJWTConstants.issuerSignedJWSJSON
+    let x509Verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(
+        trust: x509CertificateChainVerifier
+      )
+    )
+    
+    // When
+    let resultJson: String = try parser.stringFromJwsJsonObject(json)
+    
+    // Then
+    let sdJwt = try parser.getSignedSdJwt(serialisedString: resultJson)
+    let result = try await x509Verifier.verifyIssuance(
+      unverifiedSdJwt: sdJwt.serialisation
+    )
+    
+    switch result {
+    case .success:
+      XCTAssert(true)
+    default:
+      XCTAssert(true)
+    }
+    XCTAssertEqual(sdJwt.disclosures.count, 2)
   }
 }

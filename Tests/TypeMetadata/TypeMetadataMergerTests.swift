@@ -189,6 +189,62 @@ final class TypeMetadataMergerTests: XCTestCase {
     XCTAssertEqual(mergedClaim?.svgId, "child_svg") // child wins
     XCTAssertEqual(mergedClaim?.display?.first?.label, "Child Label") // child's display wins
   }
+
+  func test_mergeMetadata_withConflictingClaimPath_childFullyOverridesParentDisplay() {
+    
+    let childClaim = SdJwtVcTypeMetadata.ClaimMetadata(
+      path: ClaimPath([.claim(name: "same_path")]),
+      display: [
+        SdJwtVcTypeMetadata.ClaimDisplay(lang: "en", label: "Child Label EN")
+      ],
+      selectivelyDisclosable: .always,
+      svgId: "child_svg"
+    )
+    
+    let parentClaim = SdJwtVcTypeMetadata.ClaimMetadata(
+      path: ClaimPath([.claim(name: "same_path")]),
+      display: [
+        SdJwtVcTypeMetadata.ClaimDisplay(lang: "en", label: "Parent Label EN"),
+        SdJwtVcTypeMetadata.ClaimDisplay(lang: "fr", label: "Parent Label FR")
+      ],
+      selectivelyDisclosable: .never,
+      svgId: "parent_svg"
+    )
+    
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: nil,
+      description: nil,
+      displays: [],
+      claims: [childClaim]
+    )
+    
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: nil,
+      description: nil,
+      displays: [],
+      claims: [parentClaim]
+    )
+    
+    let merged = TypeMetadataMerger().mergeMetadata(from: [child, parent])
+    
+    // Child claim fully overrides parent
+    XCTAssertEqual(merged?.claims.count, 1)
+    let mergedClaim = merged?.claims.first
+    
+    // Only child's displays should be present (no French from parent)
+    XCTAssertEqual(mergedClaim?.display?.count, 1)
+    XCTAssertEqual(mergedClaim?.display?.first?.lang, "en")
+    XCTAssertEqual(mergedClaim?.display?.first?.label, "Child Label EN")
+    
+    // Parent's French display should NOT be present
+    XCTAssertFalse(mergedClaim?.display?.contains(where: { $0.lang == "fr" }) ?? true)
+    
+    // All child properties win
+    XCTAssertEqual(mergedClaim?.selectivelyDisclosable, .always)
+    XCTAssertEqual(mergedClaim?.svgId, "child_svg")
+  }
   
   func test_mergeMetadata_parentDisplaysAppended() {
     let childDisplay = SdJwtVcTypeMetadata.DisplayMetadata(

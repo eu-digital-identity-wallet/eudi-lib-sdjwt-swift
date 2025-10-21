@@ -83,7 +83,6 @@ struct SdJwtVcSpec {
   static let extendsIntegrity = "\(extends)\(hashIntegrity)"
   static let display = "display"
   static let claims = "claims"
-  static let schema = "schema"
   static let schemaURI = "schema_uri"
   static let schemaURIIntegrity = "\(schemaURI)\(hashIntegrity)"
   static let claimPath = "path"

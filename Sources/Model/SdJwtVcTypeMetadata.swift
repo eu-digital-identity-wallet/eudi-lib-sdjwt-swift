@@ -17,30 +17,7 @@ import Foundation
 import SwiftyJSON
 
 
-/*
- Check if we can use enum for schema byValue or byReference
- */
-
-
 public typealias DocumentIntegrity = String
-
-public enum SchemaSource {
-  case byValue(JSON)
-  case byReference(url: URL, integrity: DocumentIntegrity?)
-}
-
-extension SchemaSource: Equatable {
-  public static func == (lhs: SchemaSource, rhs: SchemaSource) -> Bool {
-    switch (lhs, rhs) {
-    case let (.byValue(l), .byValue(r)):
-      return l == r
-    case let (.byReference(lURL, lIntegrity), .byReference(rURL, rIntegrity)):
-      return lURL == rURL && lIntegrity == rIntegrity
-    default:
-      return false
-    }
-  }
-}
 
 
 public struct SdJwtVcTypeMetadata: Decodable {
@@ -52,7 +29,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
   public let extendsIntegrity: DocumentIntegrity?
   public let display: [DisplayMetadata]?
   public let claims: [ClaimMetadata]?
-  public let schemaSource: SchemaSource?
   
   enum CodingKeys: String, CodingKey {
     case vct
@@ -63,9 +39,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
     case extendsIntegrity = "extends#integrity"
     case display
     case claims
-    case schema
-    case schemaUri = "schema_uri"
-    case schemaUriIntegrity = "schema_uri#integrity"
   }
   
   
@@ -80,24 +53,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
     extendsIntegrity = try container.decodeIfPresent(DocumentIntegrity.self, forKey: .extendsIntegrity)
     display = try container.decodeIfPresent([DisplayMetadata].self, forKey: .display)
     claims = try container.decodeIfPresent([ClaimMetadata].self, forKey: .claims)
-    
-    let schema = try container.decodeIfPresent(JSON.self, forKey: .schema)
-    let schemaUri = try container.decodeIfPresent(URL.self, forKey: .schemaUri)
-    let schemaUriIntegrity = try container.decodeIfPresent(DocumentIntegrity.self, forKey: .schemaUriIntegrity)
-    
-    if let schema = schema {
-      guard schemaUri == nil && schemaUriIntegrity == nil else {
-        throw TypeMetadataError.conflictingSchemaDefinition
-      }
-      schemaSource = .byValue(schema)
-    } else if let schemaUri = schemaUri {
-      guard let integrity = schemaUriIntegrity else {
-        throw TypeMetadataError.missingSchemaUriIntegrity
-      }
-      schemaSource = .byReference(url: schemaUri, integrity: integrity)
-    } else {
-      schemaSource = nil
-    }
   }
   
   
@@ -109,8 +64,7 @@ public struct SdJwtVcTypeMetadata: Decodable {
     extends: URL? = nil,
     extendsIntegrity: DocumentIntegrity? = nil,
     display: [DisplayMetadata]? = nil,
-    claims: [ClaimMetadata]? = nil,
-    schemaSource: SchemaSource? = nil
+    claims: [ClaimMetadata]? = nil
   ) throws {
     
     self.vct = vct
@@ -121,7 +75,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
     self.extendsIntegrity = extendsIntegrity
     self.display = display
     self.claims = claims
-    self.schemaSource = schemaSource
   }
   
   

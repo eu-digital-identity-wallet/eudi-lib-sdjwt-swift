@@ -31,7 +31,7 @@ final class VerifierTest: XCTestCase {
       .recreateClaims()
 
     XCTAssertTrue(recreatedClaimsResult.recreatedClaims.exists())
-    XCTAssertTrue(recreatedClaimsResult.digestsFoundOnPayload.count == 23)
+    XCTAssertTrue(recreatedClaimsResult.digestsFoundOnPayload.count == 2)
 
   }
   

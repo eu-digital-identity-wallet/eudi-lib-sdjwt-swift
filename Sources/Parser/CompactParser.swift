@@ -51,7 +51,7 @@ public class CompactParser: ParserProtocol {
     return try getSignedSdJwt(serialisedString: compactString)
   }
   
-  func stringFromJwsJsonObject(_ json: JSON) throws -> String {
+  public func stringFromJwsJsonObject(_ json: JSON) throws -> String {
     let payload: String
     let protected: String
     let signature: String

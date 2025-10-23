@@ -48,6 +48,17 @@ struct SdJwtSpec {
   static let mediaSubtypeKBJWT = "kb+jwt"
   static let mediaTypeApplicationKBJWTJSON = "application/\(mediaSubtypeKBJWT)"
   static let suffixSDJWT = "+sd-jwt"
+  
+  static let registeredNonDisclosableClaims: Set<String> =
+  [
+    "iss",
+    "nbf",
+    "exp",
+    "cnf",
+    "vct",
+    "vct#integrity",
+    "status"
+  ]
 }
 
 /// JSON Web Signature (JWS) Specification

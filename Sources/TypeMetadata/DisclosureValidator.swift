@@ -47,6 +47,16 @@ struct DisclosureValidator: DisclosureValidatorType {
       throw TypeMetadataError.missingDisclosuresForValidation
     }
     
+    
+    for (claimPath, disclosureList) in disclosures {
+      if let claimName = claimPath.leafClaimName,
+         SdJwtSpec.registeredNonDisclosableClaims.contains(claimName) {
+        if !disclosureList.isEmpty {
+          throw TypeMetadataError.unexpectedDisclosurePresent(path: claimPath)
+        }
+      }
+    }
+    
     for claim in metadata.claims {
       
       let claimPath = claim.path

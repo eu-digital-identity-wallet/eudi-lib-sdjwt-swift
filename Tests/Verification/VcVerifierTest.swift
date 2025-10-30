@@ -36,14 +36,6 @@ final class VcVerifierTest: XCTestCase {
         extension: "json"
       ))))
   
-  private let didVerifier = SDJWTVCVerifier( verificationMethod: .did(
-    lookup: LookupPublicKeysFromDIDDocumentMock()
-  ))
-  
-  
-    
-  
-  
   override func setUp() async throws {
   }
   
@@ -132,30 +124,6 @@ final class VcVerifierTest: XCTestCase {
     
     // When
     let result = try await metadataVerifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
-    
-    // Then
-    XCTAssertNoThrow(try result.get())
-  }
-  
-  func testVerifyIssuance_WithValidSDJWT_WithDID_ShouldSucceed() async throws {
-    
-    // Given
-    let sdJwtString = SDJWTConstants.did_sd_jwt.clean()
-    
-    // When
-    let result = try await didVerifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
-    
-    // Then
-    XCTAssertNoThrow(try result.get())
-  }
-  
-  func testVerifyIssuance_WithValidSDJWT_WithDID_AndConfiguration_ShouldSucceed() async throws {
-    
-    // Given
-    let sdJwtString = SDJWTConstants.did_sd_jwt.clean()
-    
-    // When
-    let result = try await didVerifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
     
     // Then
     XCTAssertNoThrow(try result.get())

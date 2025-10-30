@@ -21,24 +21,7 @@ import JSONWebSignature
 import JSONWebToken
 
 private let HTTPS_URI_SCHEME = "https"
-private let DID_URI_SCHEME = "did"
 private let SD_JWT_DC_TYPE = "dc+sd-jwt"
-
-/**
- * A protocol to look up public keys from DIDs/DID URLs.
- */
-public protocol LookupPublicKeysFromDIDDocument {
-  /**
-   * Asynchronously looks up public keys from a DID document based on a DID or DID URL.
-   *
-   * - Parameters:
-   *   - did: The DID identifier.
-   *   - didUrl: The DID URL (optional).
-   * - Returns: An array of JWKs (public keys) or `nil` if the lookup fails.
-   */
-  func lookup(did: String, didUrl: String?) async throws -> [JWK]?
-}
-
 
 /**
  * A protocol defining methods for verifying SD-JWTs
@@ -103,12 +86,10 @@ protocol SdJwtVcVerifierType {
   * It can be one of the following:
   * - metadata: Fetch issuer metadata to get keys.
   * - x509: Use X.509 certificates for verification.
-  * - did: Use DID URLs to look up keys.
  */
 public enum VerificationMethod {
   case metadata(fetcher: SdJwtVcIssuerMetaDataFetching)
   case x509(trust: X509SDJWTVCCertificateTrust)
-  case did(lookup: LookupPublicKeysFromDIDDocument)
 }
 
 /**
@@ -306,7 +287,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
 private extension SDJWTVCVerifier {
   
   /**
-   * Selects the issuer's public key from the JWS object based on metadata, X.509 certificates, or DID URLs.
+   * Selects the issuer's public key from the JWS object based on metadata, X.509 certificates.
    *
    * - Parameters:
    *   - jws: The JSON Web Signature object.
@@ -353,17 +334,6 @@ private extension SDJWTVCVerifier {
       return .failure(
         SDJWTVerifierError.invalidJwt
       )
-      
-    case .didUrl(let iss, let kid, let lookup):
-      guard let key = try await lookup.lookup(
-        did: iss,
-        didUrl: kid
-      )?.first(where: { $0.keyID == kid }) else {
-        return .failure(
-          SDJWTVerifierError.invalidJwt
-        )
-      }
-      return .success(key)
     }
   }
   
@@ -402,13 +372,6 @@ private extension SDJWTVCVerifier {
         iss: issUrl,
         chain: certChain,
         trust: trust
-      )
-      
-    case .did(lookup: let lookup):
-      return .didUrl(
-        iss: iss,
-        kid: jws.protectedHeader.keyID,
-        loukup: lookup
       )
     }
   }

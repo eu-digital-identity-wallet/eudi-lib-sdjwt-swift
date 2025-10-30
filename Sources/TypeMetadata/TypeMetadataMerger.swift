@@ -25,6 +25,9 @@ package protocol TypeMetadataMergerType {
    *
    * The merging process prioritizes the properties of the first element in the array,
    * using subsequent elements to fill in missing values or merge collections.
+   *
+   * If a child type defines claim metadata with the same path as
+   * in the extended type, the child type's claim metadata will fully override the parent's.
    */
   func mergeMetadata(from metadataArray: [ResolvedTypeMetadata]) -> ResolvedTypeMetadata?
 }
@@ -53,19 +56,7 @@ struct TypeMetadataMerger: TypeMetadataMergerType {
         primary: result.claims,
         secondary: parent.claims,
         keySelector: \.path,
-        merge: { current, parent in
-          SdJwtVcTypeMetadata.ClaimMetadata(
-            path: current.path,
-            display: mergeByKey(
-              primary: current.display ?? [],
-              secondary: parent.display ?? [],
-              keySelector: \.lang,
-              merge: { current, _ in current }
-            ),
-            selectivelyDisclosable: current.selectivelyDisclosable,
-            svgId: current.svgId
-          )
-        }
+        merge: { current, _ in current }  
       )
       
       return ResolvedTypeMetadata(
@@ -123,5 +114,3 @@ struct TypeMetadataMerger: TypeMetadataMergerType {
     return merged
   }
 }
-
-

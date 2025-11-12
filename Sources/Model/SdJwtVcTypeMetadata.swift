@@ -183,18 +183,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
     case never
   }
   
-//  public struct Display: Decodable {
-//    public let value: [DisplayMetadata]
-//    
-//    public init(value: [DisplayMetadata]) throws {
-//      let uniqueLangs = Set(value.map { $0.lang })
-//      guard value.count == uniqueLangs.count else {
-//        throw TypeMetadataError.duplicateLanguageInDisplay
-//      }
-//      self.value = value
-//    }
-//  }
-  
   public struct DisplayMetadata: Decodable {
     public let lang: String
     public let name: String

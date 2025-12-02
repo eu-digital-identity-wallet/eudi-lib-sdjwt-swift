@@ -294,7 +294,7 @@ extension SignedSDJWT {
   public func present(
     query: Set<JSONPointer>,
     visitor: ClaimVisitor? = ClaimVisitor()
-  ) async throws -> SignedSDJWT? {
+  ) throws -> SignedSDJWT? {
     let (_, disclosuresPerClaim) = try recreateClaimsAndDisclosuresPerClaim(
       visitor: visitor
     )
@@ -327,7 +327,7 @@ extension SignedSDJWT {
   public func present(
     query: Set<ClaimPath>,
     visitor: ClaimVisitor? = ClaimVisitor()
-  ) async throws -> SignedSDJWT? {
+  ) throws -> SignedSDJWT? {
     
     let (_, disclosuresPerClaimPath) = try recreateClaimsAndDisclosuresPerClaimPath(
       visitor: visitor
@@ -335,9 +335,11 @@ extension SignedSDJWT {
     
     let keys = disclosuresPerClaimPath.keys.filter { claimFound in
       query.contains { requested in
+        #if DEBUG
         if claimFound.matches(requested) {
           print("claimFound: \(claimFound) requested: \(requested)")
         }
+        #endif
         return claimFound.matches(requested)
       }
     }

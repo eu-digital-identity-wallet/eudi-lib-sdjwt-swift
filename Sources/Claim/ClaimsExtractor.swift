@@ -36,6 +36,7 @@ public class ClaimExtractor {
   
   // MARK: - Methods
   
+  @discardableResult
   public func findDigests(
     payload json: JSON,
     disclosures: [Disclosure],
@@ -118,8 +119,7 @@ public class ClaimExtractor {
                 visitor: visitor,
                 currentPath: newPath  // Pass the updated path for the nested JSON
                 
-              ),
-                 !ifHasNested.digestsFoundOnPayload.isEmpty {
+              ), !ifHasNested.digestsFoundOnPayload.isEmpty {
                 foundDigests += ifHasNested.digestsFoundOnPayload
                 json[key].arrayObject?[index] = ifHasNested.recreatedClaims
                 
@@ -140,10 +140,38 @@ public class ClaimExtractor {
                 )
               }
             }
+          } else {
+            
+            visitor?.call(
+              pointer: .init(
+                pointer: "/" + newPath.joined(separator: "/")
+              ),
+              path: .init(
+                jsonPointer: "/" + newPath.joined(separator: "/")
+              )
+            )
+            
+            try self.findDigests(
+              payload: object,
+              disclosures: disclosures,
+              visitor: visitor,
+              currentPath: newPath // Pass the updated path
+            )
           }
         }
+      } else if subJson.isPrimitive {
+        let newPath = currentPath + [key]
+        visitor?.call(
+          pointer: .init(
+            pointer: "/" + newPath.joined(separator: "/")
+          ),
+          path: .init(
+            jsonPointer: "/" + newPath.joined(separator: "/")
+          )
+        )
       }
     }
+    
     return (
       foundDigests,
       json,

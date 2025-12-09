@@ -135,8 +135,7 @@ final class EndToEndTest: XCTestCase {
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let query: Set<ClaimPath> = Set(
       [
-        .claim("family_name"),
-        .claim("given_name")
+        .claim("places_of_work").claim("place_of_work").arrayElement(1).claim("country_code")
       ]
     )
     
@@ -153,7 +152,7 @@ final class EndToEndTest: XCTestCase {
       serialisedString: sdJwtString
     )
     
-    let presentedSdJwt = try await issuerSignedSDJWT.present(
+    let presentedSdJwt = try issuerSignedSDJWT.present(
       query: query,
       visitor: visitor
     )

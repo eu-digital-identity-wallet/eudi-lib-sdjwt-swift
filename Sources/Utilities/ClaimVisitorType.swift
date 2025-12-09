@@ -50,8 +50,8 @@ public final class ClaimVisitor: ClaimVisitorType {
   public func call(
     pointer: JSONPointer,
     path: ClaimPath?,
-    disclosure: Disclosure,
-    value: String?
+    disclosure: Disclosure = "",
+    value: String? = nil
   ) {
     call(pointer: pointer, disclosure: disclosure, value: value)
     call(path: path, disclosure: disclosure, value: value)
@@ -62,12 +62,7 @@ public final class ClaimVisitor: ClaimVisitorType {
     disclosure: Disclosure,
     value: String? = nil
   ) {
-    // Ensure that the path (pointer) does not already
-    // exist in disclosuresPerClaim
-    guard disclosuresPerClaim[pointer] == nil else {
-      fatalError("Disclosures for \(pointer.pointer) have already been calculated.")
-    }
-    
+
     // Calculate claimDisclosures
     let claimDisclosures: [Disclosure] = {
       let containerPath = pointer.parent()
@@ -85,12 +80,6 @@ public final class ClaimVisitor: ClaimVisitorType {
     value: String?
   ) {
     guard let path = path else { return }
-    
-    // Ensure that the path (pointer) does not already
-    // exist in disclosuresPerClaim
-    guard disclosuresPerClaimPath[path] == nil else {
-      fatalError("Disclosures for \(path) have already been calculated.")
-    }
     
     // Calculate claimDisclosures
     let claimDisclosures: [Disclosure] = {

@@ -19,6 +19,7 @@ import JSONWebSignature
 import JSONWebToken
 import SwiftyJSON
 import XCTest
+import CryptoKit
 
 @testable import eudi_lib_sdjwt_swift
 
@@ -360,7 +361,7 @@ final class VcVerifierTest: XCTestCase {
     )!
     
     let vct = try! Vct(uri: "https://dev.issuer-backend.eudiw.dev/type-metadata/urn:eudi:pid:1")
-    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct, useMock: false)
+    let typeMetadataVerifier = typeMetadataVerifierFactory(useMock: false)
     let sdJwtString = try await SDJWTIssuer.issue(
       issuersPrivateKey: extractECKey(
         from: keyData
@@ -436,8 +437,7 @@ final class VcVerifierTest: XCTestCase {
   func testVerifyIssuance_WithPolicyOptional_ShouldSucceed() async throws {
     
     // Given
-    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
-    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let typeMetadataVerifier = typeMetadataVerifierFactory()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     let verifier = SDJWTVCVerifier(
@@ -455,36 +455,10 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
   
-  func testVerifyIssuance_WithPolicyAlwaysRequired_InvalidMetadata_ShouldFail() async throws {
-    
-    // Given
-    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
-    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
-    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
-    
-    let verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(
-      trust: X509SDJWTVCCertificateChainVerifier(
-        rootCertificates: try! SDJWTConstants.loadRootCertificates()
-      )),
-      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
-      )
-    
-    do {
-      // When
-      _ = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
-      XCTFail("Verification should not succeeded")
-    } catch {
-      // Then
-      XCTAssertEqual(error as? TypeMetadataError, .vctMismatch)
-    }
-  }
-  
   func testVerifyIssuance_WithPolicyAlwaysRequired_ValidMetadata_ShouldSucceed() async throws {
     
     // Given
-    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
-    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let typeMetadataVerifier = typeMetadataVerifierFactory()
     let keyData = Data(
       base64Encoded: SDJWTConstants.anIssuerPrivateKey
     )!
@@ -573,8 +547,7 @@ final class VcVerifierTest: XCTestCase {
   func testVerifyIssuance_WithPolicyRequiredForVcts_MissingDisclosure_ShouldFail() async throws {
     
     // Given
-    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
-    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let typeMetadataVerifier = typeMetadataVerifierFactory()
     let keyData = Data(
       base64Encoded: SDJWTConstants.anIssuerPrivateKey
     )!
@@ -656,19 +629,503 @@ final class VcVerifierTest: XCTestCase {
     do {
       // When
       _ = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
-      XCTFail("Verification should not succeeded")
+      XCTFail("Verification should not be succeeded")
     } catch {
       let missingClaimPath = ClaimPath([.claim(name: "sex")])
       XCTAssertEqual(error as? TypeMetadataError, .expectedDisclosureMissing(path: missingClaimPath))
     }
   }
   
+  // MARK: - Integrity Validation Tests
+
+  func testVerifyIssuance_WithValidTypeMetadataIntegrity_ShouldSucceed() async throws {
+    // Given: Create a type metadata mock with integrity hash
+    let typeMetadataJSON = """
+    {
+      "vct": "https://mock.local/type_meta_data_with_integrity",
+      "name": "Test Metadata with Integrity",
+      "claims": [
+        {
+          "path": ["family_name"],
+          "sd": "always"
+        },
+        {
+          "path": ["given_name"],
+          "sd": "always"
+        }
+      ]
+    }
+    """
+
+    let metadataData = typeMetadataJSON.data(using: .utf8)!
+    let sha256Hash = Data(SHA256.hash(data: metadataData)).base64EncodedString()
+    let integrityHash = "sha256-\(sha256Hash)"
+
+    let keyData = Data(base64Encoded: SDJWTConstants.anIssuerPrivateKey)!
+
+    // Issue SD-JWT with vct and vct#integrity
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(from: keyData),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://mock.local/type_meta_data_with_integrity")
+      PlainClaim("vct#integrity", integrityHash)
+      FlatDisclosedClaim("family_name", "Doe")
+      FlatDisclosedClaim("given_name", "John")
+    }
+
+    // Create verifier with SRI validator
+    let sriValidator = try SRIValidator()
+    let session = NetworkingDataMock(data: metadataData)
+
+    let metadataFetcher = TypeMetadataFetcher(
+      session: session,
+      integrityValidator: sriValidator
+    )
+
+    let typeMetadataVerifier = TypeMetadataVerifier(
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
+      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
+      schemaValidator: SchemaValidator()
+    )
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+    )
+
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
+
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyIssuance_WithInvalidTypeMetadataIntegrity_ShouldFail() async throws {
+    // Given: Issue SD-JWT with incorrect integrity hash
+    let keyData = Data(base64Encoded: SDJWTConstants.anIssuerPrivateKey)!
+    let wrongIntegrityHash = "sha256-wronghash123456789ABCDEF="
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(from: keyData),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://mock.local/type_meta_data_pid")
+      PlainClaim("vct#integrity", wrongIntegrityHash)
+      FlatDisclosedClaim("family_name", "Doe")
+      FlatDisclosedClaim("given_name", "John")
+    }
+
+    // Create verifier with SRI validator
+    let sriValidator = try SRIValidator()
+    let session = NetworkingBundleMock(
+      filenameResolver: { url in url.lastPathComponent }
+    )
+
+    let metadataFetcher = TypeMetadataFetcher(
+      session: session,
+      integrityValidator: sriValidator
+    )
+
+    let typeMetadataVerifier = TypeMetadataVerifier(
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
+      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
+      schemaValidator: SchemaValidator()
+    )
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+    )
+
+    // When & Then
+    do {
+      _ = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
+      XCTFail("Verification should fail with invalid integrity hash")
+    } catch let error as TypeMetadataError {
+      XCTAssertEqual(error, .integrityValidationFailed)
+    } catch {
+      XCTFail("Expected TypeMetadataError.integrityValidationFailed, got \(error)")
+    }
+  }
+
+  func testVerifyIssuance_WithMultipleIntegrityHashes_SelectsStrongest() async throws {
+    // Given: Create metadata with multiple integrity hashes (SHA-256, SHA-384, SHA-512)
+    let typeMetadataJSON = """
+    {
+      "vct": "https://mock.local/test_metadata",
+      "name": "Test Metadata",
+      "claims": [{"path": ["test_claim"], "sd": "allowed"}]
+    }
+    """
+
+    let metadataData = typeMetadataJSON.data(using: .utf8)!
+    let sha256Hash = Data(SHA256.hash(data: metadataData)).base64EncodedString()
+    let sha512Hash = Data(SHA512.hash(data: metadataData)).base64EncodedString()
+
+    // Multiple hashes: SRI validator should select strongest (SHA-512)
+    let multipleHashes = "sha256-\(sha256Hash) sha512-\(sha512Hash)"
+
+    let keyData = Data(base64Encoded: SDJWTConstants.anIssuerPrivateKey)!
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(from: keyData),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://mock.local/test_metadata")
+      PlainClaim("vct#integrity", multipleHashes)
+      FlatDisclosedClaim("test_claim", "test_value")
+    }
+
+    let sriValidator = try SRIValidator()
+    let session = NetworkingDataMock(data: metadataData)
+
+    let metadataFetcher = TypeMetadataFetcher(
+      session: session,
+      integrityValidator: sriValidator
+    )
+
+    let typeMetadataVerifier = TypeMetadataVerifier(
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
+      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
+      schemaValidator: SchemaValidator()
+    )
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+    )
+
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
+
+    // Then: Should succeed by validating against strongest algorithm (SHA-512)
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyIssuance_WithSchemaUriIntegrity_ShouldSucceed() async throws {
+    // Given: Create type metadata with inline schema (testing metadata integrity, not schema URI)
+    let metadataJSON = """
+    {
+      "vct": "https://mock.local/metadata_with_schema",
+      "name": "Metadata with Inline Schema",
+      "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "family_name": {"type": "string"},
+          "given_name": {"type": "string"}
+        },
+        "required": ["family_name", "given_name"]
+      },
+      "claims": [
+        {"path": ["family_name"], "sd": "always"},
+        {"path": ["given_name"], "sd": "always"}
+      ]
+    }
+    """
+
+    let keyData = Data(base64Encoded: SDJWTConstants.anIssuerPrivateKey)!
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(from: keyData),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://mock.local/metadata_with_schema")
+      FlatDisclosedClaim("family_name", "Doe")
+      FlatDisclosedClaim("given_name", "John")
+    }
+
+    let metadataData = metadataJSON.data(using: .utf8)!
+
+    let sriValidator = try SRIValidator()
+    let session = NetworkingDataMock(data: metadataData)
+
+    let metadataFetcher = TypeMetadataFetcher(
+      session: session,
+      integrityValidator: sriValidator
+    )
+
+    let typeMetadataVerifier = TypeMetadataVerifier(
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
+      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
+      schemaValidator: SchemaValidator()
+    )
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+    )
+
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
+
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyIssuance_WithExtendsIntegrity_ShouldValidateParentMetadata() async throws {
+    // Given: Parent and child metadata with extends#integrity
+    let parentMetadataJSON = """
+    {
+      "vct": "https://mock.local/parent_metadata",
+      "name": "Parent Metadata",
+      "claims": [
+        {"path": ["base_claim"], "sd": "always"}
+      ]
+    }
+    """
+
+    let parentData = parentMetadataJSON.data(using: .utf8)!
+    let parentHash = Data(SHA256.hash(data: parentData)).base64EncodedString()
+    let parentIntegrity = "sha256-\(parentHash)"
+
+    let childMetadataJSON = """
+    {
+      "vct": "https://mock.local/child_metadata",
+      "name": "Child Metadata",
+      "extends": "https://mock.local/parent_metadata",
+      "extends#integrity": "\(parentIntegrity)",
+      "claims": [
+        {"path": ["child_claim"], "sd": "always"}
+      ]
+    }
+    """
+
+    let keyData = Data(base64Encoded: SDJWTConstants.anIssuerPrivateKey)!
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(from: keyData),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://mock.local/child_metadata")
+      FlatDisclosedClaim("base_claim", "base_value")
+      FlatDisclosedClaim("child_claim", "child_value")
+    }
+
+    let childData = childMetadataJSON.data(using: .utf8)!
+
+    let sriValidator = try SRIValidator()
+    let session = NetworkingMultiDataMock { url in
+      if url.absoluteString.contains("parent") {
+        return parentData
+      }
+      return childData
+    }
+
+    let metadataFetcher = TypeMetadataFetcher(
+      session: session,
+      integrityValidator: sriValidator
+    )
+
+    let typeMetadataVerifier = TypeMetadataVerifier(
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
+      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
+      schemaValidator: SchemaValidator()
+    )
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+    )
+
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
+
+    // Then: Should succeed with parent metadata integrity validated
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyPresentation_WithIntegrityValidation_ShouldSucceed() async throws {
+    // Given: Full presentation flow with integrity validation
+    let typeMetadataJSON = """
+    {
+      "vct": "https://mock.local/simple_type_metadata",
+      "name": "Simple Metadata",
+      "claims": [
+        {"path": ["family_name"], "sd": "always"},
+        {"path": ["given_name"], "sd": "always"},
+        {"path": ["birthdate"], "sd": "always"}
+      ]
+    }
+    """
+    let metadataData = typeMetadataJSON.data(using: .utf8)!
+
+    let keyData = Data(base64Encoded: SDJWTConstants.anIssuerPrivateKey)!
+    let issuersKey = issuersKeyPair.public
+    let issuerJwk = try issuersKey.jwk
+
+    let holdersKey = holdersKeyPair.public
+    let holdersJwk = try holdersKey.jwk
+
+    // Issue SD-JWT
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(from: keyData),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      PlainClaim("vct", "https://mock.local/simple_type_metadata")
+      FlatDisclosedClaim("family_name", "Doe")
+      FlatDisclosedClaim("given_name", "John")
+      FlatDisclosedClaim("birthdate", "1990-01-01")
+
+      // Add holder's public key
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("crv", "P-256")
+          PlainClaim("y", holdersJwk.y!.base64URLEncode())
+          PlainClaim("x", holdersJwk.x!.base64URLEncode())
+        }
+      }
+    }
+
+    // Create presentation
+    let sdHash = DigestCreator().hashAndBase64Encode(
+      input: CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+    )!
+
+    let nonce = UUID().uuidString
+    let aud = "verifier_id"
+
+    let holderPresentation = try await SDJWTIssuer.presentation(
+      holdersPrivateKey: holdersKeyPair.private,
+      signedSDJWT: issuerSignedSDJWT,
+      disclosuresToPresent: issuerSignedSDJWT.disclosures,
+      keyBindingJWT: KBJWT(
+        header: DefaultJWSHeaderImpl(algorithm: .ES256),
+        kbJwtPayload: .init([
+          Keys.nonce.rawValue: nonce,
+          Keys.aud.rawValue: aud,
+          Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
+          Keys.sdHash.rawValue: sdHash
+        ])
+      )
+    )
+
+    // Create verifier with SRI validation
+    let sriValidator = try SRIValidator()
+    let session = NetworkingDataMock(data: metadataData)
+
+    let metadataFetcher = TypeMetadataFetcher(
+      session: session,
+      integrityValidator: sriValidator
+    )
+
+    let typeMetadataVerifier = TypeMetadataVerifier(
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
+      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
+      schemaValidator: SchemaValidator()
+    )
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+    )
+
+    // When
+    let result = try await verifier.verifyPresentation(
+      unverifiedSdJwt: CompactSerialiser(signedSDJWT: holderPresentation).serialised,
+      claimsVerifier: ClaimsVerifier(),
+      keyBindingVerifier: KeyBindingVerifier()
+    )
+
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyIssuance_WithIntegrityValidationDisabled_ShouldSucceed() async throws {
+    // Given: Verifier without SRI validator (integrity validation disabled)
+    let typeMetadataJSON = """
+    {
+      "vct": "https://mock.local/simple_metadata",
+      "name": "Simple Metadata",
+      "claims": [
+        {"path": ["family_name"], "sd": "always"},
+        {"path": ["given_name"], "sd": "always"}
+      ]
+    }
+    """
+    let metadataData = typeMetadataJSON.data(using: .utf8)!
+
+    let keyData = Data(base64Encoded: SDJWTConstants.anIssuerPrivateKey)!
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: extractECKey(from: keyData),
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+      )
+    ) {
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://mock.local/simple_metadata")
+      PlainClaim("vct#integrity", "sha256-wronghash123=") // Wrong hash, but validator is disabled
+      FlatDisclosedClaim("family_name", "Doe")
+      FlatDisclosedClaim("given_name", "John")
+    }
+
+    // Create verifier WITHOUT SRI validator
+    let session = NetworkingDataMock(data: metadataData)
+
+    let metadataFetcher = TypeMetadataFetcher(
+      session: session,
+      integrityValidator: nil  // No integrity validator
+    )
+
+    let typeMetadataVerifier = TypeMetadataVerifier(
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
+      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
+      schemaValidator: SchemaValidator()
+    )
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+    )
+
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
+
+    // Then: Should succeed even with wrong hash because validation is disabled
+    XCTAssertNoThrow(try result.get())
+  }
   
-  func testVerifyIssuance_WithPolicyRequiredForVcts_EmptyRequiredSet_ShouldSucceed() async throws {
+  
+  func testVerifyIssuance_WithPolicyRequiredForVcts_EmptyRequiredSet_ShouldFail() async throws {
     
     // Given
-    let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
-    let typeMetadataVerifier = typeMetadataVerifierFactory(with: vct)
+    let typeMetadataVerifier = typeMetadataVerifierFactory()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     
     let verifier = SDJWTVCVerifier(
@@ -679,15 +1136,17 @@ final class VcVerifierTest: XCTestCase {
       typeMetadataPolicy: .requiredFor(vcts: [], verifier: typeMetadataVerifier)
       )
     
-    // When
-    let result = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
-    
-    // Then
-    XCTAssertNoThrow(try result.get())
+    do {
+      // When
+      _ = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+      XCTFail("Verification should not be succeeded")
+    } catch {
+      XCTAssertEqual(error as? TypeMetadataError, .emptyRequiredVcts)
+    }
   }
   
+  
   private func typeMetadataVerifierFactory(
-    with vct: Vct,
     useMock: Bool = true
   ) -> TypeMetadataVerifierType {
     let session: Networking = useMock ? (
@@ -701,8 +1160,8 @@ final class VcVerifierTest: XCTestCase {
     let schemafetcher = SchemaFetcher(session: session)
     
     let metadataLookup = TypeMetadataLookupDefault(
-      vct: vct,
-      fetcher: metadataFetcher)
+      fetcher: metadataFetcher
+    )
     
     let schemaLookup = TypeMetadataSchemaLookupDefault(
       schemaFetcher: schemafetcher

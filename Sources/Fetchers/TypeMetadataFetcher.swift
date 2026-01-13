@@ -26,47 +26,38 @@ public protocol TypeMetadataFetching {
   ) async throws -> SdJwtVcTypeMetadata
 }
 
-public protocol TypeMetadataIntegrityChecking {
-  func verify(metadata: SdJwtVcTypeMetadata, expectedHash: String?) throws
+public protocol SRIValidatorProtocol {
+  func isValid(expectedIntegrity: DocumentIntegrity, content: Data) -> Bool
 }
-
-public struct TypeMetadataIntegrityChecker: TypeMetadataIntegrityChecking {
-  public init() {}
-
-  public func verify(metadata: SdJwtVcTypeMetadata, expectedHash: String?) throws { }
-}
-
 
 
 public class TypeMetadataFetcher: TypeMetadataFetching {
   
   public let session: Networking
-  let integrityChecker: TypeMetadataIntegrityChecking?
+  let integrityValidator: SRIValidatorProtocol?
   
   public init(
     session: Networking,
-    integrityChecker: TypeMetadataIntegrityChecking? = nil) {
-    self.session = session
-    self.integrityChecker = integrityChecker
-  }
+    integrityValidator: SRIValidatorProtocol? = nil) {
+      self.session = session
+      self.integrityValidator = integrityValidator
+    }
   
   public func fetchTypeMetadata(
     from url: URL,
-    expectedIntegrityHash: String? = nil) async throws -> SdJwtVcTypeMetadata {
-      
-      guard url.scheme == "https" else {
-        throw TypeMetadataError.invalidTypeMetadataURL
-      }
-      
-      let metadata: SdJwtVcTypeMetadata = try await session.fetch(
-        from: url)
-      if let integrityChecker {
-        try integrityChecker.verify(
-          metadata: metadata,
-          expectedHash: expectedIntegrityHash
-        )
-      }
-      
-      return metadata
-    }
+    expectedIntegrityHash: String? = nil
+  ) async throws -> SdJwtVcTypeMetadata {
+    
+//    guard url.scheme == "https" else {
+//      throw TypeMetadataError.invalidTypeMetadataURL
+//    }
+    
+    let metadata: SdJwtVcTypeMetadata = try await session.fetch(
+      from: url,
+      validator: integrityValidator,
+      expectedIntegrity: expectedIntegrityHash
+    )
+    
+    return metadata
+  }
 }

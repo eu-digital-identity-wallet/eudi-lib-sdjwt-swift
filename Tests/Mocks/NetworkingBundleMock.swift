@@ -76,10 +76,10 @@ class NetworkingBundleMock: Networking {
 }
 
 class NetworkingJSONMock: Networking {
-  
+
   let json: JSON
   let statusCode: Int
-  
+
   init(
     json: JSON,
     statusCode: Int = 200
@@ -87,7 +87,7 @@ class NetworkingJSONMock: Networking {
     self.json = json
     self.statusCode = statusCode
   }
-  
+
   func data(
     from url: URL
   ) async throws -> (Data, URLResponse) {
@@ -100,7 +100,74 @@ class NetworkingJSONMock: Networking {
     )
     return try (result.get(), response!)
   }
-  
+
+  func data(
+    for request: URLRequest
+  ) async throws -> (Data, URLResponse) {
+    return try await data(from: URL(string: "https://www.example.com")!)
+  }
+}
+
+class NetworkingDataMock: Networking {
+
+  let data: Data
+  let statusCode: Int
+
+  init(
+    data: Data,
+    statusCode: Int = 200
+  ) {
+    self.data = data
+    self.statusCode = statusCode
+  }
+
+  func data(
+    from url: URL
+  ) async throws -> (Data, URLResponse) {
+    let result = Result<Data, Error>.success(self.data)
+    let response = HTTPURLResponse(
+      url: .stub(),
+      statusCode: statusCode,
+      httpVersion: nil,
+      headerFields: [:]
+    )
+    return try (result.get(), response!)
+  }
+
+  func data(
+    for request: URLRequest
+  ) async throws -> (Data, URLResponse) {
+    return try await data(from: URL(string: "https://www.example.com")!)
+  }
+}
+
+class NetworkingMultiDataMock: Networking {
+
+  let dataResolver: (URL) -> Data
+  let statusCode: Int
+
+  init(
+    dataResolver: @escaping (URL) -> Data,
+    statusCode: Int = 200
+  ) {
+    self.dataResolver = dataResolver
+    self.statusCode = statusCode
+  }
+
+  func data(
+    from url: URL
+  ) async throws -> (Data, URLResponse) {
+    let responseData = dataResolver(url)
+    let result = Result<Data, Error>.success(responseData)
+    let response = HTTPURLResponse(
+      url: .stub(),
+      statusCode: statusCode,
+      httpVersion: nil,
+      headerFields: [:]
+    )
+    return try (result.get(), response!)
+  }
+
   func data(
     for request: URLRequest
   ) async throws -> (Data, URLResponse) {

@@ -19,8 +19,13 @@ import CryptoKit
 
 // MARK: - Models
 
-/// Represents a Subresource Integrity (SRI) value as per W3C spec
-/// Example: "sha256-abc123=="
+/// Represents a Subresource Integrity (SRI) value.
+///
+/// An SRI value consists of one or more cryptographic hashes that can be used
+/// to verify that fetched resources have not been tampered with.
+/// When multiple hashes are present, the validator selects the strongest algorithm
+/// for validation (SHA-512 > SHA-384 > SHA-256).
+///
 public struct DocumentIntegrity {
   let value: String
   
@@ -65,14 +70,23 @@ public struct DocumentIntegrity {
         """
 }
 
-/// Represents a single hash within an SRI value
+/// Represents a single hash within a Subresource Integrity (SRI) value.
+///
+/// Each hash consists of an algorithm identifier, a base64-encoded hash value,
+/// and optional parameters (e.g., "sha256-abc123==?option=value").
 struct DocumentHash {
   let algorithm: IntegrityAlgorithm
   let encodedHash: String
   let options: String?
 }
 
-/// Supported integrity algorithms
+/// Hash algorithms supported for Subresource Integrity (SRI) validation.
+///
+/// These algorithms are used to compute cryptographic hashes of fetched resources.
+/// When multiple hashes are present, the validator selects the strongest algorithm
+/// based on the `strength` property.
+///
+/// **Algorithm Strength Ordering:** SHA-512 (strongest) > SHA-384 > SHA-256
 public enum IntegrityAlgorithm: String {
   case sha256 = "sha256"
   case sha384 = "sha384"
@@ -89,14 +103,16 @@ public enum IntegrityAlgorithm: String {
 
 // MARK: - Validator
 
-/// Performs integrity validation according to W3C Subresource Integrity spec
-/// https://www.w3.org/TR/sri/
+/// Validates content integrity using Subresource Integrity (SRI) standard.
+///
+/// This validator supports:
+/// - **SHA-256, SHA-384, SHA-512** hash algorithms
+/// - **Multiple hashes** with automatic strongest algorithm selection
+/// - **Configurable algorithm restrictions** for security policies
+///
 public class SRIValidator: SRIValidatorProtocol {
   private let allowedAlgorithms: Set<IntegrityAlgorithm>
   
-  /// Initializes the validator with allowed algorithms
-  /// - Parameter allowedAlgorithms: Hash algorithms that are allowed for validation.
-  ///   Defaults to all algorithms.
   public init(allowedAlgorithms: Set<IntegrityAlgorithm> = [.sha256, .sha384, .sha512]) throws {
     guard !allowedAlgorithms.isEmpty else {
       throw SRIError.noAlgorithmsAllowed
@@ -152,6 +168,7 @@ public class SRIValidator: SRIValidatorProtocol {
 
 // MARK: - Errors
 
+/// Errors related to Subresource Integrity (SRI) validation.
 enum SRIError: LocalizedError {
   case invalidFormat(String)
   case noAlgorithmsAllowed

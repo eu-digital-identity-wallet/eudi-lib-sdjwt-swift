@@ -16,8 +16,6 @@
 
 import Foundation
 
-
-
 public protocol TypeMetadataFetching {
   var session: Networking { get }
   func fetchTypeMetadata(
@@ -26,7 +24,20 @@ public protocol TypeMetadataFetching {
   ) async throws -> SdJwtVcTypeMetadata
 }
 
+
+/// Protocol for Subresource Integrity (SRI) validation.
+///
+/// Enables verification of fetched resources
+/// by comparing cryptographic hashes.
+///
+
 public protocol SRIValidatorProtocol {
+  /// Validates content against expected integrity hash.
+  ///
+  /// - Parameters:
+  ///   - expectedIntegrity: The expected SRI value (e.g., "sha256-abc123==")
+  ///   - content: The raw data to validate
+  /// - Returns: `true` if content matches integrity hash, `false` otherwise
   func isValid(expectedIntegrity: DocumentIntegrity, content: Data) -> Bool
 }
 
@@ -47,11 +58,6 @@ public class TypeMetadataFetcher: TypeMetadataFetching {
     from url: URL,
     expectedIntegrityHash: String? = nil
   ) async throws -> SdJwtVcTypeMetadata {
-    
-//    guard url.scheme == "https" else {
-//      throw TypeMetadataError.invalidTypeMetadataURL
-//    }
-    
     let metadata: SdJwtVcTypeMetadata = try await session.fetch(
       from: url,
       validator: integrityValidator,

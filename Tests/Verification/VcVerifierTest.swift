@@ -405,6 +405,7 @@ final class VcVerifierTest: XCTestCase {
         FlatDisclosedClaim("region", "Sachsen-Anhalt")
         FlatDisclosedClaim("country", "DE")
       }
+      FlatDisclosedClaim("attestation_legal_category", "a_actegory")
       FlatDisclosedClaim("nationalities", ["DE", "FR", "EN"])
       FlatDisclosedClaim("age_in_years", 34)
       FlatDisclosedClaim("age_birth_year", "1990")

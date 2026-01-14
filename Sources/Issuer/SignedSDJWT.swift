@@ -357,6 +357,9 @@ extension SignedSDJWT {
           }
           .values
           .flatMap { $0 }
+          .filter {
+            !$0.isEmpty
+          }
       )
       return try SignedSDJWT(
         serializedJwt: jwt.compactSerialization,

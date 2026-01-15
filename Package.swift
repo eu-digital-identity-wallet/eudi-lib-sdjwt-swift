@@ -37,10 +37,6 @@ let package = Package(
     .package(
       url: "https://github.com/krzyzanowskim/CryptoSwift.git",
       from: "1.9.0"
-    ),
-    .package(
-      url: "https://github.com/niscy-eudiw/swift-json-schema",
-      from: "0.0.4"
     )
   ],
   targets: [
@@ -51,7 +47,6 @@ let package = Package(
         "CryptoSwift",
         .product(name: "SwiftyJSON", package: "swiftyjson"),
         .product(name: "X509", package: "swift-certificates"),
-        .product(name: "SwiftJSONSchema", package: "swift-json-schema"),
         .product(
           name: "CryptorECC",
           package: "BlueECC"

@@ -699,21 +699,13 @@ final class VcVerifierTest: XCTestCase {
     ) : URLSession.shared
     
     let metadataFetcher = TypeMetadataFetcher(session: session)
-    let schemafetcher = SchemaFetcher(session: session)
     
     let metadataLookup = TypeMetadataLookupDefault(
       vct: vct,
       fetcher: metadataFetcher)
     
-    let schemaLookup = TypeMetadataSchemaLookupDefault(
-      schemaFetcher: schemafetcher
-    )
-    
     let verifier = TypeMetadataVerifier(
-      metadataLookup: metadataLookup,
-      schemaLookup: schemaLookup,
-      schemaValidator: SchemaValidator()
-    )
+      metadataLookup: metadataLookup)
     
     return verifier
   }

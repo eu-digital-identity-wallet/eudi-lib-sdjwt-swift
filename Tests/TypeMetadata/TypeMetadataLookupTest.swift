@@ -75,31 +75,15 @@ final class TypeMetadataLookupTests: XCTestCase {
     
     XCTAssertEqual(metadata.claims?[2].path.value.count, 2)
     XCTAssertEqual(metadata.claims?[3].path.value.count, 2)
-    
-    XCTAssertEqual(metadata.schemaSource, .byReference(
-      url: URL(
-        string: "https://exampleuniversity.com/public/credential-schema-0.9")!,
-      integrity: "sha256-o984vn819a48ui1llkwPmKjZ5t0WRL5ca_xGgX3c1VLmXfh"
-    )
-    )
   }
   
-  func test_getTypeMetadata_withSchemaValue_returnsSingleEntryWithExpectedFields() async throws {
+  func test_getTypeMetadata_returnsSingleEntryWithExpectedFields() async throws {
     
     let typeMetadataString = """
     {
       "vct": "https://mock.local/base_type_metadata",
       "name": "Betelgeuse Education Credential - Preliminary Version",
-      "description": "This is our development version of the education credential. Don't panic.",
-      "schema": {
-        "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "type": "object",
-        "properties": {
-          "vct": {"type": "string"},
-          "iss": {"type": "string"},
-          "birthdate": {"type": "string"}
-        }
-      }
+      "description": "This is our development version of the education credential. Don't panic."
     }
     """
     
@@ -120,20 +104,6 @@ final class TypeMetadataLookupTests: XCTestCase {
     guard let metadata = metadataArray.first else {
       XCTFail("No metadata found")
       return
-    }
-    
-    switch metadata.schemaSource {
-    case .byValue(let json ):
-      XCTAssertNotNil(json)
-      XCTAssertEqual(json["type"].stringValue, "object")
-      let properties = json["properties"]
-      XCTAssertEqual(properties["vct"]["type"].stringValue, "string")
-      XCTAssertEqual(properties["iss"]["type"].stringValue, "string")
-      XCTAssertEqual(properties["birthdate"]["type"].stringValue, "string")
-    case .byReference(url: _, integrity: _):
-      XCTFail("schemaSource should not be .byReference")
-    case .none:
-      XCTFail("schemaSource should not be none")
     }
   }
   

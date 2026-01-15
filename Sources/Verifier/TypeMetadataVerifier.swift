@@ -41,37 +41,27 @@ public protocol TypeMetadataVerifierType {
 public class TypeMetadataVerifier: TypeMetadataVerifierType {
   
   let metadataLookup: TypeMetadataLookup
-  let schemaLookup: TypeMetadataSchemaLookup
   var typeMetadataMerger: TypeMetadataMergerType
-  let schemaValidator: SchemaValidatorType
   let disclosedValidator: DisclosureValidatorType
   let claimsValidator: TypeMetadataClaimsValidatorType
   
   public init(
-    metadataLookup: TypeMetadataLookup,
-    schemaLookup: TypeMetadataSchemaLookup,
-    schemaValidator: SchemaValidatorType
+    metadataLookup: TypeMetadataLookup
   ) {
     self.metadataLookup = metadataLookup
-    self.schemaLookup = schemaLookup
     self.typeMetadataMerger = TypeMetadataMerger()
-    self.schemaValidator = schemaValidator
     self.disclosedValidator = DisclosureValidator()
     self.claimsValidator = TypeMetadataClaimsValidator()
   }
   
   init(
     metadataLookup: TypeMetadataLookup,
-    schemaLookup: TypeMetadataSchemaLookup,
     typeMetadataMerger: TypeMetadataMergerType = TypeMetadataMerger(),
-    schemaValidator: SchemaValidatorType,
     disclosedValidator: DisclosureValidatorType = DisclosureValidator(),
     claimsValidator: TypeMetadataClaimsValidatorType = TypeMetadataClaimsValidator()
   ) {
     self.metadataLookup = metadataLookup
-    self.schemaLookup = schemaLookup
     self.typeMetadataMerger = typeMetadataMerger
-    self.schemaValidator = schemaValidator
     self.disclosedValidator = disclosedValidator
     self.claimsValidator = claimsValidator
   }
@@ -85,8 +75,6 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     let metadataArray = try await metadataLookup.getTypeMetadata()
     let finalData = typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
     try claimsValidator.validate(result.recreatedClaims, finalData)
-    let schemas = try await schemaLookup.getSchemas(metadataArray: metadataArray)
-    try schemaValidator.validate(result.recreatedClaims, schemas)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }
   
@@ -105,9 +93,7 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     guard !requiredMetadata.isEmpty else { return }
     
     let finalData = typeMetadataMerger.mergeMetadata(from: requiredMetadata.map { $0.toResolvedTypeMetadata() })
-    let schemas = try await schemaLookup.getSchemas(metadataArray: requiredMetadata)
     try claimsValidator.validate(result.recreatedClaims, finalData)
-    try schemaValidator.validate(result.recreatedClaims, schemas)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }
 }

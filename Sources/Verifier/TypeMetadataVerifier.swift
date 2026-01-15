@@ -83,7 +83,7 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     let result = try sdJwt.recreateClaims()
     let disclosuresPerClaimPath = result.disclosuresPerClaimPath
     let metadataArray = try await metadataLookup.getTypeMetadata()
-    let finalData = typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
+    let finalData = try typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
     try claimsValidator.validate(result.recreatedClaims, finalData)
     let schemas = try await schemaLookup.getSchemas(metadataArray: metadataArray)
     try schemaValidator.validate(result.recreatedClaims, schemas)
@@ -104,7 +104,7 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     // If no required metadata matches, skip validations
     guard !requiredMetadata.isEmpty else { return }
     
-    let finalData = typeMetadataMerger.mergeMetadata(from: requiredMetadata.map { $0.toResolvedTypeMetadata() })
+    let finalData = try typeMetadataMerger.mergeMetadata(from: requiredMetadata.map { $0.toResolvedTypeMetadata() })
     let schemas = try await schemaLookup.getSchemas(metadataArray: requiredMetadata)
     try claimsValidator.validate(result.recreatedClaims, finalData)
     try schemaValidator.validate(result.recreatedClaims, schemas)

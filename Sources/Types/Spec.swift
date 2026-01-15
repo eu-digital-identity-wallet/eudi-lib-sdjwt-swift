@@ -99,6 +99,7 @@ struct SdJwtVcSpec {
   static let schemaURIIntegrity = "\(schemaURI)\(hashIntegrity)"
   static let claimPath = "path"
   static let claimDisplay = "display"
+  static let claimMandatory = "mandatory"
   static let claimSD = "sd"
   static let claimSDAlways = "always"
   static let claimSDAllowed = "allowed"

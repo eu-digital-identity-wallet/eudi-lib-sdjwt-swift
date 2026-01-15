@@ -56,8 +56,8 @@ final class TypeMetadataClaimsValidatorTests: XCTestCase {
     let sut = TypeMetadataClaimsValidator()
     
     let metadata = ResolvedTypeMetadata(vct: "vct", displays: [
-      .init(lang: "en", name: "USA English"),
-      .init(lang: "en", name: "UK English")
+      .init(locale: "en", name: "USA English"),
+      .init(locale: "en", name: "UK English")
     ])
     
     XCTAssertThrowsError(try sut.validate(["vct": "vct",], metadata)) { error in

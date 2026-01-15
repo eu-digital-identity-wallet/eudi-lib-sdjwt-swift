@@ -48,7 +48,7 @@ struct TypeMetadataMerger: TypeMetadataMergerType {
       let display = mergeByKey(
         primary: result.displays,
         secondary: parent.displays,
-        keySelector: \.lang,
+        keySelector: \.locale,
         merge: { current, _ in current }
       )
       

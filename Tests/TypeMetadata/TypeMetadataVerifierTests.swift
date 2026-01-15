@@ -40,8 +40,8 @@ final class TypeMetadataVerifierTests: XCTestCase {
     let vct = try! Vct(uri: "https://mock.local/type_meta_data_pid")
     
     let metadataLookup = TypeMetadataLookupDefault(
-      vct: vct,
-      fetcher: metadataFetcher)
+      fetcher: metadataFetcher
+    )
     
     let schemaLookup = TypeMetadataSchemaLookupDefault(
       schemaFetcher: schemafetcher

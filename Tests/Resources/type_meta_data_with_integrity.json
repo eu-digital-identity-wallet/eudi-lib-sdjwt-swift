@@ -1,0 +1,14 @@
+{
+  "vct": "https://mock.local/type_meta_data_with_integrity",
+  "name": "Test Metadata with Integrity",
+  "claims": [
+    {
+      "path": ["family_name"],
+      "sd": "always"
+    },
+    {
+      "path": ["given_name"],
+      "sd": "always"
+    }
+  ]
+}

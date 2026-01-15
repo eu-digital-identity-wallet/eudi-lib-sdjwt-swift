@@ -50,7 +50,7 @@ final class TypeMetadataLookupTests: XCTestCase {
     XCTAssertEqual(metadata.description, "This is our development version of the education credential. Don't panic.")
     
     XCTAssertEqual(metadata.display?.count, 2)
-    XCTAssertEqual(metadata.display?.first?.lang, "en-US")
+    XCTAssertEqual(metadata.display?.first?.locale, "en-US")
     XCTAssertEqual(metadata.display?.first?.name, "Betelgeuse Education Credential")
     XCTAssertEqual(metadata.display?.first?.description, "An education credential for all carbon-based life forms on Betelgeusians",
                    "rendering")
@@ -68,7 +68,7 @@ final class TypeMetadataLookupTests: XCTestCase {
     XCTAssertEqual(metadata.claims?.count, 4)
     XCTAssertEqual(metadata.claims?.first?.path.value.count, 1)
     XCTAssertEqual(metadata.claims?.first?.path.value.first, .claim(name: "name"))
-    XCTAssertEqual(metadata.claims?.first?.display?.first?.lang, "de-DE")
+    XCTAssertEqual(metadata.claims?.first?.display?.first?.locale, "de-DE")
     XCTAssertEqual(metadata.claims?.first?.display?.first?.label, "Vor- und Nachname")
     XCTAssertEqual(metadata.claims?.first?.display?.first?.description, "Der Name des Studenten")
     

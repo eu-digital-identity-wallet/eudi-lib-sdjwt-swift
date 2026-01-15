@@ -51,12 +51,12 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
   
   func testValidDisplayMetadataInitialization() {
     let displayMetadata = SdJwtVcTypeMetadata.DisplayMetadata(
-      lang: "en",
+      locale: "en",
       name: "Test Name",
       description: "Test Description"
     )
     
-    XCTAssertEqual(displayMetadata.lang, "en")
+    XCTAssertEqual(displayMetadata.locale, "en")
     XCTAssertEqual(displayMetadata.name, "Test Name")
     XCTAssertEqual(displayMetadata.description, "Test Description")
   }
@@ -119,7 +119,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     let vct = "complex-vct"
     let integrity = "doc-integrity"
     
-    let displayMetadata = [SdJwtVcTypeMetadata.DisplayMetadata(lang: "en", name: "Test Name")]
+    let displayMetadata = [SdJwtVcTypeMetadata.DisplayMetadata(locale: "en", name: "Test Name")]
     
     let schemaJson = JSON(["title": "Test Schema"])
     
@@ -157,7 +157,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     XCTAssertEqual(metadata.name, "Type Metadata for Person Identification Data")
 
     XCTAssertEqual(metadata.display?.count, 1)
-    XCTAssertEqual(metadata.display?.first?.lang, "en")
+    XCTAssertEqual(metadata.display?.first?.locale, "en")
     XCTAssertEqual(metadata.display?.first?.name, "PID")
     XCTAssertEqual(metadata.display?.first?.description, "Person Identification Data")
 

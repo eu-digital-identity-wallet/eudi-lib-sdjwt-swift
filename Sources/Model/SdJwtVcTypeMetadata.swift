@@ -224,21 +224,25 @@ public struct SdJwtVcTypeMetadata: Decodable {
     public let logo: LogoMetadata?
     public let backgroundColor: String?
     public let textColor: String?
-    
+    public let backgroundImage: BackgroundImage?
+
     public init(
       logo: LogoMetadata? = nil,
       backgroundColor: String? = nil,
-      textColor: String? = nil
+      textColor: String? = nil,
+      backgroundImage: BackgroundImage? = nil
     ) {
       self.logo = logo
       self.backgroundColor = backgroundColor
       self.textColor = textColor
+      self.backgroundImage = backgroundImage
     }
-    
+
     enum CodingKeys: String, CodingKey {
       case logo
       case backgroundColor = "background_color"
       case textColor = "text_color"
+      case backgroundImage = "background_image"
     }
   }
   
@@ -308,6 +312,24 @@ public struct SdJwtVcTypeMetadata: Decodable {
       case uri
       case uriIntegrity = "uri#integrity"
       case altText = "alt_text"
+    }
+  }
+
+  public struct BackgroundImage: Decodable {
+    public let uri: URL
+    public let uriIntegrity: DocumentIntegrity?
+
+    public init(
+      uri: URL,
+      uriIntegrity: DocumentIntegrity? = nil
+    ) {
+      self.uri = uri
+      self.uriIntegrity = uriIntegrity
+    }
+
+    enum CodingKeys: String, CodingKey {
+      case uri
+      case uriIntegrity = "uri#integrity"
     }
   }
 }

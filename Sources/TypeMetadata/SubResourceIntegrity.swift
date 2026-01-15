@@ -29,7 +29,7 @@ import CryptoKit
 public struct DocumentIntegrity {
   let value: String
   
-  init(_ value: String) throws {
+  public init(_ value: String) throws {
     guard value.range(of: Self.sriPattern, options: .regularExpression) != nil else {
       throw SRIError.invalidFormat("not a valid sub-resource integrity value")
     }

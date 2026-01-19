@@ -32,7 +32,6 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     XCTAssertEqual(metadata.vct, "test-vct")
     XCTAssertEqual(metadata.name, "Test Name")
     XCTAssertEqual(metadata.description, "Test Description")
-    XCTAssertNil(metadata.schemaSource) // Ensure optional properties default to nil
   }
   
   
@@ -121,8 +120,6 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     
     let displayMetadata = [SdJwtVcTypeMetadata.DisplayMetadata(locale: "en", name: "Test Name")]
     
-    let schemaJson = JSON(["title": "Test Schema"])
-    
     let metadata = try SdJwtVcTypeMetadata(
       vct: vct,
       vctIntegrity: integrity,
@@ -131,8 +128,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
       extends: URL(string: "https://example.com")!,
       extendsIntegrity: integrity,
       display: displayMetadata,
-      claims: [],
-      schemaSource: .byValue(schemaJson)
+      claims: []
     )
     
     XCTAssertEqual(metadata.vct, "complex-vct")
@@ -167,13 +163,6 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     // Verify at least one path includes a null value
     let containsNullPath = metadata.claims?.contains(where: { $0.path.value.contains(.allArrayElements) }) ?? false
     XCTAssertTrue(containsNullPath, "Expected at least one claim path to contain null")
-
-    // Verify schema is parsed as byValue and is an object
-    if case let .byValue(schema)? = metadata.schemaSource {
-        XCTAssertEqual(schema["type"].stringValue, "object")
-    } else {
-        XCTFail("Expected schemaSource to be .byValue with a valid schema")
-    }
   }
 }
 

@@ -16,8 +16,6 @@
 
 import Foundation
 
-
-
 public protocol TypeMetadataFetching {
   var session: Networking { get }
   func fetchTypeMetadata(
@@ -26,47 +24,46 @@ public protocol TypeMetadataFetching {
   ) async throws -> SdJwtVcTypeMetadata
 }
 
-public protocol TypeMetadataIntegrityChecking {
-  func verify(metadata: SdJwtVcTypeMetadata, expectedHash: String?) throws
+
+/// Protocol for Subresource Integrity (SRI) validation.
+///
+/// Enables verification of fetched resources
+/// by comparing cryptographic hashes.
+///
+
+public protocol SRIValidatorProtocol {
+  /// Validates content against expected integrity hash.
+  ///
+  /// - Parameters:
+  ///   - expectedIntegrity: The expected SRI value (e.g., "sha256-abc123==")
+  ///   - content: The raw data to validate
+  /// - Returns: `true` if content matches integrity hash, `false` otherwise
+  func isValid(expectedIntegrity: DocumentIntegrity, content: Data) -> Bool
 }
-
-public struct TypeMetadataIntegrityChecker: TypeMetadataIntegrityChecking {
-  public init() {}
-
-  public func verify(metadata: SdJwtVcTypeMetadata, expectedHash: String?) throws { }
-}
-
 
 
 public class TypeMetadataFetcher: TypeMetadataFetching {
   
   public let session: Networking
-  let integrityChecker: TypeMetadataIntegrityChecking?
+  let integrityValidator: SRIValidatorProtocol?
   
   public init(
     session: Networking,
-    integrityChecker: TypeMetadataIntegrityChecking? = nil) {
-    self.session = session
-    self.integrityChecker = integrityChecker
-  }
+    integrityValidator: SRIValidatorProtocol? = nil) {
+      self.session = session
+      self.integrityValidator = integrityValidator
+    }
   
   public func fetchTypeMetadata(
     from url: URL,
-    expectedIntegrityHash: String? = nil) async throws -> SdJwtVcTypeMetadata {
-      
-      guard url.scheme == "https" else {
-        throw TypeMetadataError.invalidTypeMetadataURL
-      }
-      
-      let metadata: SdJwtVcTypeMetadata = try await session.fetch(
-        from: url)
-      if let integrityChecker {
-        try integrityChecker.verify(
-          metadata: metadata,
-          expectedHash: expectedIntegrityHash
-        )
-      }
-      
-      return metadata
-    }
+    expectedIntegrityHash: String? = nil
+  ) async throws -> SdJwtVcTypeMetadata {
+    let metadata: SdJwtVcTypeMetadata = try await session.fetch(
+      from: url,
+      validator: integrityValidator,
+      expectedIntegrity: expectedIntegrityHash
+    )
+    
+    return metadata
+  }
 }

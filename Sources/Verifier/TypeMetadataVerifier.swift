@@ -81,12 +81,18 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
   ) async throws  {
     
     let result = try sdJwt.recreateClaims()
+    let claims = result.recreatedClaims
     let disclosuresPerClaimPath = result.disclosuresPerClaimPath
-    let metadataArray = try await metadataLookup.getTypeMetadata()
+    guard let vctUri = claims["vct"].string else {
+      throw TypeMetadataError.missingOrInvalidVCT
+    }
+  
+    let vct = try Vct(uri: vctUri, integrityHash: claims["vct#integrity"].string)
+    let metadataArray = try await metadataLookup.getTypeMetadata(vct: vct)
     let finalData = typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
-    try claimsValidator.validate(result.recreatedClaims, finalData)
+    try claimsValidator.validate(claims, finalData)
     let schemas = try await schemaLookup.getSchemas(metadataArray: metadataArray)
-    try schemaValidator.validate(result.recreatedClaims, schemas)
+    try schemaValidator.validate(claims, schemas)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }
   
@@ -95,8 +101,17 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     sdJwt: SignedSDJWT
   ) async throws {
     let result = try sdJwt.recreateClaims()
+    let claims = result.recreatedClaims
     let disclosuresPerClaimPath = result.disclosuresPerClaimPath
-    let metadataArray = try await metadataLookup.getTypeMetadata()
+    guard let vctUri = claims["vct"].string else {
+      throw TypeMetadataError.missingOrInvalidVCT
+    }
+    guard !vcts.isEmpty else {
+      throw TypeMetadataError.emptyRequiredVcts
+    }
+  
+    let vct = try Vct(uri: vctUri, integrityHash: claims["vct#integrity"].string)
+    let metadataArray = try await metadataLookup.getTypeMetadata(vct: vct)
     
     // Filter only required metadata based on VCTs
     let requiredMetadata = metadataArray.filter { vcts.contains($0.vct) }
@@ -106,8 +121,8 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     
     let finalData = typeMetadataMerger.mergeMetadata(from: requiredMetadata.map { $0.toResolvedTypeMetadata() })
     let schemas = try await schemaLookup.getSchemas(metadataArray: requiredMetadata)
-    try claimsValidator.validate(result.recreatedClaims, finalData)
-    try schemaValidator.validate(result.recreatedClaims, schemas)
+    try claimsValidator.validate(claims, finalData)
+    try schemaValidator.validate(claims, schemas)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }
 }

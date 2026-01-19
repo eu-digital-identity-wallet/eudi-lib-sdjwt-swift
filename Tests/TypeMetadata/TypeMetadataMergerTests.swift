@@ -42,11 +42,11 @@ final class TypeMetadataMergerTests: XCTestCase {
     XCTAssertEqual(mergedMetadata.displays.count, 4)
     XCTAssertEqual(mergedMetadata.claims.count, 4)
     
-    XCTAssertEqual(mergedMetadata.displays[0].lang, "child_display_1_lang")
-    XCTAssertEqual(mergedMetadata.displays[1].lang, "child_display_2_lang")
+    XCTAssertEqual(mergedMetadata.displays[0].locale, "child_display_1_lang")
+    XCTAssertEqual(mergedMetadata.displays[1].locale, "child_display_2_lang")
     
-    XCTAssertEqual(mergedMetadata.displays[2].lang, "parent_display_1_lang")
-    XCTAssertEqual(mergedMetadata.displays[3].lang, "parent_display_2_lang")
+    XCTAssertEqual(mergedMetadata.displays[2].locale, "parent_display_1_lang")
+    XCTAssertEqual(mergedMetadata.displays[3].locale, "parent_display_2_lang")
     
     XCTAssertEqual(mergedMetadata.claims[0].path, ClaimPath([.claim(name: "child_claims_1_path")]))
     XCTAssertEqual(mergedMetadata.claims[0].display?.count, 3)
@@ -74,14 +74,14 @@ final class TypeMetadataMergerTests: XCTestCase {
   func test_mergeMetadata_whenChildAndParentHaveSameLangDisplay_childWins() throws {
     // Given
     let childDisplay = SdJwtVcTypeMetadata.DisplayMetadata(
-      lang: "en",
+      locale: "en",
       name: "child_name",
       description: "child_description",
       rendering: nil
     )
     
     let parentDisplay = SdJwtVcTypeMetadata.DisplayMetadata(
-      lang: "en",
+      locale: "en",
       name: "parent_name",
       description: "parent_description",
       rendering: nil
@@ -110,7 +110,7 @@ final class TypeMetadataMergerTests: XCTestCase {
     
     // Then
     XCTAssertEqual(merged?.displays.count, 1)
-    XCTAssertEqual(merged?.displays.first?.lang, "en")
+    XCTAssertEqual(merged?.displays.first?.locale, "en")
     XCTAssertEqual(merged?.displays.first?.name, "child_name")
     XCTAssertEqual(merged?.displays.first?.description, "child_description")
   }
@@ -153,15 +153,15 @@ final class TypeMetadataMergerTests: XCTestCase {
     // Changed parent from .never to .allowed so child can legitimately tighten to .always
     let childClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "same_path")]),
-      display: [SdJwtVcTypeMetadata.ClaimDisplay(lang: "en", label: "Child Label")],
+      display: [SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Child Label")],
       selectivelyDisclosable: .always,
       svgId: "child_svg"
     )
     
     let parentClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "same_path")]),
-      display: [SdJwtVcTypeMetadata.ClaimDisplay(lang: "en", label: "Parent Label")],
-      selectivelyDisclosable: .allowed, // Changed from .never to .allowed
+      display: [SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Parent Label")],
+      selectivelyDisclosable: .never,
       svgId: "parent_svg"
     )
     
@@ -196,7 +196,7 @@ final class TypeMetadataMergerTests: XCTestCase {
     let childClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "same_path")]),
       display: [
-        SdJwtVcTypeMetadata.ClaimDisplay(lang: "en", label: "Child Label EN")
+        SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Child Label EN")
       ],
       selectivelyDisclosable: .always,
       svgId: "child_svg"
@@ -205,8 +205,8 @@ final class TypeMetadataMergerTests: XCTestCase {
     let parentClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "same_path")]),
       display: [
-        SdJwtVcTypeMetadata.ClaimDisplay(lang: "en", label: "Parent Label EN"),
-        SdJwtVcTypeMetadata.ClaimDisplay(lang: "fr", label: "Parent Label FR")
+        SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Parent Label EN"),
+        SdJwtVcTypeMetadata.ClaimDisplay(locale: "fr", label: "Parent Label FR")
       ],
       selectivelyDisclosable: .allowed, // Changed from .never to .allowed
       svgId: "parent_svg"
@@ -236,11 +236,11 @@ final class TypeMetadataMergerTests: XCTestCase {
     
     // Only child's displays should be present (no French from parent)
     XCTAssertEqual(mergedClaim?.display?.count, 1)
-    XCTAssertEqual(mergedClaim?.display?.first?.lang, "en")
+    XCTAssertEqual(mergedClaim?.display?.first?.locale, "en")
     XCTAssertEqual(mergedClaim?.display?.first?.label, "Child Label EN")
     
     // Parent's French display should NOT be present
-    XCTAssertFalse(mergedClaim?.display?.contains(where: { $0.lang == "fr" }) ?? true)
+    XCTAssertFalse(mergedClaim?.display?.contains(where: { $0.locale == "fr" }) ?? true)
     
     // All child properties win
     XCTAssertEqual(mergedClaim?.selectivelyDisclosable, .always)
@@ -249,14 +249,14 @@ final class TypeMetadataMergerTests: XCTestCase {
   
   func test_mergeMetadata_parentDisplaysAppended() throws {
     let childDisplay = SdJwtVcTypeMetadata.DisplayMetadata(
-      lang: "en",
+      locale: "en",
       name: "Child Name",
       description: "Child Desc",
       rendering: nil
     )
     
     let parentDisplay = SdJwtVcTypeMetadata.DisplayMetadata(
-      lang: "fr",
+      locale: "fr",
       name: "Parent Name",
       description: "Parent Desc",
       rendering: nil
@@ -281,21 +281,21 @@ final class TypeMetadataMergerTests: XCTestCase {
     let merged = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
     
     XCTAssertEqual(merged?.displays.count, 2)
-    XCTAssertTrue(merged?.displays.contains(where: { $0.lang == "en" }) ?? false)
-    XCTAssertTrue(merged?.displays.contains(where: { $0.lang == "fr" }) ?? false)
+    XCTAssertTrue(merged?.displays.contains(where: { $0.locale == "en" }) ?? false)
+    XCTAssertTrue(merged?.displays.contains(where: { $0.locale == "fr" }) ?? false)
   }
   
   func test_mergeMetadata_parentClaimsAppended() throws {
     let childClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "child_path")]),
-      display: [SdJwtVcTypeMetadata.ClaimDisplay(lang: "en", label: "Child Label")],
+      display: [SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Child Label")],
       selectivelyDisclosable: .allowed,
       svgId: "child_svg"
     )
     
     let parentClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "parent_path")]),
-      display: [SdJwtVcTypeMetadata.ClaimDisplay(lang: "en", label: "Parent Label")],
+      display: [SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Parent Label")],
       selectivelyDisclosable: .never,
       svgId: "parent_svg"
     )

@@ -167,16 +167,16 @@ public struct SdJwtVcTypeMetadata: Decodable {
   }
   
   public struct ClaimDisplay: Decodable {
-    public let lang: String
+    public let locale: String
     public let label: String
     public let description: String?
-    
+
     public init(
-      lang: String,
+      locale: String,
       label: String,
       description: String? = nil
     ) {
-      self.lang = lang
+      self.locale = locale
       self.label = label
       self.description = description
     }
@@ -189,18 +189,18 @@ public struct SdJwtVcTypeMetadata: Decodable {
   }
   
   public struct DisplayMetadata: Decodable {
-    public let lang: String
+    public let locale: String
     public let name: String
     public let description: String?
     public let rendering: RenderingMetadata?
-    
+
     public init(
-      lang: String,
+      locale: String,
       name: String,
       description: String? = nil,
       rendering: RenderingMetadata? = nil
     ) {
-      self.lang = lang
+      self.locale = locale
       self.name = name
       self.description = description
       self.rendering = rendering

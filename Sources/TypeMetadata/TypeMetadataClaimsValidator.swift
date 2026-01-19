@@ -36,8 +36,8 @@ struct TypeMetadataClaimsValidator: TypeMetadataClaimsValidatorType {
     }
     
     try validateVCT(payload["vct"].string, expectedVct: metadata.vct)
-    
-    let langs = metadata.displays.map { $0.lang }
+
+    let langs = metadata.displays.map { $0.locale }
     let uniqueLangs = Set(langs)
     guard langs.count == uniqueLangs.count else {
       throw TypeMetadataError.duplicateLanguageInDisplay

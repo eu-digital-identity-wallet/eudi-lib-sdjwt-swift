@@ -21,32 +21,31 @@ import Foundation
  */
 public protocol TypeMetadataLookup {
   
-  var vct: Vct { get }
-  
   /**
    Retrieves  type metadata using Vct.
    
    - Returns: An array of `SdJwtVcTypeMetadata`
-   - Note:
+   - Note: Get Vct Object
    - Throws: `TypeMetadataError` if resolution fails or a circular reference is detected.
    */
-  func getTypeMetadata() async throws -> [SdJwtVcTypeMetadata]
+  
+  func getTypeMetadata(
+    vct: Vct
+  ) async throws -> [SdJwtVcTypeMetadata]
 }
 
 struct TypeMetadataLookupDefault: TypeMetadataLookup {
   
-  let vct: Vct
   let fetcher: TypeMetadataFetching
   
   public init(
-    vct: Vct,
     fetcher: TypeMetadataFetching
   ) {
-    self.vct = vct
     self.fetcher = fetcher
   }
   
-  func getTypeMetadata() async throws -> [SdJwtVcTypeMetadata] {
+  func getTypeMetadata(vct: Vct) async throws -> [SdJwtVcTypeMetadata] {
+    
     guard let vctURL = URL(string: vct.uri) else {
       throw TypeMetadataError.invalidTypeMetadataURL
     }

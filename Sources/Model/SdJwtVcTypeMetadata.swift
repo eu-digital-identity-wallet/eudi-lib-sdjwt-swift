@@ -21,12 +21,9 @@ import SwiftyJSON
  Check if we can use enum for schema byValue or byReference
  */
 
-
-public typealias DocumentIntegrity = String
-
 public enum SchemaSource {
   case byValue(JSON)
-  case byReference(url: URL, integrity: DocumentIntegrity?)
+  case byReference(url: URL, integrity: String?)
 }
 
 extension SchemaSource: Equatable {
@@ -45,11 +42,11 @@ extension SchemaSource: Equatable {
 
 public struct SdJwtVcTypeMetadata: Decodable {
   public let vct: String
-  public let vctIntegrity: DocumentIntegrity?
+  public let vctIntegrity: String?
   public let name: String?
   public let description: String?
   public let extends: URL?
-  public let extendsIntegrity: DocumentIntegrity?
+  public let extendsIntegrity: String?
   public let display: [DisplayMetadata]?
   public let claims: [ClaimMetadata]?
   public let schemaSource: SchemaSource?
@@ -73,17 +70,17 @@ public struct SdJwtVcTypeMetadata: Decodable {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     
     vct = try container.decode(String.self, forKey: .vct)
-    vctIntegrity = try container.decodeIfPresent(DocumentIntegrity.self, forKey: .vctIntegrity)
+    vctIntegrity = try container.decodeIfPresent(String.self, forKey: .vctIntegrity)
     name = try container.decodeIfPresent(String.self, forKey: .name)
     description = try container.decodeIfPresent(String.self, forKey: .description)
     extends = try container.decodeIfPresent(URL.self, forKey: .extends)
-    extendsIntegrity = try container.decodeIfPresent(DocumentIntegrity.self, forKey: .extendsIntegrity)
+    extendsIntegrity = try container.decodeIfPresent(String.self, forKey: .extendsIntegrity)
     display = try container.decodeIfPresent([DisplayMetadata].self, forKey: .display)
     claims = try container.decodeIfPresent([ClaimMetadata].self, forKey: .claims)
     
     let schema = try container.decodeIfPresent(JSON.self, forKey: .schema)
     let schemaUri = try container.decodeIfPresent(URL.self, forKey: .schemaUri)
-    let schemaUriIntegrity = try container.decodeIfPresent(DocumentIntegrity.self, forKey: .schemaUriIntegrity)
+    let schemaUriIntegrity = try container.decodeIfPresent(String.self, forKey: .schemaUriIntegrity)
     
     if let schema = schema {
       guard schemaUri == nil && schemaUriIntegrity == nil else {
@@ -103,11 +100,11 @@ public struct SdJwtVcTypeMetadata: Decodable {
   
   public init(
     vct: String,
-    vctIntegrity: DocumentIntegrity? = nil,
+    vctIntegrity: String? = nil,
     name: String? = nil,
     description: String? = nil,
     extends: URL? = nil,
-    extendsIntegrity: DocumentIntegrity? = nil,
+    extendsIntegrity: String? = nil,
     display: [DisplayMetadata]? = nil,
     claims: [ClaimMetadata]? = nil,
     schemaSource: SchemaSource? = nil
@@ -244,12 +241,12 @@ public struct SdJwtVcTypeMetadata: Decodable {
   
   public struct SvgTemplate: Decodable {
     public let uri: URL
-    public let uriIntegrity: DocumentIntegrity?
+    public let uriIntegrity: String?
     public let properties: SvgTemplateProperties?
     
     public init(
       uri: URL,
-      uriIntegrity: DocumentIntegrity? = nil,
+      uriIntegrity: String? = nil,
       properties: SvgTemplateProperties? = nil
     ) {
       self.uri = uri
@@ -291,12 +288,12 @@ public struct SdJwtVcTypeMetadata: Decodable {
   
   public struct LogoMetadata: Decodable {
     public let uri: URL
-    public let uriIntegrity: DocumentIntegrity?
+    public let uriIntegrity: String?
     public let altText: String?
     
     public init(
       uri: URL,
-      uriIntegrity: DocumentIntegrity? = nil,
+      uriIntegrity: String? = nil,
       altText: String? = nil
     ) {
       self.uri = uri

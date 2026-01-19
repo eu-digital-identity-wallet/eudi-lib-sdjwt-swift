@@ -61,6 +61,7 @@ public enum TypeMetadataError: Error, Equatable {
   case unsupportedRetreivalMethod
   case vctIntegrityCheckFailed
   case schemaIntegrityCheckFailed
+  case emptyRequiredVcts
   case circularReference
   case invalidSchemaURL
   case invalidSchema
@@ -72,6 +73,7 @@ public enum TypeMetadataError: Error, Equatable {
   case missingDisclosuresForValidation
   case expectedDisclosureMissing(path: ClaimPath)
   case unexpectedDisclosurePresent(path: ClaimPath)
+  case integrityValidationFailed
 }
 
 /// Static Keys Used by the JWT

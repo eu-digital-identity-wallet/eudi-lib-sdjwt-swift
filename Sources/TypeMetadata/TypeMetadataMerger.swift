@@ -15,51 +15,74 @@
  */
 
 
-package protocol TypeMetadataMergerType {
+public protocol TypeMetadataMergerType {
   
   /**
    * Merges an array of `ResolvedTypeMetadata` objects into a single `ResolvedTypeMetadata`.
    *
    * - Parameter metadataArray: An array of `ResolvedTypeMetadata` instances to merge.
    * - Returns: A merged `ResolvedTypeMetadata` instance if the input array is not empty; otherwise, nil.
+   * - Throws: `TypeMetadataError` if inheritance validation rules are violated.
    *
    * The merging process prioritizes the properties of the first element in the array,
    * using subsequent elements to fill in missing values or merge collections.
    *
-   * If a child type defines claim metadata with the same path as
-   * in the extended type, the child type's claim metadata will fully override the parent's.
+   * **Claim Metadata Inheritance Rules:**
+   * When a child type defines claim metadata with the same path as the extended type:
+   * - The child's claim metadata takes precedence
+   * - **Mandatory validation:** If parent has `mandatory = true`, child MUST NOT change it to `false`
+   * - **SD validation:** If parent has `sd = always` or `sd = never`, child MUST NOT change it to a different value
+   * - Violations of these rules will throw a `TypeMetadataError`
+   *
+   * These constraints ensure that extending types cannot relax security requirements established by parent types.
    */
-  func mergeMetadata(from metadataArray: [ResolvedTypeMetadata]) -> ResolvedTypeMetadata?
+   func mergeMetadata(from metadataArray: [ResolvedTypeMetadata]) throws -> ResolvedTypeMetadata?
 }
 
 struct TypeMetadataMerger: TypeMetadataMergerType {
   
   public func mergeMetadata(
     from metadataArray: [ResolvedTypeMetadata]
-  ) -> ResolvedTypeMetadata? {
+  ) throws ->  ResolvedTypeMetadata? {
     
     guard let base = metadataArray.first else { return nil }
+    var result = base
     
-    return metadataArray.dropFirst().reduce(base) { (result: ResolvedTypeMetadata, parent: ResolvedTypeMetadata) -> ResolvedTypeMetadata in
-      
+    for parent in metadataArray.dropFirst() {
       let name = result.name ?? parent.name
       let description = result.description ?? parent.description
-      
-      let display = mergeByKey(
+
+      let display = try mergeByKey(
         primary: result.displays,
         secondary: parent.displays,
         keySelector: \.locale,
         merge: { current, _ in current }
       )
-      
-      let claims = mergeByKey(
+
+      let claims = try mergeByKey(
         primary: result.claims,
         secondary: parent.claims,
         keySelector: \.path,
-        merge: { current, _ in current }  
+        merge: { current, parent in
+          // Validate mandatory attribute override
+          if parent.mandatory {
+            guard current.mandatory else {
+              throw TypeMetadataError.mandatoryPropertyOverrideNotAllowed(path: current.path)
+            }
+          }
+
+          // Validate selective disclosure attribute override
+          if parent.selectivelyDisclosable == .always || parent.selectivelyDisclosable == .never {
+            guard parent.selectivelyDisclosable == current.selectivelyDisclosable else {
+              throw TypeMetadataError.selectivelyDisclosablePropertyOverrideNotAllowed(path: current.path)
+            }
+          }
+
+          return current
+        }
       )
-      
-      return ResolvedTypeMetadata(
+
+      result = ResolvedTypeMetadata(
         vct: result.vct,
         name: name,
         description: description,
@@ -67,6 +90,8 @@ struct TypeMetadataMerger: TypeMetadataMergerType {
         claims: claims
       )
     }
+
+    return result
   }
   
   
@@ -82,15 +107,16 @@ struct TypeMetadataMerger: TypeMetadataMergerType {
    *   - primary: The primary array whose elements take precedence.
    *   - secondary: The secondary array to merge into the primary.
    *   - keySelector: A closure that selects a key from an element for identifying uniqueness.
-   *   - merge: A closure that merges two elements with the same key, prioritizing the primary element.
+   *   - merge: A closure that merges two elements with the same key, prioritizing the primary element. Can throw errors.
    * - Returns: A merged array containing elements from both arrays, merged by key.
+   * - Throws: Any error thrown by the merge closure.
    */
   private func mergeByKey<T, K: Hashable>(
     primary: [T],
     secondary: [T],
     keySelector: (T) -> K,
-    merge: (T, T) -> T
-  ) -> [T] {
+    merge: (T, T) throws -> T
+  ) throws -> [T] {
 
     var seenKeys = Set<K>()
     var merged: [T] = []
@@ -106,7 +132,7 @@ struct TypeMetadataMerger: TypeMetadataMergerType {
     for item in secondary {
       let key = keySelector(item)
       if let index = merged.firstIndex(where: { keySelector($0) == key }) {
-        merged[index] = merge(merged[index], item)
+        merged[index] = try merge(merged[index], item)
       } else if !seenKeys.contains(key) {
         merged.append(item)
       }

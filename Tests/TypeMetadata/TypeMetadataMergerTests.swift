@@ -30,7 +30,7 @@ final class TypeMetadataMergerTests: XCTestCase {
     let parentMetadata = SDJWTConstants.parentMetadata
     
     let sut = TypeMetadataMerger()
-    let mergedMetadata = sut.mergeMetadata(from: [childMetada, parentMetadata])
+    let mergedMetadata = try sut.mergeMetadata(from: [childMetada, parentMetadata])
     
     guard let mergedMetadata else {
       XCTFail("Merged metadata should not be nil")
@@ -106,7 +106,7 @@ final class TypeMetadataMergerTests: XCTestCase {
     let sut = TypeMetadataMerger()
     
     // When
-    let merged = sut.mergeMetadata(from: [childMetadata, parentMetadata])
+    let merged = try sut.mergeMetadata(from: [childMetadata, parentMetadata])
     
     // Then
     XCTAssertEqual(merged?.displays.count, 1)
@@ -115,13 +115,13 @@ final class TypeMetadataMergerTests: XCTestCase {
     XCTAssertEqual(merged?.displays.first?.description, "child_description")
   }
   
-  func test_mergeMetadata_withEmptyArray_returnsNil() {
+  func test_mergeMetadata_withEmptyArray_returnsNil() throws {
     let sut = TypeMetadataMerger()
-    let result = sut.mergeMetadata(from: [])
+    let result = try sut.mergeMetadata(from: [])
     XCTAssertNil(result)
   }
   
-  func test_mergeMetadata_withSingleMetadata_returnsItself() {
+  func test_mergeMetadata_withSingleMetadata_returnsItself() throws {
     let metadata = ResolvedTypeMetadata(
       vct: "vct_test",
       name: "Test Name",
@@ -130,26 +130,27 @@ final class TypeMetadataMergerTests: XCTestCase {
       claims: []
     )
     let sut = TypeMetadataMerger()
-    let result = sut.mergeMetadata(from: [metadata])
+    let result = try sut.mergeMetadata(from: [metadata])
     XCTAssertEqual(result?.vct, "vct_test")
     XCTAssertEqual(result?.name, "Test Name")
     XCTAssertEqual(result?.description, "Test Description")
   }
   
-  func test_mergeMetadata_childMissingName_parentUsedInstead() {
+  func test_mergeMetadata_childMissingName_parentUsedInstead() throws {
     let child = ResolvedTypeMetadata(
       vct: "child_vct", name: nil, description: nil, displays: [], claims: []
     )
     let parent = ResolvedTypeMetadata(
       vct: "parent_vct", name: "Parent Name", description: "Parent Desc", displays: [], claims: []
     )
-    let result = TypeMetadataMerger().mergeMetadata(from: [child, parent])
+    let result = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
     XCTAssertEqual(result?.name, "Parent Name")
     XCTAssertEqual(result?.description, "Parent Desc")
   }
   
-  func test_mergeMetadata_withConflictingClaimPath_childClaimWins() {
+  func test_mergeMetadata_withConflictingClaimPath_childClaimWins() throws {
     // Child claim with same path but different selectivelyDisclosable and svgId
+    // Changed parent from .never to .allowed so child can legitimately tighten to .always
     let childClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "same_path")]),
       display: [SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Child Label")],
@@ -179,9 +180,9 @@ final class TypeMetadataMergerTests: XCTestCase {
       displays: [],
       claims: [parentClaim]
     )
-    
-    let merged = TypeMetadataMerger().mergeMetadata(from: [child, parent])
-    
+
+    let merged = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
+
     XCTAssertEqual(merged?.claims.count, 1)
     let mergedClaim = merged?.claims.first
     XCTAssertEqual(mergedClaim?.path, ClaimPath([.claim(name: "same_path")]))
@@ -190,7 +191,7 @@ final class TypeMetadataMergerTests: XCTestCase {
     XCTAssertEqual(mergedClaim?.display?.first?.label, "Child Label") // child's display wins
   }
 
-  func test_mergeMetadata_withConflictingClaimPath_childFullyOverridesParentDisplay() {
+  func test_mergeMetadata_withConflictingClaimPath_childFullyOverridesParentDisplay() throws {
     
     let childClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "same_path")]),
@@ -207,7 +208,7 @@ final class TypeMetadataMergerTests: XCTestCase {
         SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Parent Label EN"),
         SdJwtVcTypeMetadata.ClaimDisplay(locale: "fr", label: "Parent Label FR")
       ],
-      selectivelyDisclosable: .never,
+      selectivelyDisclosable: .allowed, // Changed from .never to .allowed
       svgId: "parent_svg"
     )
     
@@ -227,7 +228,7 @@ final class TypeMetadataMergerTests: XCTestCase {
       claims: [parentClaim]
     )
     
-    let merged = TypeMetadataMerger().mergeMetadata(from: [child, parent])
+    let merged = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
     
     // Child claim fully overrides parent
     XCTAssertEqual(merged?.claims.count, 1)
@@ -246,7 +247,7 @@ final class TypeMetadataMergerTests: XCTestCase {
     XCTAssertEqual(mergedClaim?.svgId, "child_svg")
   }
   
-  func test_mergeMetadata_parentDisplaysAppended() {
+  func test_mergeMetadata_parentDisplaysAppended() throws {
     let childDisplay = SdJwtVcTypeMetadata.DisplayMetadata(
       locale: "en",
       name: "Child Name",
@@ -277,14 +278,14 @@ final class TypeMetadataMergerTests: XCTestCase {
       claims: []
     )
     
-    let merged = TypeMetadataMerger().mergeMetadata(from: [child, parent])
+    let merged = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
     
     XCTAssertEqual(merged?.displays.count, 2)
     XCTAssertTrue(merged?.displays.contains(where: { $0.locale == "en" }) ?? false)
     XCTAssertTrue(merged?.displays.contains(where: { $0.locale == "fr" }) ?? false)
   }
   
-  func test_mergeMetadata_parentClaimsAppended() {
+  func test_mergeMetadata_parentClaimsAppended() throws {
     let childClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "child_path")]),
       display: [SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Child Label")],
@@ -315,10 +316,380 @@ final class TypeMetadataMergerTests: XCTestCase {
       claims: [parentClaim]
     )
     
-    let merged = TypeMetadataMerger().mergeMetadata(from: [child, parent])
+    let merged = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
     
     XCTAssertEqual(merged?.claims.count, 2)
     XCTAssertTrue(merged?.claims.contains(where: { $0.path == ClaimPath([.claim(name: "child_path")]) }) ?? false)
     XCTAssertTrue(merged?.claims.contains(where: { $0.path == ClaimPath([.claim(name: "parent_path")]) }) ?? false)
+  }
+
+  func test_mergeMetadata_whenChildAndParentHaveSameMandatoryTrue_shouldSucceed() throws {
+    // Given: Both parent and child have mandatory = true
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: true,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: true,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    // When
+    let result = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
+
+    // Then
+    XCTAssertNotNil(result)
+    XCTAssertEqual(result?.claims.count, 1)
+    XCTAssertTrue(result?.claims.first?.mandatory ?? false)
+  }
+
+  func test_mergeMetadata_whenChildTightensMandatoryConstraint_shouldSucceed() throws {
+    // Given: Child has mandatory = true, parent has mandatory = false
+    // This is valid: child is tightening the constraint
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: true,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    // When
+    let result = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
+
+    // Then
+    XCTAssertNotNil(result)
+    XCTAssertEqual(result?.claims.count, 1)
+    XCTAssertTrue(result?.claims.first?.mandatory ?? false)
+  }
+
+  func test_mergeMetadata_whenChildRelaxesMandatoryConstraint_shouldThrowError() {
+    // Given: Parent has mandatory = true, child tries to override to false
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: true,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    // When/Then: Should throw mandatoryPropertyOverrideNotAllowed error
+    let merger = TypeMetadataMerger()
+    XCTAssertThrowsError(try merger.mergeMetadata(from: [child, parent])) { error in
+      guard case TypeMetadataError.mandatoryPropertyOverrideNotAllowed(let path) = error else {
+        XCTFail("Expected mandatoryPropertyOverrideNotAllowed error, got \(error)")
+        return
+      }
+      XCTAssertEqual(path, testClaimPath)
+    }
+  }
+
+  func test_mergeMetadata_whenBothHaveSDAlways_shouldSucceed() throws {
+    // Given: Both parent and child have sd = always
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .always
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .always
+        )
+      ]
+    )
+
+    // When
+    let result = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
+
+    // Then
+    XCTAssertNotNil(result)
+    XCTAssertEqual(result?.claims.count, 1)
+    XCTAssertEqual(result?.claims.first?.selectivelyDisclosable, .always)
+  }
+
+  func test_mergeMetadata_whenChildTightensSDFromAllowedToAlways_shouldSucceed() throws {
+    // Given: Parent has sd = allowed, child has sd = always
+    // This is valid: child is tightening the constraint
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .always
+        )
+      ]
+    )
+
+    // When
+    let result = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
+
+    // Then
+    XCTAssertNotNil(result)
+    XCTAssertEqual(result?.claims.count, 1)
+    XCTAssertEqual(result?.claims.first?.selectivelyDisclosable, .always)
+  }
+
+  func test_mergeMetadata_whenChildRelaxesSDFromAlwaysToAllowed_shouldThrowError() {
+    // Given: Parent has sd = always, child tries to override to allowed
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .always
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    // When/Then: Should throw selectivelyDisclosablePropertyOverrideNotAllowed error
+    let merger = TypeMetadataMerger()
+    XCTAssertThrowsError(try merger.mergeMetadata(from: [child, parent])) { error in
+      guard case TypeMetadataError.selectivelyDisclosablePropertyOverrideNotAllowed(let path) = error else {
+        XCTFail("Expected selectivelyDisclosablePropertyOverrideNotAllowed error, got \(error)")
+        return
+      }
+      XCTAssertEqual(path, testClaimPath)
+    }
+  }
+
+  func test_mergeMetadata_whenBothHaveSDNever_shouldSucceed() throws {
+    // Given: Both parent and child have sd = never
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .never
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .never
+        )
+      ]
+    )
+
+    // When
+    let result = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
+
+    // Then
+    XCTAssertNotNil(result)
+    XCTAssertEqual(result?.claims.count, 1)
+    XCTAssertEqual(result?.claims.first?.selectivelyDisclosable, .never)
+  }
+
+  func test_mergeMetadata_whenChildRelaxesSDFromNeverToAllowed_shouldThrowError() {
+    // Given: Parent has sd = never, child tries to override to allowed
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .never
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    // When/Then: Should throw selectivelyDisclosablePropertyOverrideNotAllowed error
+    let merger = TypeMetadataMerger()
+    XCTAssertThrowsError(try merger.mergeMetadata(from: [child, parent])) { error in
+      guard case TypeMetadataError.selectivelyDisclosablePropertyOverrideNotAllowed(let path) = error else {
+        XCTFail("Expected selectivelyDisclosablePropertyOverrideNotAllowed error, got \(error)")
+        return
+      }
+      XCTAssertEqual(path, testClaimPath)
+    }
+  }
+
+  func test_mergeMetadata_whenChildTightensBothMandatoryAndSD_shouldSucceed() throws {
+    // Given: Valid combination - child tightens both constraints
+    let testClaimPath = ClaimPath([.claim(name: "testClaim")])
+    let parent = ResolvedTypeMetadata(
+      vct: "parent_vct",
+      name: "Parent",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: false,
+          selectivelyDisclosable: .allowed
+        )
+      ]
+    )
+
+    let child = ResolvedTypeMetadata(
+      vct: "child_vct",
+      name: "Child",
+      description: nil,
+      displays: [],
+      claims: [
+        SdJwtVcTypeMetadata.ClaimMetadata(
+          path: testClaimPath,
+          mandatory: true,
+          selectivelyDisclosable: .always
+        )
+      ]
+    )
+
+    // When
+    let result = try TypeMetadataMerger().mergeMetadata(from: [child, parent])
+
+    // Then
+    XCTAssertNotNil(result)
+    XCTAssertEqual(result?.claims.count, 1)
+    let claim = result?.claims.first
+    XCTAssertTrue(claim?.mandatory ?? false)
+    XCTAssertEqual(claim?.selectivelyDisclosable, .always)
   }
 }

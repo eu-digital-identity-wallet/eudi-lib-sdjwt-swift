@@ -129,17 +129,20 @@ public struct SdJwtVcTypeMetadata: Decodable {
   public struct ClaimMetadata: Decodable {
     public let path: ClaimPath
     public let display: [ClaimDisplay]?
+    public let mandatory: Bool
     public let selectivelyDisclosable: ClaimSelectivelyDisclosable
     public let svgId: String?
     
     public init(
       path: ClaimPath,
       display: [ClaimDisplay]? = nil,
+      mandatory: Bool = false,
       selectivelyDisclosable: ClaimSelectivelyDisclosable = .allowed,
       svgId: String? = nil
     ) {
       self.path = path
       self.display = display
+      self.mandatory = mandatory
       self.selectivelyDisclosable = selectivelyDisclosable
       self.svgId = svgId
     }
@@ -147,6 +150,7 @@ public struct SdJwtVcTypeMetadata: Decodable {
     enum CodingKeys: String, CodingKey {
       case path
       case display
+      case mandatory
       case selectivelyDisclosable = "sd"
       case svgId
     }
@@ -156,6 +160,7 @@ public struct SdJwtVcTypeMetadata: Decodable {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       path = try container.decode(ClaimPath.self, forKey: .path)
       display = try container.decodeIfPresent([ClaimDisplay].self, forKey: .display)
+      mandatory = try container.decodeIfPresent(Bool.self, forKey: .mandatory) ?? false
       selectivelyDisclosable = try container.decodeIfPresent(ClaimSelectivelyDisclosable.self, forKey: .selectivelyDisclosable) ?? .allowed
       svgId = try container.decodeIfPresent(String.self, forKey: .svgId)
     }
@@ -224,21 +229,25 @@ public struct SdJwtVcTypeMetadata: Decodable {
     public let logo: LogoMetadata?
     public let backgroundColor: String?
     public let textColor: String?
-    
+    public let backgroundImage: BackgroundImage?
+
     public init(
       logo: LogoMetadata? = nil,
       backgroundColor: String? = nil,
-      textColor: String? = nil
+      textColor: String? = nil,
+      backgroundImage: BackgroundImage? = nil
     ) {
       self.logo = logo
       self.backgroundColor = backgroundColor
       self.textColor = textColor
+      self.backgroundImage = backgroundImage
     }
-    
+
     enum CodingKeys: String, CodingKey {
       case logo
       case backgroundColor = "background_color"
       case textColor = "text_color"
+      case backgroundImage = "background_image"
     }
   }
   
@@ -308,6 +317,24 @@ public struct SdJwtVcTypeMetadata: Decodable {
       case uri
       case uriIntegrity = "uri#integrity"
       case altText = "alt_text"
+    }
+  }
+
+  public struct BackgroundImage: Decodable {
+    public let uri: URL
+    public let uriIntegrity: DocumentIntegrity?
+
+    public init(
+      uri: URL,
+      uriIntegrity: DocumentIntegrity? = nil
+    ) {
+      self.uri = uri
+      self.uriIntegrity = uriIntegrity
+    }
+
+    enum CodingKeys: String, CodingKey {
+      case uri
+      case uriIntegrity = "uri#integrity"
     }
   }
 }

@@ -71,10 +71,17 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
   ) async throws  {
     
     let result = try sdJwt.recreateClaims()
+    let claims = result.recreatedClaims
     let disclosuresPerClaimPath = result.disclosuresPerClaimPath
-    let metadataArray = try await metadataLookup.getTypeMetadata()
-    let finalData = try typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
-    try claimsValidator.validate(result.recreatedClaims, finalData)
+
+    guard let vctUri = claims["vct"].string else {
+      throw TypeMetadataError.missingOrInvalidVCT
+    }
+    
+    let vct = try Vct(uri: vctUri, integrityHash: claims["vct#integrity"].string)
+    let metadataArray = try await metadataLookup.getTypeMetadata(vct: vct)
+    let finalData = typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
+    try claimsValidator.validate(claims, finalData)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }
   
@@ -83,8 +90,17 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     sdJwt: SignedSDJWT
   ) async throws {
     let result = try sdJwt.recreateClaims()
+    let claims = result.recreatedClaims
     let disclosuresPerClaimPath = result.disclosuresPerClaimPath
-    let metadataArray = try await metadataLookup.getTypeMetadata()
+    guard let vctUri = claims["vct"].string else {
+      throw TypeMetadataError.missingOrInvalidVCT
+    }
+    guard !vcts.isEmpty else {
+      throw TypeMetadataError.emptyRequiredVcts
+    }
+  
+    let vct = try Vct(uri: vctUri, integrityHash: claims["vct#integrity"].string)
+    let metadataArray = try await metadataLookup.getTypeMetadata(vct: vct)
     
     // Filter only required metadata based on VCTs
     let requiredMetadata = metadataArray.filter { vcts.contains($0.vct) }

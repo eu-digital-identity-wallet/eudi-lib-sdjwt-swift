@@ -33,10 +33,10 @@ final class TypeMetadataLookupTests: XCTestCase {
     // Given
     let vct = try Vct(uri: "https://mock.local/base_type_metadata")
     let fetcher = TypeMetadataFetcher(session: networkingBundleMock)
-    let sut = TypeMetadataLookupDefault(vct: vct, fetcher: fetcher)
+    let sut = TypeMetadataLookupDefault(fetcher: fetcher)
     
     // When
-    let metadataArray = try await sut.getTypeMetadata()
+    let metadataArray = try await sut.getTypeMetadata(vct: vct)
     
     // Then
     XCTAssertEqual(metadataArray.count, 1)
@@ -95,10 +95,10 @@ final class TypeMetadataLookupTests: XCTestCase {
     // Given
     let vct = try Vct(uri: "https://mock.local/type_metadata_with_extend")
     let fetcher = TypeMetadataFetcher(session: NetworkingJSONMock(json: typeMetadataJSON))
-    let sut = TypeMetadataLookupDefault(vct: vct, fetcher: fetcher)
+    let sut = TypeMetadataLookupDefault(fetcher: fetcher)
     
     // When
-    let metadataArray = try await sut.getTypeMetadata()
+    let metadataArray = try await sut.getTypeMetadata(vct: vct)
     
     XCTAssertEqual(metadataArray.count, 1)
     guard let metadata = metadataArray.first else {
@@ -112,10 +112,10 @@ final class TypeMetadataLookupTests: XCTestCase {
     // Given
     let vct = try Vct(uri: "https://mock.local/type_metadata_with_extend")
     let fetcher = TypeMetadataFetcher(session: networkingBundleMock)
-    let sut = TypeMetadataLookupDefault(vct: vct, fetcher: fetcher)
+    let sut = TypeMetadataLookupDefault(fetcher: fetcher)
     
     // When
-    let metadataArray = try await sut.getTypeMetadata()
+    let metadataArray = try await sut.getTypeMetadata(vct:vct)
     
     // Then
     XCTAssertEqual(metadataArray.count, 2)
@@ -126,10 +126,10 @@ final class TypeMetadataLookupTests: XCTestCase {
     // Given
     let vct = try Vct(uri: "https://mock.local/type_metadata_double_extend")
     let fetcher = TypeMetadataFetcher(session: networkingBundleMock)
-    let sut = TypeMetadataLookupDefault(vct: vct, fetcher: fetcher)
+    let sut = TypeMetadataLookupDefault(fetcher: fetcher)
     
     // When
-    let metadataArray = try await sut.getTypeMetadata()
+    let metadataArray = try await sut.getTypeMetadata(vct: vct)
     
     // Then
     XCTAssertEqual(metadataArray.count, 3)
@@ -147,11 +147,11 @@ final class TypeMetadataLookupTests: XCTestCase {
     // Given
     let vct = try Vct(uri: "https://mock.local/type_metadata_with_extend")
     let fetcher = TypeMetadataFetcher(session: NetworkingJSONMock(json: child))
-    let sut = TypeMetadataLookupDefault(vct: vct, fetcher: fetcher)
+    let sut = TypeMetadataLookupDefault(fetcher: fetcher)
     
     do {
       // When
-      _ = try await sut.getTypeMetadata()
+      _ = try await sut.getTypeMetadata(vct: vct)
       XCTFail("Expected to throw, but did not throw")
       
     } catch let error as TypeMetadataError {
@@ -176,10 +176,10 @@ final class TypeMetadataLookupTests: XCTestCase {
     // Given
     let vct = try Vct(uri: "https://mock.local/type_metadata_with_extend")
     let fetcher = TypeMetadataFetcher(session: NetworkingJSONMock(json: child))
-    let sut = TypeMetadataLookupDefault(vct: vct, fetcher: fetcher)
+    let sut = TypeMetadataLookupDefault(fetcher: fetcher)
     
     // When
-    let metadataArray = try await sut.getTypeMetadata()
+    let metadataArray = try await sut.getTypeMetadata(vct: vct)
     
     // Then
     XCTAssertEqual(metadataArray.count, 1)

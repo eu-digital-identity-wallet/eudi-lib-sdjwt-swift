@@ -26,7 +26,7 @@ import CryptoKit
 /// When multiple hashes are present, the validator selects the strongest algorithm
 /// for validation (SHA-512 > SHA-384 > SHA-256).
 ///
-public struct DocumentIntegrity {
+public struct DocumentIntegrity: Decodable {
   let value: String
   
   public init(_ value: String) throws {

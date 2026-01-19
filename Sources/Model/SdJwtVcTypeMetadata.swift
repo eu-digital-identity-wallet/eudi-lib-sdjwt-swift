@@ -17,9 +17,6 @@ import Foundation
 import SwiftyJSON
 
 
-public typealias DocumentIntegrity = String
-
-
 public struct SdJwtVcTypeMetadata: Decodable {
   public let vct: String
   public let vctIntegrity: String?

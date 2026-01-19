@@ -690,10 +690,7 @@ final class VcVerifierTest: XCTestCase {
     )
 
     let typeMetadataVerifier = TypeMetadataVerifier(
-      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
-      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
-      schemaValidator: SchemaValidator()
-    )
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher))
 
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
@@ -739,10 +736,7 @@ final class VcVerifierTest: XCTestCase {
     )
 
     let typeMetadataVerifier = TypeMetadataVerifier(
-      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
-      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
-      schemaValidator: SchemaValidator()
-    )
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher))
 
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
@@ -802,10 +796,7 @@ final class VcVerifierTest: XCTestCase {
     )
 
     let typeMetadataVerifier = TypeMetadataVerifier(
-      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
-      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
-      schemaValidator: SchemaValidator()
-    )
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher))
 
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
@@ -868,10 +859,7 @@ final class VcVerifierTest: XCTestCase {
     )
 
     let typeMetadataVerifier = TypeMetadataVerifier(
-      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
-      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
-      schemaValidator: SchemaValidator()
-    )
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher))
 
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
@@ -945,10 +933,7 @@ final class VcVerifierTest: XCTestCase {
     )
 
     let typeMetadataVerifier = TypeMetadataVerifier(
-      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
-      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
-      schemaValidator: SchemaValidator()
-    )
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher))
 
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
@@ -1044,10 +1029,7 @@ final class VcVerifierTest: XCTestCase {
     )
 
     let typeMetadataVerifier = TypeMetadataVerifier(
-      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
-      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
-      schemaValidator: SchemaValidator()
-    )
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher))
 
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),
@@ -1105,10 +1087,7 @@ final class VcVerifierTest: XCTestCase {
     )
 
     let typeMetadataVerifier = TypeMetadataVerifier(
-      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher),
-      schemaLookup: TypeMetadataSchemaLookupDefault(schemaFetcher: SchemaFetcher(session: session)),
-      schemaValidator: SchemaValidator()
-    )
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher))
 
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(trust: X509CertificateTrustFactory.trust),

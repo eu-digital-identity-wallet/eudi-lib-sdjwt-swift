@@ -149,8 +149,6 @@ final class TypeMetadataMergerTests: XCTestCase {
   }
   
   func test_mergeMetadata_withConflictingClaimPath_childClaimWins() throws {
-    // Child claim with same path but different selectivelyDisclosable and svgId
-    // Changed parent from .never to .allowed so child can legitimately tighten to .always
     let childClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "same_path")]),
       display: [SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Child Label")],
@@ -161,7 +159,7 @@ final class TypeMetadataMergerTests: XCTestCase {
     let parentClaim = SdJwtVcTypeMetadata.ClaimMetadata(
       path: ClaimPath([.claim(name: "same_path")]),
       display: [SdJwtVcTypeMetadata.ClaimDisplay(locale: "en", label: "Parent Label")],
-      selectivelyDisclosable: .never,
+      selectivelyDisclosable: .allowed,
       svgId: "parent_svg"
     )
     

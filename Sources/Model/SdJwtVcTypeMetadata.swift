@@ -129,17 +129,20 @@ public struct SdJwtVcTypeMetadata: Decodable {
   public struct ClaimMetadata: Decodable {
     public let path: ClaimPath
     public let display: [ClaimDisplay]?
+    public let mandatory: Bool
     public let selectivelyDisclosable: ClaimSelectivelyDisclosable
     public let svgId: String?
     
     public init(
       path: ClaimPath,
       display: [ClaimDisplay]? = nil,
+      mandatory: Bool = false,
       selectivelyDisclosable: ClaimSelectivelyDisclosable = .allowed,
       svgId: String? = nil
     ) {
       self.path = path
       self.display = display
+      self.mandatory = mandatory
       self.selectivelyDisclosable = selectivelyDisclosable
       self.svgId = svgId
     }
@@ -147,6 +150,7 @@ public struct SdJwtVcTypeMetadata: Decodable {
     enum CodingKeys: String, CodingKey {
       case path
       case display
+      case mandatory
       case selectivelyDisclosable = "sd"
       case svgId
     }
@@ -156,6 +160,7 @@ public struct SdJwtVcTypeMetadata: Decodable {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       path = try container.decode(ClaimPath.self, forKey: .path)
       display = try container.decodeIfPresent([ClaimDisplay].self, forKey: .display)
+      mandatory = try container.decodeIfPresent(Bool.self, forKey: .mandatory) ?? false
       selectivelyDisclosable = try container.decodeIfPresent(ClaimSelectivelyDisclosable.self, forKey: .selectivelyDisclosable) ?? .allowed
       svgId = try container.decodeIfPresent(String.self, forKey: .svgId)
     }

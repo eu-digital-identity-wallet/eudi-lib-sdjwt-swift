@@ -15,7 +15,7 @@
  */
 
 
-package protocol TypeMetadataMergerType {
+public protocol TypeMetadataMergerType {
   
   /**
    * Merges an array of `ResolvedTypeMetadata` objects into a single `ResolvedTypeMetadata`.
@@ -36,7 +36,7 @@ package protocol TypeMetadataMergerType {
    *
    * These constraints ensure that extending types cannot relax security requirements established by parent types.
    */
-  func mergeMetadata(from metadataArray: [ResolvedTypeMetadata]) throws -> ResolvedTypeMetadata?
+   func mergeMetadata(from metadataArray: [ResolvedTypeMetadata]) throws -> ResolvedTypeMetadata?
 }
 
 struct TypeMetadataMerger: TypeMetadataMergerType {

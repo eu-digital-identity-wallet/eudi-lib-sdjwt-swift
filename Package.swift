@@ -6,7 +6,7 @@ import PackageDescription
 let package = Package(
   name: "eudi-lib-sdjwt-swift",
   platforms: [
-    .iOS(.v14),
+    .iOS(.v15),
     .tvOS(.v14),
     .watchOS(.v5),
     .macOS(.v14)

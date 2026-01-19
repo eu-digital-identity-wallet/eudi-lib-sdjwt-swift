@@ -135,4 +135,20 @@ final class DisclosedValidatorTests: XCTestCase {
     // When/Then
     XCTAssertNoThrow(try sut.validate(metadata, disclosures))
   }
+  
+  func testValidate_registeredClaimDisclosurePresent_throwsError() {
+   
+    // Registered claim that must NOT be disclosed (e.g. "vct#integrity")
+    let claimPath = ClaimPath([.claim(name: "vct#integrity")])
+    let disclosures: DisclosuresPerClaimPath = [claimPath: ["someDisclosureValue"]]
+    let metadata = ResolvedTypeMetadata(vct: "vct", claims: [])
+    
+    let sut = DisclosureValidator()
+    
+    // When / Then
+    XCTAssertThrowsError(try sut.validate(metadata, disclosures)) { error in
+      // The validator should flag the unexpected disclosure for a registered claim
+      XCTAssertEqual(error as? TypeMetadataError, .unexpectedDisclosurePresent(path: claimPath))
+    }
+  }
 }

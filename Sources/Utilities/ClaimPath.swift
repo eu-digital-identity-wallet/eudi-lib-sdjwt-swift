@@ -182,3 +182,15 @@ extension ClaimPath: Decodable {
     self.init(elements)
   }
 }
+
+
+extension ClaimPath {
+  /// Returns the last claim name if available.
+  var leafClaimName: String? {
+    value.last?.fold(
+      ifAllArrayElements: { nil },
+      ifArrayElement: { _ in nil },
+      ifClaim: { $0 }
+    )
+  }
+}

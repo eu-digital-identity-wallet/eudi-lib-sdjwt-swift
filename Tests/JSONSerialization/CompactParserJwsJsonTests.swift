@@ -285,12 +285,6 @@ class CompactParserJwsJsonTests: XCTestCase {
       unverifiedSdJwt: sdJwt.serialisation
     )
     
-    switch result {
-    case .success:
-      XCTAssert(true)
-    default:
-      XCTAssert(true)
-    }
     XCTAssertEqual(sdJwt.disclosures.count, 2)
   }
 }

@@ -73,7 +73,7 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     let result = try sdJwt.recreateClaims()
     let disclosuresPerClaimPath = result.disclosuresPerClaimPath
     let metadataArray = try await metadataLookup.getTypeMetadata()
-    let finalData = typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
+    let finalData = try typeMetadataMerger.mergeMetadata(from: metadataArray.map { $0.toResolvedTypeMetadata() })
     try claimsValidator.validate(result.recreatedClaims, finalData)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)
   }

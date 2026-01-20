@@ -34,7 +34,7 @@ public protocol TypeMetadataLookup {
   ) async throws -> [SdJwtVcTypeMetadata]
 }
 
-struct TypeMetadataLookupDefault: TypeMetadataLookup {
+public struct TypeMetadataLookupDefault: TypeMetadataLookup {
   
   let fetcher: TypeMetadataFetching
   
@@ -44,7 +44,7 @@ struct TypeMetadataLookupDefault: TypeMetadataLookup {
     self.fetcher = fetcher
   }
   
-  func getTypeMetadata(vct: Vct) async throws -> [SdJwtVcTypeMetadata] {
+  public func getTypeMetadata(vct: Vct) async throws -> [SdJwtVcTypeMetadata] {
     
     guard let vctURL = URL(string: vct.uri) else {
       throw TypeMetadataError.invalidTypeMetadataURL

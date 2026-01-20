@@ -39,7 +39,7 @@ public protocol TypeMetadataMergerType {
    func mergeMetadata(from metadataArray: [ResolvedTypeMetadata]) throws -> ResolvedTypeMetadata?
 }
 
-struct TypeMetadataMerger: TypeMetadataMergerType {
+public struct TypeMetadataMerger: TypeMetadataMergerType {
   
   public func mergeMetadata(
     from metadataArray: [ResolvedTypeMetadata]

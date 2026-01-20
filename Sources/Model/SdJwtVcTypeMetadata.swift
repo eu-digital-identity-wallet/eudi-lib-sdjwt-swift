@@ -17,29 +17,6 @@ import Foundation
 import SwiftyJSON
 
 
-/*
- Check if we can use enum for schema byValue or byReference
- */
-
-public enum SchemaSource {
-  case byValue(JSON)
-  case byReference(url: URL, integrity: String?)
-}
-
-extension SchemaSource: Equatable {
-  public static func == (lhs: SchemaSource, rhs: SchemaSource) -> Bool {
-    switch (lhs, rhs) {
-    case let (.byValue(l), .byValue(r)):
-      return l == r
-    case let (.byReference(lURL, lIntegrity), .byReference(rURL, rIntegrity)):
-      return lURL == rURL && lIntegrity == rIntegrity
-    default:
-      return false
-    }
-  }
-}
-
-
 public struct SdJwtVcTypeMetadata: Decodable {
   public let vct: String
   public let vctIntegrity: String?
@@ -49,7 +26,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
   public let extendsIntegrity: String?
   public let display: [DisplayMetadata]?
   public let claims: [ClaimMetadata]?
-  public let schemaSource: SchemaSource?
   
   enum CodingKeys: String, CodingKey {
     case vct
@@ -60,9 +36,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
     case extendsIntegrity = "extends#integrity"
     case display
     case claims
-    case schema
-    case schemaUri = "schema_uri"
-    case schemaUriIntegrity = "schema_uri#integrity"
   }
   
   
@@ -77,24 +50,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
     extendsIntegrity = try container.decodeIfPresent(String.self, forKey: .extendsIntegrity)
     display = try container.decodeIfPresent([DisplayMetadata].self, forKey: .display)
     claims = try container.decodeIfPresent([ClaimMetadata].self, forKey: .claims)
-    
-    let schema = try container.decodeIfPresent(JSON.self, forKey: .schema)
-    let schemaUri = try container.decodeIfPresent(URL.self, forKey: .schemaUri)
-    let schemaUriIntegrity = try container.decodeIfPresent(String.self, forKey: .schemaUriIntegrity)
-    
-    if let schema = schema {
-      guard schemaUri == nil && schemaUriIntegrity == nil else {
-        throw TypeMetadataError.conflictingSchemaDefinition
-      }
-      schemaSource = .byValue(schema)
-    } else if let schemaUri = schemaUri {
-      guard let integrity = schemaUriIntegrity else {
-        throw TypeMetadataError.missingSchemaUriIntegrity
-      }
-      schemaSource = .byReference(url: schemaUri, integrity: integrity)
-    } else {
-      schemaSource = nil
-    }
   }
   
   
@@ -106,8 +61,7 @@ public struct SdJwtVcTypeMetadata: Decodable {
     extends: URL? = nil,
     extendsIntegrity: String? = nil,
     display: [DisplayMetadata]? = nil,
-    claims: [ClaimMetadata]? = nil,
-    schemaSource: SchemaSource? = nil
+    claims: [ClaimMetadata]? = nil
   ) throws {
     
     self.vct = vct
@@ -118,7 +72,6 @@ public struct SdJwtVcTypeMetadata: Decodable {
     self.extendsIntegrity = extendsIntegrity
     self.display = display
     self.claims = claims
-    self.schemaSource = schemaSource
   }
   
   
@@ -126,17 +79,20 @@ public struct SdJwtVcTypeMetadata: Decodable {
   public struct ClaimMetadata: Decodable {
     public let path: ClaimPath
     public let display: [ClaimDisplay]?
+    public let mandatory: Bool
     public let selectivelyDisclosable: ClaimSelectivelyDisclosable
     public let svgId: String?
     
     public init(
       path: ClaimPath,
       display: [ClaimDisplay]? = nil,
+      mandatory: Bool = false,
       selectivelyDisclosable: ClaimSelectivelyDisclosable = .allowed,
       svgId: String? = nil
     ) {
       self.path = path
       self.display = display
+      self.mandatory = mandatory
       self.selectivelyDisclosable = selectivelyDisclosable
       self.svgId = svgId
     }
@@ -144,6 +100,7 @@ public struct SdJwtVcTypeMetadata: Decodable {
     enum CodingKeys: String, CodingKey {
       case path
       case display
+      case mandatory
       case selectivelyDisclosable = "sd"
       case svgId
     }
@@ -153,22 +110,23 @@ public struct SdJwtVcTypeMetadata: Decodable {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       path = try container.decode(ClaimPath.self, forKey: .path)
       display = try container.decodeIfPresent([ClaimDisplay].self, forKey: .display)
+      mandatory = try container.decodeIfPresent(Bool.self, forKey: .mandatory) ?? false
       selectivelyDisclosable = try container.decodeIfPresent(ClaimSelectivelyDisclosable.self, forKey: .selectivelyDisclosable) ?? .allowed
       svgId = try container.decodeIfPresent(String.self, forKey: .svgId)
     }
   }
   
   public struct ClaimDisplay: Decodable {
-    public let lang: String
+    public let locale: String
     public let label: String
     public let description: String?
-    
+
     public init(
-      lang: String,
+      locale: String,
       label: String,
       description: String? = nil
     ) {
-      self.lang = lang
+      self.locale = locale
       self.label = label
       self.description = description
     }
@@ -181,18 +139,18 @@ public struct SdJwtVcTypeMetadata: Decodable {
   }
   
   public struct DisplayMetadata: Decodable {
-    public let lang: String
+    public let locale: String
     public let name: String
     public let description: String?
     public let rendering: RenderingMetadata?
-    
+
     public init(
-      lang: String,
+      locale: String,
       name: String,
       description: String? = nil,
       rendering: RenderingMetadata? = nil
     ) {
-      self.lang = lang
+      self.locale = locale
       self.name = name
       self.description = description
       self.rendering = rendering
@@ -221,21 +179,25 @@ public struct SdJwtVcTypeMetadata: Decodable {
     public let logo: LogoMetadata?
     public let backgroundColor: String?
     public let textColor: String?
-    
+    public let backgroundImage: BackgroundImage?
+
     public init(
       logo: LogoMetadata? = nil,
       backgroundColor: String? = nil,
-      textColor: String? = nil
+      textColor: String? = nil,
+      backgroundImage: BackgroundImage? = nil
     ) {
       self.logo = logo
       self.backgroundColor = backgroundColor
       self.textColor = textColor
+      self.backgroundImage = backgroundImage
     }
-    
+
     enum CodingKeys: String, CodingKey {
       case logo
       case backgroundColor = "background_color"
       case textColor = "text_color"
+      case backgroundImage = "background_image"
     }
   }
   
@@ -305,6 +267,24 @@ public struct SdJwtVcTypeMetadata: Decodable {
       case uri
       case uriIntegrity = "uri#integrity"
       case altText = "alt_text"
+    }
+  }
+
+  public struct BackgroundImage: Decodable {
+    public let uri: URL
+    public let uriIntegrity: DocumentIntegrity?
+
+    public init(
+      uri: URL,
+      uriIntegrity: DocumentIntegrity? = nil
+    ) {
+      self.uri = uri
+      self.uriIntegrity = uriIntegrity
+    }
+
+    enum CodingKeys: String, CodingKey {
+      case uri
+      case uriIntegrity = "uri#integrity"
     }
   }
 }

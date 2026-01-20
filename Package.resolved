@@ -1,5 +1,5 @@
 {
-  "originHash" : "e1e24dc7d4c38befed215d707ea5a05bec1a7688a2f964170c14ea1fb6a76374",
+  "originHash" : "3d6b7128fd507143e3e0fdb12e1a948890bb7196582362cfb3d1bedb56b5da95",
   "pins" : [
     {
       "identity" : "blueecc",
@@ -62,15 +62,6 @@
       "state" : {
         "revision" : "d1c6b70f7c5f19fb0b8750cb8dcdf2ea6e2d8c34",
         "version" : "3.15.0"
-      }
-    },
-    {
-      "identity" : "swift-json-schema",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/niscy-eudiw/swift-json-schema",
-      "state" : {
-        "revision" : "105cfcd41cf83f264f23ed36dc11191dea45b65f",
-        "version" : "0.0.4"
       }
     },
     {

@@ -73,6 +73,8 @@ public enum TypeMetadataError: Error, Equatable {
   case missingDisclosuresForValidation
   case expectedDisclosureMissing(path: ClaimPath)
   case unexpectedDisclosurePresent(path: ClaimPath)
+  case mandatoryPropertyOverrideNotAllowed(path: ClaimPath)
+  case selectivelyDisclosablePropertyOverrideNotAllowed(path: ClaimPath)
   case integrityValidationFailed
 }
 

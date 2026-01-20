@@ -32,7 +32,6 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     XCTAssertEqual(metadata.vct, "test-vct")
     XCTAssertEqual(metadata.name, "Test Name")
     XCTAssertEqual(metadata.description, "Test Description")
-    XCTAssertNil(metadata.schemaSource) // Ensure optional properties default to nil
   }
   
   
@@ -51,12 +50,12 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
   
   func testValidDisplayMetadataInitialization() {
     let displayMetadata = SdJwtVcTypeMetadata.DisplayMetadata(
-      lang: "en",
+      locale: "en",
       name: "Test Name",
       description: "Test Description"
     )
     
-    XCTAssertEqual(displayMetadata.lang, "en")
+    XCTAssertEqual(displayMetadata.locale, "en")
     XCTAssertEqual(displayMetadata.name, "Test Name")
     XCTAssertEqual(displayMetadata.description, "Test Description")
   }
@@ -119,9 +118,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     let vct = "complex-vct"
     let integrity = "doc-integrity"
     
-    let displayMetadata = [SdJwtVcTypeMetadata.DisplayMetadata(lang: "en", name: "Test Name")]
-    
-    let schemaJson = JSON(["title": "Test Schema"])
+    let displayMetadata = [SdJwtVcTypeMetadata.DisplayMetadata(locale: "en", name: "Test Name")]
     
     let metadata = try SdJwtVcTypeMetadata(
       vct: vct,
@@ -131,8 +128,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
       extends: URL(string: "https://example.com")!,
       extendsIntegrity: integrity,
       display: displayMetadata,
-      claims: [],
-      schemaSource: .byValue(schemaJson)
+      claims: []
     )
     
     XCTAssertEqual(metadata.vct, "complex-vct")
@@ -157,7 +153,7 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     XCTAssertEqual(metadata.name, "Type Metadata for Person Identification Data")
 
     XCTAssertEqual(metadata.display?.count, 1)
-    XCTAssertEqual(metadata.display?.first?.lang, "en")
+    XCTAssertEqual(metadata.display?.first?.locale, "en")
     XCTAssertEqual(metadata.display?.first?.name, "PID")
     XCTAssertEqual(metadata.display?.first?.description, "Person Identification Data")
 
@@ -167,13 +163,6 @@ final class SdJwtVcTypeMetadataTests: XCTestCase {
     // Verify at least one path includes a null value
     let containsNullPath = metadata.claims?.contains(where: { $0.path.value.contains(.allArrayElements) }) ?? false
     XCTAssertTrue(containsNullPath, "Expected at least one claim path to contain null")
-
-    // Verify schema is parsed as byValue and is an object
-    if case let .byValue(schema)? = metadata.schemaSource {
-        XCTAssertEqual(schema["type"].stringValue, "object")
-    } else {
-        XCTFail("Expected schemaSource to be .byValue with a valid schema")
-    }
   }
 }
 

@@ -256,9 +256,7 @@ When `TypeMetadataVerifier.verifyTypeMetadata(sdJwt:)` is invoked, it performs t
 
 1. **Retrieves type metadata** using a user-provided `TypeMetadataLookup`.
 2. **Merges multiple metadata documents** into a unified `ResolvedTypeMetadata`, giving precedence to child metadata entries.
-3. **Fetches referenced schemas** using a user-provided `TypeMetadataSchemaLookup`.
-4. **Validates the SD-JWT claims** against the fetched schemas using a user-provided `SchemaValidatorType`.
-5. **Validates claim disclosures** (e.g. required, allowed, or disallowed).
+3. **Validates claim disclosures** (e.g. required, allowed, or disallowed).
 
 ## How to contribute
 

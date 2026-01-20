@@ -109,7 +109,7 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
     name: "child_name",
     description: "child_description",
     displays: [
-      SdJwtVcTypeMetadata.DisplayMetadata(lang: "child_display_1_lang",
+      SdJwtVcTypeMetadata.DisplayMetadata(locale: "child_display_1_lang",
             name: "child_display_1_name",
             description: "child_display_1_description",
             rendering: .init(
@@ -133,7 +133,7 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
               ]
             )
            ),
-      SdJwtVcTypeMetadata.DisplayMetadata(lang: "child_display_2_lang",
+      SdJwtVcTypeMetadata.DisplayMetadata(locale: "child_display_2_lang",
             name: "child_display_2_name",
             description: "child_display_2_description",
             rendering: .init(
@@ -162,15 +162,15 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
       SdJwtVcTypeMetadata.ClaimMetadata(
         path: ClaimPath([.claim(name: "child_claims_1_path")]),
         display: [
-          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_1_display_1_lang",
+          SdJwtVcTypeMetadata.ClaimDisplay(locale: "child_claims_1_display_1_lang",
                 label: "child_claims_1_display_1_label",
                 description: "child_claims_1_display_1_description"
                ),
-          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_1_display_2_lang",
+          SdJwtVcTypeMetadata.ClaimDisplay(locale: "child_claims_1_display_2_lang",
                 label: "child_claims_1_display_2_label",
                 description: "child_claims_1_display_2_description"
                ),
-          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_1_display_3_lang",
+          SdJwtVcTypeMetadata.ClaimDisplay(locale: "child_claims_1_display_3_lang",
                 label: "child_claims_1_display_3_label",
                 description: "child_claims_1_display_3_description"
                )
@@ -181,15 +181,15 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
       SdJwtVcTypeMetadata.ClaimMetadata(
         path: ClaimPath([.claim(name: "child_claims_2_path")]),
         display: [
-          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_2_display_1_lang",
+          SdJwtVcTypeMetadata.ClaimDisplay(locale: "child_claims_2_display_1_lang",
                 label: "child_claims_2_display_1_label",
                 description: "child_claims_1_display_1_description"
                ),
-          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_2_display_2_lang",
+          SdJwtVcTypeMetadata.ClaimDisplay(locale: "child_claims_2_display_2_lang",
                 label: "child_claims_2_display_2_label",
                 description: "child_claims_2_display_2_description"
                ),
-          SdJwtVcTypeMetadata.ClaimDisplay(lang: "child_claims_2_display_3_lang",
+          SdJwtVcTypeMetadata.ClaimDisplay(locale: "child_claims_2_display_3_lang",
                 label: "child_claims_2_display_3_label",
                 description: "child_claims_2_display_3_description"
                )
@@ -205,7 +205,7 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
     description: "parent_description",
     displays: [
       SdJwtVcTypeMetadata.DisplayMetadata(
-        lang: "parent_display_1_lang",
+        locale: "parent_display_1_lang",
         name: "parent_display_1_name",
         description: "parent_display_1_description",
         rendering: .init(
@@ -231,7 +231,7 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
         )
       ),
       SdJwtVcTypeMetadata.DisplayMetadata(
-        lang: "parent_display_2_lang",
+        locale: "parent_display_2_lang",
         name: "parent_display_2_name",
         description: "parent_display_2_description",
         rendering: .init(
@@ -262,17 +262,17 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
         path: ClaimPath([.claim(name: "parent_claims_1_path")]),
         display: [
           SdJwtVcTypeMetadata.ClaimDisplay(
-            lang: "parent_claims_1_display_1_lang",
+            locale: "parent_claims_1_display_1_lang",
             label: "parent_claims_1_display_1_label",
             description: "parent_claims_1_display_1_description"
           ),
           SdJwtVcTypeMetadata.ClaimDisplay(
-            lang: "parent_claims_1_display_2_lang",
+            locale: "parent_claims_1_display_2_lang",
             label: "parent_claims_1_display_2_label",
             description: "parent_claims_1_display_2_description"
           ),
           SdJwtVcTypeMetadata.ClaimDisplay(
-            lang: "parent_claims_1_display_3_lang",
+            locale: "parent_claims_1_display_3_lang",
             label: "parent_claims_1_display_3_label",
             description: "parent_claims_1_display_3_description"
           )
@@ -284,17 +284,17 @@ eyJhbGciOiJFUzI1NiIsImNuZiI6eyJqd2siOnsiY3J2IjoiUC0yNTYiLCJrdHkiOiJFQyIsIngiOiJS
         path: ClaimPath([.claim(name: "parent_claims_2_path")]),
         display: [
           SdJwtVcTypeMetadata.ClaimDisplay(
-            lang: "parent_claims_2_display_1_lang",
+            locale: "parent_claims_2_display_1_lang",
             label: "parent_claims_2_display_1_label",
             description: "parent_claims_2_display_1_description"
           ),
           SdJwtVcTypeMetadata.ClaimDisplay(
-            lang: "parent_claims_2_display_2_lang",
+            locale: "parent_claims_2_display_2_lang",
             label: "parent_claims_2_display_2_label",
             description: "parent_claims_2_display_2_description"
           ),
           SdJwtVcTypeMetadata.ClaimDisplay(
-            lang: "parent_claims_2_display_3_lang",
+            locale: "parent_claims_2_display_3_lang",
             label: "parent_claims_2_display_3_label",
             description: "parent_claims_2_display_3_description"
           )

@@ -103,17 +103,13 @@ final class PresentationTest: XCTestCase {
     }
     
     // When
-    let query: Set<JSONPointer> = Set(
-      [
-        "/address/region",
-        "/address/country",
-        "/test_recursive/recursive_address",
-        "/evidence/0/time",
-        "/evidence/0/evidence/0/time"
-      ].compactMap {
-        JSONPointer(pointer: $0)
-      }
-    )
+    let query: Set<ClaimPath> = Set([
+      .claim("address").claim("region"),
+      .claim("address").claim("country"),
+      .claim("test_recursive").claim("recursive_address"),
+      .claim("evidence").arrayElement(0).claim("time"),
+      .claim("evidence").arrayElement(0).claim("evidence").arrayElement(0).claim("time")
+    ])
     
     let presentedSdJwt = try issuerSignedSDJWT.present(
       query: query,

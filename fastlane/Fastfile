@@ -21,14 +21,21 @@ platform :ios do
   desc "Code coverage"
   lane :code_coverage do
     
-  params = {
-    package_path: ".",
-    scheme: "eudi-lib-sdjwt-swift",
-    destination: "platform=iOS Simulator,name=iPhone 16,OS=18.5",
-    result_bundle: true
-  }
+    # You can convert the generated report to JSON using the following command:
+    # xcrun xccov view xcov_output/xccovreport-0.xccovreport --json
+    params = {
+      package_path: '.',
+      scheme: 'eudi-lib-sdjwt-swift',
+      destination: "platform=iOS Simulator,name=iPhone 16,OS=18.5",
+      output_directory: "xcov_output",
+      result_bundle: true,
+      parallel_testing: false,
+      xcodebuild_formatter: "xcbeautify"
+    }
 
-  params[:xcargs] = "-skipPackagePluginValidation" if ENV["CI"]
+    if ENV['CI']
+      params[:xcargs] = "-skipPackagePluginValidation"
+    end
 
     run_tests(params)
 

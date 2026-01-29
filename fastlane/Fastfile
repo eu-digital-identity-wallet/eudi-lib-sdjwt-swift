@@ -27,31 +27,21 @@ platform :ios do
   desc "Code coverage"
   lane :code_coverage do
     
-   sh(%q(
-     xcodebuild -scheme "eudi-lib-sdjwt-swift" -showdestinations
-   ))
-
     sh("xcodebuild -version")
-    sh("xcode-select -p")
-    sh("xcodebuild -showsdks || true")
-    sh("xcrun simctl list runtimes")
-    sh("xcrun simctl list devices available")
+  sh("xcode-select -p")
+  sh("xcodebuild -showsdks || true")
+  sh("xcrun simctl list runtimes")
+  sh("xcrun simctl list devices available")
 
-    # You can convert the generated report to JSON using the following command:
-    # xcrun xccov view xcov_output/xccovreport-0.xccovreport --json
-    params = {
-      package_path: '.',
-      scheme: 'eudi-lib-sdjwt-swift',
-      destination: "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.6", 
-      output_directory: "xcov_output",
-      result_bundle: true,
-      parallel_testing: false,
-      xcodebuild_formatter: "xcbeautify"
-    }
+  params = {
+    package_path: ".",
+    scheme: "eudi-lib-sdjwt-swift",
+    destination: "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.6",
+    result_bundle: true
+  }
 
-    if ENV['CI']
-      params[:xcargs] = "-skipPackagePluginValidation"
-    end
+  params[:xcargs] = "-skipPackagePluginValidation" if ENV["CI"]
+  run_tests(params)
 
     run_tests(params)
 

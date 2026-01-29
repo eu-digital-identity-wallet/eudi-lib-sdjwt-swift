@@ -4,6 +4,12 @@ platform :ios do
   desc "Runs unit tests"
   lane :tests do
 
+   sh("xcodebuild -version")
+   sh("xcode-select -p")
+   sh("xcodebuild -showsdks || true")
+   sh("xcrun simctl list runtimes")
+   sh("xcrun simctl list devices available")
+
     params = {
       package_path: '.',
       scheme: 'eudi-lib-sdjwt-swift',

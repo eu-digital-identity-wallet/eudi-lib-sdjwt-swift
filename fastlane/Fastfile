@@ -4,12 +4,6 @@ platform :ios do
   desc "Runs unit tests"
   lane :tests do
 
-   sh("xcodebuild -version")
-   sh("xcode-select -p")
-   sh("xcodebuild -showsdks || true")
-   sh("xcrun simctl list runtimes")
-   sh("xcrun simctl list devices available")
-
     params = {
       package_path: '.',
       scheme: 'eudi-lib-sdjwt-swift',
@@ -27,16 +21,10 @@ platform :ios do
   desc "Code coverage"
   lane :code_coverage do
     
-    sh("xcodebuild -version")
-  sh("xcode-select -p")
-  sh("xcodebuild -showsdks || true")
-  sh("xcrun simctl list runtimes")
-  sh("xcrun simctl list devices available")
-
   params = {
     package_path: ".",
     scheme: "eudi-lib-sdjwt-swift",
-    destination: "platform=iOS Simulator,name=iPhone 16 Pro,OS=18.6",
+    destination: "platform=iOS Simulator,name=iPhone 16,OS=18.5",
     result_bundle: true
   }
 

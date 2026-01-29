@@ -6,19 +6,19 @@
     push:
   
   jobs:
-  build:
-    runs-on: macos-15
-    steps:
-      - uses: actions/checkout@v4
+    build:
+      runs-on: macos-15
+      steps:
+        - uses: actions/checkout@v4
 
-      # use the preinstalled Xcode (more likely to have full platforms)
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+        # use the preinstalled Xcode (more likely to have full platforms)
+        - name: Select Xcode
+          run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
-      - name: Sanity check destinations
-        run: |
-          xcodebuild -version
-          xcodebuild -showsdks
-          xcodebuild -scheme eudi-lib-sdjwt-swift -showdestinations
+        - name: Sanity check destinations
+          run: |
+            xcodebuild -version
+            xcodebuild -showsdks
+            xcodebuild -scheme eudi-lib-sdjwt-swift -showdestinations
 
-      - run: fastlane tests
+        - run: fastlane tests

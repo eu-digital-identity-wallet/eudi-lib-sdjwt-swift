@@ -19,7 +19,6 @@ import JSONWebSignature
 import SwiftyJSON
 import Tools
 
-public typealias DisclosuresPerClaim = [JSONPointer: [Disclosure]]
 public typealias DisclosuresPerClaimPath = [ClaimPath: [Disclosure]]
 
 public struct SignedSDJWT {
@@ -266,16 +265,6 @@ extension SignedSDJWT {
       )
   }
   
-  public func disclosedPaths() throws -> [JSONPointer] {
-    let visitor = ClaimVisitor()
-    _ = try self.toSDJWT()
-      .recreateClaims(
-        visitor: visitor
-      )
-    let pointers = visitor.disclosuresPerClaim.keys.compactMap { $0 }
-    return pointers
-  }
-  
   public func asJwsJsonObject(
     option: JwsJsonSupportOption = .flattened,
     kbJwt: JWTString?,
@@ -289,39 +278,6 @@ extension SignedSDJWT {
       disclosures: Set(disclosures),
       kbJwt: kbJwt
     )
-  }
-  
-  public func present(
-    query: Set<JSONPointer>,
-    visitor: ClaimVisitor? = ClaimVisitor()
-  ) throws -> SignedSDJWT? {
-    let (_, disclosuresPerClaim) = try recreateClaimsAndDisclosuresPerClaim(
-      visitor: visitor
-    )
-    let keys = disclosuresPerClaim.keys.filter { jsonPointer in
-      return query.contains(jsonPointer)
-    }
-    
-    if keys.isEmpty {
-      return try .init(
-        serializedJwt: jwt.compactSerialization,
-        disclosures: []
-      )
-      
-    } else {
-      let disclosures = Set(
-        disclosuresPerClaim
-          .filter {
-            keys.contains($0.key)
-          }
-          .values
-          .flatMap { $0 }
-      )
-      return try .init(
-        serializedJwt: jwt.compactSerialization,
-        disclosures: Array(disclosures)
-      )
-    }
   }
   
   public func present(
@@ -370,18 +326,6 @@ extension SignedSDJWT {
 }
 
 extension SignedSDJWT {
-  fileprivate func recreateClaimsAndDisclosuresPerClaim(visitor: ClaimVisitor?) throws -> (
-    JSON, DisclosuresPerClaim
-  ) {
-    
-    let claims = try recreateClaims(visitor: visitor)
-    
-    return (
-      claims.recreatedClaims,
-      claims.disclosuresPerClaim ?? [:]
-    )
-  }
-  
   fileprivate func recreateClaimsAndDisclosuresPerClaimPath(visitor: ClaimVisitor?) throws -> (
     JSON, DisclosuresPerClaimPath
   ) {

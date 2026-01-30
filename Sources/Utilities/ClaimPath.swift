@@ -18,7 +18,6 @@ import SwiftyJSON
 
 public enum ClaimPathError: Error {
   case emptyClaimPath
-  case invalidJsonPointerFormat(String)
   case elementNotFound(ClaimPath)
 }
 

@@ -17,19 +17,6 @@ import Foundation
 
 public protocol ClaimVisitorType: Sendable {
   func call(
-    pointer: JSONPointer,
-    disclosure: Disclosure,
-    value: String?
-  )
-  
-  func call(
-    path: ClaimPath?,
-    disclosure: Disclosure,
-    value: String?
-  )
-  
-  func call(
-    pointer: JSONPointer,
     path: ClaimPath?,
     disclosure: Disclosure,
     value: String?
@@ -38,17 +25,15 @@ public protocol ClaimVisitorType: Sendable {
 
 public final class ClaimVisitor: ClaimVisitorType {
   
-  nonisolated(unsafe) var disclosuresPerClaim: [JSONPointer: [Disclosure]] = [:]
   nonisolated(unsafe) var disclosuresPerClaimPath: [ClaimPath: [Disclosure]] = [:]
-  nonisolated(unsafe) var disclosures: [Disclosure] {
-    disclosuresPerClaim.flatMap { $0.value }
+  var disclosures: [Disclosure] {
+    disclosuresPerClaimPath.flatMap { $0.value }
   }
   
   public init() {
   }
   
   public func call(
-    pointer: JSONPointer,
     path: ClaimPath?,
     disclosure: Disclosure = "",
     value: String? = nil
@@ -62,32 +47,6 @@ public final class ClaimVisitor: ClaimVisitorType {
       return
     }
     
-    call(pointer: pointer, disclosure: disclosure, value: value)
-    call(path: path, disclosure: disclosure, value: value)
-  }
-  
-  public func call(
-    pointer: JSONPointer,
-    disclosure: Disclosure,
-    value: String? = nil
-  ) {
-
-    // Calculate claimDisclosures
-    let claimDisclosures: [Disclosure] = {
-      let containerPath = pointer.parent()
-      let containerDisclosures = containerPath.flatMap { disclosuresPerClaim[$0] } ?? []
-      return containerDisclosures + [disclosure]
-    }()
-    
-    // Insert the claimDisclosures only if the pointer doesn't already exist
-    disclosuresPerClaim[pointer] = disclosuresPerClaim[pointer] ?? claimDisclosures
-  }
-  
-  public func call(
-    path: ClaimPath?,
-    disclosure: Disclosure,
-    value: String?
-  ) {
     guard let path = path else { return }
     
     // Calculate claimDisclosures

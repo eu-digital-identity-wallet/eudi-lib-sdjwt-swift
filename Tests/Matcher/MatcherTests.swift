@@ -166,7 +166,7 @@ final class MatcherTests: XCTestCase {
   // MARK: - Invalid Path Formats
   
   func testMatchWithInvalidJsonPointerPath() {
-    let path = ClaimPath(jsonPointer: "invalid-path")
+    let path = ClaimPath(pointer: "invalid-path")
     XCTAssertNil(path)
   }
   

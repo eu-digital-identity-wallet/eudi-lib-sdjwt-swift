@@ -46,14 +46,10 @@ final class EndToEndTest: XCTestCase {
     let visitor = ClaimVisitor()
     let verifier: KeyBindingVerifier = KeyBindingVerifier()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
-    let query: Set<JSONPointer> = Set(
-      [
-        "/credential_holder/family_name",
-        "/credential_holder/given_name"
-      ].compactMap {
-        JSONPointer(pointer: $0)
-      }
-    )
+    let query: Set<ClaimPath> = Set([
+      .claim("credential_holder").claim("family_name"),
+      .claim("credential_holder").claim("given_name")
+    ])
     
     // When
     let x509Verifier = SDJWTVCVerifier(
@@ -215,14 +211,10 @@ final class EndToEndTest: XCTestCase {
     let visitor = ClaimVisitor()
     let verifier: KeyBindingVerifier = KeyBindingVerifier()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
-    let query: Set<JSONPointer> = Set(
-      [
-        "/credential_holder/family_name",
-        "/credential_holder/given_name"
-      ].compactMap {
-        JSONPointer(pointer: $0)
-      }
-    )
+    let query: Set<ClaimPath> = Set([
+      .claim("credential_holder").claim("family_name"),
+      .claim("credential_holder").claim("given_name")
+    ])
     
     // When
     let x509Verifier = SDJWTVCVerifier(
@@ -239,7 +231,7 @@ final class EndToEndTest: XCTestCase {
       serialisedString: sdJwtString
     )
     
-    let presentedSdJwt = try await issuerSignedSDJWT.present(
+    let presentedSdJwt = try issuerSignedSDJWT.present(
       query: query,
       visitor: visitor
     )
@@ -317,7 +309,7 @@ final class EndToEndTest: XCTestCase {
       serialisedString: sdJwtString
     )
     
-    let presentedSdJwt = try await issuerSignedSDJWT.present(
+    let presentedSdJwt = try issuerSignedSDJWT.present(
       query: query,
       visitor: visitor
     )
@@ -440,7 +432,7 @@ final class EndToEndTest: XCTestCase {
       XCTAssert(true, error.localizedDescription)
     }
     
-    let presentedSdJwt = try await issuerSignedSDJWT.present(
+    let presentedSdJwt = try issuerSignedSDJWT.present(
       query: query,
       visitor: visitor
     )
@@ -601,7 +593,7 @@ final class EndToEndTest: XCTestCase {
       XCTAssert(true, error.localizedDescription)
     }
     
-    let presentedSdJwt = try await issuerSignedSDJWT.present(
+    let presentedSdJwt = try issuerSignedSDJWT.present(
       query: query,
       visitor: visitor
     )
@@ -669,16 +661,12 @@ final class EndToEndTest: XCTestCase {
     
     let visitor = ClaimVisitor()
     let verifier: KeyBindingVerifier = KeyBindingVerifier()
-    let query: Set<JSONPointer> = Set(
-      [
-        "/hidden_name",
-        "/second_hidden_name",
-        "/address/street_address",
-        "/nationalities"
-      ].compactMap {
-        JSONPointer(pointer: $0)
-      }
-    )
+    let query: Set<ClaimPath> = Set([
+      .claim("hidden_name"),
+      .claim("second_hidden_name"),
+      .claim("address").claim("street_address"),
+      .claim("nationalities")
+    ])
     
     let issuerSignedSDJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: extractECKey(
@@ -732,7 +720,7 @@ final class EndToEndTest: XCTestCase {
       XCTAssert(true, error.localizedDescription)
     }
     
-    let presentedSdJwt = try await issuerSignedSDJWT.present(
+    let presentedSdJwt = try issuerSignedSDJWT.present(
       query: query,
       visitor: visitor
     )
@@ -800,21 +788,17 @@ final class EndToEndTest: XCTestCase {
     
     let visitor = ClaimVisitor()
     let verifier: KeyBindingVerifier = KeyBindingVerifier()
-    let query: Set<JSONPointer> = Set(
-      [
-        "/hidden_name",
-        "/second_hidden_name",
-        "/address/street_address",
-        "/nationalities",
-        "/type/1",
-        "/type/3",
-        "/entity/sub_enity/attribute_two",
-        "/for_all/1",
-        "/entity/sub_enity/for_all/1"
-      ].compactMap {
-        JSONPointer(pointer: $0)
-      }
-    )
+    let query: Set<ClaimPath> = Set([
+      .claim("hidden_name"),
+      .claim("second_hidden_name"),
+      .claim("address").claim("street_address"),
+      .claim("nationalities"),
+      .claim("type").arrayElement(1),
+      .claim("type").arrayElement(3),
+      .claim("entity").claim("sub_enity").claim("attribute_two"),
+      .claim("for_all").arrayElement(1),
+      .claim("entity").claim("sub_enity").claim("for_all").arrayElement(1)
+    ])
     
     let issuerSignedSDJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: extractECKey(
@@ -888,7 +872,7 @@ final class EndToEndTest: XCTestCase {
       XCTAssert(true, error.localizedDescription)
     }
     
-    let presentedSdJwt = try await issuerSignedSDJWT.present(
+    let presentedSdJwt = try issuerSignedSDJWT.present(
       query: query,
       visitor: visitor
     )

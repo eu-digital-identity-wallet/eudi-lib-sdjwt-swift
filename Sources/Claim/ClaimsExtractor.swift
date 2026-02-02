@@ -67,7 +67,7 @@ public class ClaimExtractor {
             let currentPath = "/" + (currentPath + [foundDisclosure.key]).joined(separator: "/")
             visitor?.call(
               path: .init(
-                pointer: currentPath
+                path: currentPath
               ),
               disclosure: disclosure,
               value: foundDisclosure.value.string
@@ -126,7 +126,7 @@ public class ClaimExtractor {
                 
                 visitor?.call(
                   path: .init(
-                    pointer: "/" + newPath.joined(separator: "/")
+                    path: "/" + newPath.joined(separator: "/")
                   ),
                   disclosure: dislosure,
                   value: found.string
@@ -137,7 +137,7 @@ public class ClaimExtractor {
             
             visitor?.call(
               path: .init(
-                pointer: "/" + newPath.joined(separator: "/")
+                path: "/" + newPath.joined(separator: "/")
               )
             )
             
@@ -153,7 +153,7 @@ public class ClaimExtractor {
         let newPath = currentPath + [key]
         visitor?.call(
           path: .init(
-            pointer: "/" + newPath.joined(separator: "/")
+            path: "/" + newPath.joined(separator: "/")
           )
         )
       }
@@ -168,15 +168,16 @@ public class ClaimExtractor {
 }
 
 extension ClaimPath {
-  /// Initializes a `ClaimPath` from a JSON Pointer string.
-  /// - Parameter jsonPointer: The JSON Pointer string (e.g., `"/user/name"`, `"/items/0"`, `"/items/1/child"`).
-  init?(pointer: String) {
-    guard pointer.hasPrefix("/") else { return nil } // JSON Pointers must start with "/"
+  /// Initializes a `ClaimPath` from a  path string.
+  /// - Parameter path: The path string as a JSON Pointer string format (e.g., `"/user/name"`, `"/items/0"`, `"/items/1/child"`).
+  init?(path: String) {
+    // Paths must start with "/"
+    guard path.hasPrefix("/") else { return nil }
     
-    let components = pointer
-      .dropFirst() // Remove leading "/"
-      .split(separator: "/") // Split by "/"
-      .map { String($0).replacingOccurrences(of: "~1", with: "/").replacingOccurrences(of: "~0", with: "~") } // Decode JSON Pointer escape sequences
+    let components = path
+      .dropFirst()
+      .split(separator: "/")
+      .map { String($0).replacingOccurrences(of: "~1", with: "/").replacingOccurrences(of: "~0", with: "~") }
     
     guard !components.isEmpty else { return nil }
     

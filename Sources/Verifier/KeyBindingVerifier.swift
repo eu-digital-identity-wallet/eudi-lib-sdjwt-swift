@@ -39,7 +39,7 @@ public final class KeyBindingVerifier: VerifierProtocol {
     
     let challengePayloadJson = try challenge.payloadJSON()
     
-    guard let timeInterval = challengePayloadJson[Keys.iat].int else {
+    guard let _ = challengePayloadJson[Keys.iat].int else {
       throw SDJWTVerifierError.keyBindingFailed(description: "No iat claim Provided")
     }
     

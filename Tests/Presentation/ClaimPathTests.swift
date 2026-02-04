@@ -75,22 +75,22 @@ class ClaimPathTests: XCTestCase {
   }
   
   func testClaimPathJsonPointerInitialization() {
-    let path = ClaimPath(jsonPointer: "/user/name")
+    let path = ClaimPath(path: "/user/name")
     XCTAssertEqual(path, ClaimPath([.claim(name: "user"), .claim(name: "name")]))
   }
   
   func testClaimPathJsonPointerArrayIndex() {
-    let path = ClaimPath(jsonPointer: "/items/2")
+    let path = ClaimPath(path: "/items/2")
     XCTAssertEqual(path, ClaimPath([.claim(name: "items"), .arrayElement(index: 2)]))
   }
   
   func testClaimPathJsonPointerEscapedCharacters() {
-    let path = ClaimPath(jsonPointer: "/user~1data")
+    let path = ClaimPath(path: "/user~1data")
     XCTAssertEqual(path, ClaimPath([.claim(name: "user/data")]))
   }
   
   func testClaimPathJsonPointerInvalidFormat() {
-    let path = ClaimPath(jsonPointer: "user/name") // Missing leading "/"
+    let path = ClaimPath(path: "user/name") // Missing leading "/"
     XCTAssertNil(path)
   }
   

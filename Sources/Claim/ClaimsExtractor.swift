@@ -18,7 +18,6 @@ import SwiftyJSON
 public typealias ClaimExtractorResult = (
   digestsFoundOnPayload: [DigestType],
   recreatedClaims: JSON,
-  disclosuresPerClaim: DisclosuresPerClaim?,
   disclosuresPerClaimPath: DisclosuresPerClaimPath?
 )
 
@@ -65,13 +64,10 @@ public class ClaimExtractor {
           json[foundDisclosure.key] = foundDisclosure.value
           
           if let disclosure = digestsOfDisclosures[foundDigest] {
-            let currentJsonPointer = "/" + (currentPath + [foundDisclosure.key]).joined(separator: "/")
+            let currentPath = "/" + (currentPath + [foundDisclosure.key]).joined(separator: "/")
             visitor?.call(
-              pointer: .init(
-                pointer: currentJsonPointer
-              ),
               path: .init(
-                jsonPointer: currentJsonPointer
+                path: currentPath
               ),
               disclosure: disclosure,
               value: foundDisclosure.value.string
@@ -129,11 +125,8 @@ public class ClaimExtractor {
                 json[key].arrayObject?[index] = found
                 
                 visitor?.call(
-                  pointer: .init(
-                    pointer: "/" + newPath.joined(separator: "/")
-                  ),
                   path: .init(
-                    jsonPointer: "/" + newPath.joined(separator: "/")
+                    path: "/" + newPath.joined(separator: "/")
                   ),
                   disclosure: dislosure,
                   value: found.string
@@ -143,11 +136,8 @@ public class ClaimExtractor {
           } else {
             
             visitor?.call(
-              pointer: .init(
-                pointer: "/" + newPath.joined(separator: "/")
-              ),
               path: .init(
-                jsonPointer: "/" + newPath.joined(separator: "/")
+                path: "/" + newPath.joined(separator: "/")
               )
             )
             
@@ -162,11 +152,8 @@ public class ClaimExtractor {
       } else if subJson.isPrimitive {
         let newPath = currentPath + [key]
         visitor?.call(
-          pointer: .init(
-            pointer: "/" + newPath.joined(separator: "/")
-          ),
           path: .init(
-            jsonPointer: "/" + newPath.joined(separator: "/")
+            path: "/" + newPath.joined(separator: "/")
           )
         )
       }
@@ -175,22 +162,26 @@ public class ClaimExtractor {
     return (
       foundDigests,
       json,
-      visitor?.disclosuresPerClaim,
       visitor?.disclosuresPerClaimPath
     )
   }
 }
 
 extension ClaimPath {
-  /// Initializes a `ClaimPath` from a JSON Pointer string.
-  /// - Parameter jsonPointer: The JSON Pointer string (e.g., `"/user/name"`, `"/items/0"`, `"/items/1/child"`).
-  init?(jsonPointer: String) {
-    guard jsonPointer.hasPrefix("/") else { return nil } // JSON Pointers must start with "/"
+  /// Initializes a `ClaimPath` from a  path string.
+  /// - Parameter path: The path string as a JSON Pointer string format (e.g., `"/user/name"`, `"/items/0"`, `"/items/1/child"`).
+  init?(path: String) {
+    // Paths must start with "/"
+    guard path.hasPrefix("/") else { return nil }
     
-    let components = jsonPointer
-      .dropFirst() // Remove leading "/"
-      .split(separator: "/") // Split by "/"
-      .map { String($0).replacingOccurrences(of: "~1", with: "/").replacingOccurrences(of: "~0", with: "~") } // Decode JSON Pointer escape sequences
+    let components = path
+      .dropFirst()
+      .split(separator: "/")
+      .map {
+        String($0)
+          .replacingOccurrences(of: "~1", with: "/")
+          .replacingOccurrences(of: "~0", with: "~")
+      }
     
     guard !components.isEmpty else { return nil }
     

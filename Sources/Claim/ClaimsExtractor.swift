@@ -177,7 +177,11 @@ extension ClaimPath {
     let components = path
       .dropFirst()
       .split(separator: "/")
-      .map { String($0).replacingOccurrences(of: "~1", with: "/").replacingOccurrences(of: "~0", with: "~") }
+      .map {
+        String($0)
+          .replacingOccurrences(of: "~1", with: "/")
+          .replacingOccurrences(of: "~0", with: "~")
+      }
     
     guard !components.isEmpty else { return nil }
     

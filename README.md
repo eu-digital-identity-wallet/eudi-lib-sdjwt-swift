@@ -17,7 +17,7 @@ the [EUDI Wallet Reference Implementation project description](https://github.co
 This is a library offering a DSL (domain-specific language) for defining how a set of claims should be made selectively
 disclosable.
 
-Library implements [SD-JWT draft 12](https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-12.html)
+Library implements [RFC 9901](https://www.rfc-editor.org/rfc/rfc9901.html)
 is implemented in Swift.
 
 ## Use cases supported
@@ -89,7 +89,7 @@ SDJWTVerifier(parser: CompactParser(serialisedString: unverifiedSdJwtString))
 In this case, a `Holder` of an SD-JWT issued by an `Issuer`, wants to create a presentation for a `Verifier`.
 The `Holder` should know which of the selectively disclosed claims to include in the presentation.
 The selectively disclosed claims to include in the presentation are expressed using Claim Paths as per 
-[SD-JWT VC draft 6](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-06.html#name-claim-path).
+[SD-JWT VC draft 13](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-13.html#name-claim-path).
 
 You can find comprehensive examples [here](Tests/EndToEnd/EndToEndTest.swift)
 

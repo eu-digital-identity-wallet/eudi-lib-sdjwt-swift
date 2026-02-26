@@ -1129,7 +1129,7 @@ final class VcVerifierTest: XCTestCase {
     }
   }
 
-  // MARK: - Claims Validation Tests
+  // MARK: - Claims Validation Tests (Issuance)
 
   func testVerifyIssuance_WithClaimsVerifier_ShouldVerifyClaims() async throws {
     // Given
@@ -1188,6 +1188,61 @@ final class VcVerifierTest: XCTestCase {
     let result = try await x509Verifier.verifyIssuance(
       unverifiedSdJwt: json,
       claimsVerifier: claimsVerifier
+    )
+
+    // Then - should succeed because claims are validated
+    XCTAssertNoThrow(try result.get())
+  }
+
+  // MARK: - Claims Validation Tests (Presentation)
+
+  func testVerifyPresentation_WithClaimsVerifier_ShouldVerifyClaims() async throws {
+    // Given
+    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+
+    // Create a claims verifier that will validate whatever claims are in the JWT
+    let claimsVerifier = ClaimsVerifier(
+      requireNbf: false,
+      requireExp: false,
+      currentDate: Date()
+    )
+
+    // When
+    let result = try await metadataVerifier.verifyPresentation(
+      unverifiedSdJwt: sdJwtString,
+      claimsVerifier: claimsVerifier,
+      keyBindingVerifier: nil,
+      expectedNonce: nil
+    )
+
+    // Then - should succeed because claims are validated
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyPresentation_JSON_WithClaimsVerifier_ShouldVerifyClaims() async throws {
+    // Given
+    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    let parser = CompactParser()
+    let sdJwt = try parser.getSignedSdJwt(serialisedString: sdJwtString)
+    let json = try sdJwt.asJwsJsonObject(
+      option: .flattened,
+      kbJwt: sdJwt.kbJwt?.compactSerialization,
+      getParts: parser.extractJWTParts
+    )
+
+    // Create a claims verifier that will validate whatever claims are in the JWT
+    let claimsVerifier = ClaimsVerifier(
+      requireNbf: false,
+      requireExp: false,
+      currentDate: Date()
+    )
+
+    // When
+    let result = try await metadataVerifier.verifyPresentation(
+      unverifiedSdJwt: json,
+      claimsVerifier: claimsVerifier,
+      keyBindingVerifier: nil,
+      expectedNonce: nil
     )
 
     // Then - should succeed because claims are validated

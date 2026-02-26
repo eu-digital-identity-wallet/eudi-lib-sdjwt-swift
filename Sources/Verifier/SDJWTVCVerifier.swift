@@ -249,8 +249,20 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           signedJWT: jws,
           publicKey: jwk
         )
-      } claimVerifier: { _, _ in
-        claimsVerifier
+      } claimVerifier: { nbf, exp in
+        // Create a new verifier with the extracted claims from the JWT
+        ClaimsVerifier(
+          iat: claimsVerifier.iat.map { Int($0.timeIntervalSince1970) },
+          iatValidWindow: claimsVerifier.iatValidWindow,
+          nbf: nbf,
+          exp: exp,
+          audClaim: claimsVerifier.auds?.joined(separator: ","),
+          expectedAud: claimsVerifier.expectedAud,
+          requireNbf: claimsVerifier.requireNbf,
+          requireExp: claimsVerifier.requireExp,
+          requireAud: claimsVerifier.requireAud,
+          currentDate: claimsVerifier.currentDate
+        )
       } keyBindingVerifier: { jws, jwk in
         guard let keyBindingVerifier = keyBindingVerifier else {
           return nil
@@ -297,8 +309,20 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           signedJWT: jws,
           publicKey: jwk
         )
-      } claimVerifier: { _, _ in
-        claimsVerifier
+      } claimVerifier: { nbf, exp in
+        // Create a new verifier with the extracted claims from the JWT
+        ClaimsVerifier(
+          iat: claimsVerifier.iat.map { Int($0.timeIntervalSince1970) },
+          iatValidWindow: claimsVerifier.iatValidWindow,
+          nbf: nbf,
+          exp: exp,
+          audClaim: claimsVerifier.auds?.joined(separator: ","),
+          expectedAud: claimsVerifier.expectedAud,
+          requireNbf: claimsVerifier.requireNbf,
+          requireExp: claimsVerifier.requireExp,
+          requireAud: claimsVerifier.requireAud,
+          currentDate: claimsVerifier.currentDate
+        )
       } keyBindingVerifier: { jws, jwk in
         guard let keyBindingVerifier = keyBindingVerifier else {
           return nil

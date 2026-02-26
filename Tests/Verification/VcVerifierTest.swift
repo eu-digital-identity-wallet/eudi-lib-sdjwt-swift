@@ -1128,8 +1128,73 @@ final class VcVerifierTest: XCTestCase {
       XCTAssertEqual(error as? TypeMetadataError, .emptyRequiredVcts)
     }
   }
-  
-  
+
+  // MARK: - Claims Validation Tests
+
+  func testVerifyIssuance_WithClaimsVerifier_ShouldVerifyClaims() async throws {
+    // Given
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+
+    // Create a claims verifier that will validate whatever claims are in the JWT
+    let claimsVerifier = ClaimsVerifier(
+      requireNbf: false,
+      requireExp: false,
+      currentDate: Date()
+    )
+
+    // When
+    let result = try await x509Verifier.verifyIssuance(
+      unverifiedSdJwt: sdJwtString,
+      claimsVerifier: claimsVerifier
+    )
+
+    // Then - should succeed because claims are validated
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyIssuance_WithoutClaimsVerifier_ShouldSucceed() async throws {
+    // Given
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+
+    // When - no claimsVerifier provided (backward compatibility)
+    let result = try await x509Verifier.verifyIssuance(
+      unverifiedSdJwt: sdJwtString,
+      claimsVerifier: nil
+    )
+
+    // Then - should succeed
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyIssuance_JSON_WithClaimsVerifier_ShouldVerifyClaims() async throws {
+    // Given
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+    let parser = CompactParser()
+    let sdJwt = try parser.getSignedSdJwt(serialisedString: sdJwtString)
+    let json = try sdJwt.asJwsJsonObject(
+      option: .flattened,
+      kbJwt: sdJwt.kbJwt?.compactSerialization,
+      getParts: parser.extractJWTParts
+    )
+
+    // Create a claims verifier that will validate whatever claims are in the JWT
+    let claimsVerifier = ClaimsVerifier(
+      requireNbf: false,
+      requireExp: false,
+      currentDate: Date()
+    )
+
+    // When
+    let result = try await x509Verifier.verifyIssuance(
+      unverifiedSdJwt: json,
+      claimsVerifier: claimsVerifier
+    )
+
+    // Then - should succeed because claims are validated
+    XCTAssertNoThrow(try result.get())
+  }
+
+
   private func typeMetadataVerifierFactory(
     useMock: Bool = true
   ) -> TypeMetadataVerifierType {

@@ -110,6 +110,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -192,6 +193,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -271,6 +273,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -349,6 +352,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -478,6 +482,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "www.example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -639,6 +644,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "www.example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -766,6 +772,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "www.example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -918,6 +925,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "www.example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )

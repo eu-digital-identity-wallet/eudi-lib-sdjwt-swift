@@ -57,12 +57,14 @@ protocol SdJwtVcVerifierType {
    *   - unverifiedSdJwt: The unverified SD-JWT in string format.
    *   - claimsVerifier: The claims verifier to validate the claims.
    *   - keyBindingVerifier: An optional key binding verifier.
+   *   - expectedNonce: The expected nonce value to prevent replay attacks.
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
   func verifyPresentation(
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier,
-    keyBindingVerifier: KeyBindingVerifier?
+    keyBindingVerifier: KeyBindingVerifier?,
+    expectedNonce: String?
   ) async throws -> Result<SignedSDJWT, any Error>
   
   
@@ -72,12 +74,14 @@ protocol SdJwtVcVerifierType {
    *   - unverifiedSdJwt: The unverified SD-JWT in `JSON` format.
    *   - claimsVerifier: The claims verifier to validate the claims.
    *   - keyBindingVerifier: An optional key binding verifier.
+   *   - expectedNonce: The expected nonce value to prevent replay attacks.
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
   func verifyPresentation(
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
-    keyBindingVerifier: KeyBindingVerifier?
+    keyBindingVerifier: KeyBindingVerifier?,
+    expectedNonce: String?
   ) async throws -> Result<SignedSDJWT, any Error>
 }
 
@@ -187,7 +191,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   func verifyPresentation(
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier,
-    keyBindingVerifier: KeyBindingVerifier? = nil
+    keyBindingVerifier: KeyBindingVerifier? = nil,
+    expectedNonce: String? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     let sdjwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
     let jws = sdjwt.jwt
@@ -207,7 +212,14 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       } claimVerifier: { _, _ in
         claimsVerifier
       } keyBindingVerifier: { jws, jwk in
-        try keyBindingVerifier?.verify(
+        guard let keyBindingVerifier = keyBindingVerifier else {
+          return nil
+        }
+        guard let expectedNonce = expectedNonce else {
+          throw SDJWTVerifierError.keyBindingFailed(description: "Expected nonce is required when key binding verification is performed")
+        }
+        try keyBindingVerifier.verify(
+          expectedNonce: expectedNonce,
           challenge: jws,
           extractedKey: jwk
         )
@@ -221,7 +233,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   func verifyPresentation(
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
-    keyBindingVerifier: KeyBindingVerifier?
+    keyBindingVerifier: KeyBindingVerifier?,
+    expectedNonce: String? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     guard
       let sdJwt = try SignedSDJWT(
@@ -247,7 +260,14 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       } claimVerifier: { _, _ in
         claimsVerifier
       } keyBindingVerifier: { jws, jwk in
-        try keyBindingVerifier?.verify(
+        guard let keyBindingVerifier = keyBindingVerifier else {
+          return nil
+        }
+        guard let expectedNonce = expectedNonce else {
+          throw SDJWTVerifierError.keyBindingFailed(description: "Expected nonce is required when key binding verification is performed.")
+        }
+        try keyBindingVerifier.verify(
+          expectedNonce: expectedNonce,
           challenge: jws,
           extractedKey: jwk
         )

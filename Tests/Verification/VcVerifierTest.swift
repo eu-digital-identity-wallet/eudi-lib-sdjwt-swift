@@ -199,7 +199,8 @@ final class VcVerifierTest: XCTestCase {
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: ClaimsVerifier(),
-      keyBindingVerifier: KeyBindingVerifier()
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789"
     )
     
     // Then
@@ -223,7 +224,8 @@ final class VcVerifierTest: XCTestCase {
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: json,
       claimsVerifier: ClaimsVerifier(),
-      keyBindingVerifier: KeyBindingVerifier()
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789"
     )
     
     // Then
@@ -324,7 +326,8 @@ final class VcVerifierTest: XCTestCase {
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: serialized,
       claimsVerifier: ClaimsVerifier(),
-      keyBindingVerifier: KeyBindingVerifier()
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: nonce
     )
     
     XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
@@ -1040,7 +1043,8 @@ final class VcVerifierTest: XCTestCase {
     let result = try await verifier.verifyPresentation(
       unverifiedSdJwt: CompactSerialiser(signedSDJWT: holderPresentation).serialised,
       claimsVerifier: ClaimsVerifier(),
-      keyBindingVerifier: KeyBindingVerifier()
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: nonce
     )
 
     // Then

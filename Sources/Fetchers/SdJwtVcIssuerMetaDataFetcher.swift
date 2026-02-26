@@ -38,7 +38,7 @@ public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
       from: issuerMetadataUrl)
     
     guard issuer == URL(string: metadata.issuer) else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Issuer mismatch in metadata")
     }
     
     try xorValues(metadata.jwksUri, metadata.jwks)
@@ -73,7 +73,7 @@ private extension SdJwtVcIssuerMetaDataFetcher {
   func xorValues(_ first: Any?, _ second: Any?) throws {
     // Ensure that one is non-nil and the other is nil, but not both non-nil or both nil
     guard (first != nil) != (second != nil) else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Issuer metadata must contain exactly one of jwks or jwks_uri")
     }
   }
 }

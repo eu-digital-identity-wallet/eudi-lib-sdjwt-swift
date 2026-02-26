@@ -184,4 +184,129 @@ final class ClaimsVerifierTests: XCTestCase {
       }
     }
   }
+
+  // MARK: - Required Claims / NBF
+
+  func testFailsWhenNbfIsRequired_ButMissing() {
+    let claimsVerifier = ClaimsVerifier(nbf: nil, requireNbf: true)
+
+    XCTAssertThrowsError(try claimsVerifier.verify()) { error in
+      guard case SDJWTVerifierError.invalidJwt(let description) = error else {
+        return XCTFail("wrong type of error \(error.localizedDescription)")
+      }
+      XCTAssertEqual(description, "Required claim 'nbf' is missing")
+    }
+  }
+
+  func testPassesWhenNbfIsRequired_AndPresent() {
+    let nbf = Int(Date().timeIntervalSince1970) - 5
+    let claimsVerifier = ClaimsVerifier(nbf: nbf, requireNbf: true)
+
+    XCTAssertTrue(try claimsVerifier.verify())
+  }
+
+  func testPassesWhenNbfIsNotRequired_AndMissing() {
+    let claimsVerifier = ClaimsVerifier(nbf: nil, requireNbf: false)
+
+    XCTAssertTrue(try claimsVerifier.verify())
+  }
+
+  // MARK: - Required Claims / EXP
+
+  func testFailsWhenExpIsRequired_ButMissing() {
+    let claimsVerifier = ClaimsVerifier(exp: nil, requireExp: true)
+
+    XCTAssertThrowsError(try claimsVerifier.verify()) { error in
+      guard case SDJWTVerifierError.invalidJwt(let description) = error else {
+        return XCTFail("wrong type of error \(error.localizedDescription)")
+      }
+      XCTAssertEqual(description, "Required claim 'exp' is missing")
+    }
+  }
+
+  func testPassesWhenExpIsRequired_AndPresent() {
+    let exp = Int(Date().timeIntervalSince1970) + 5
+    let claimsVerifier = ClaimsVerifier(exp: exp, requireExp: true)
+
+    XCTAssertTrue(try claimsVerifier.verify())
+  }
+
+  func testPassesWhenExpIsNotRequired_AndMissing() {
+    let claimsVerifier = ClaimsVerifier(exp: nil, requireExp: false)
+
+    XCTAssertTrue(try claimsVerifier.verify())
+  }
+
+  // MARK: - Required Claims / AUD
+
+  func testFailsWhenAudIsRequired_ButAudClaimIsMissing() {
+    let claimsVerifier = ClaimsVerifier(audClaim: nil, expectedAud: "AUD1", requireAud: true)
+
+    XCTAssertThrowsError(try claimsVerifier.verify()) { error in
+      guard case SDJWTVerifierError.invalidJwt(let description) = error else {
+        return XCTFail("wrong type of error \(error.localizedDescription)")
+      }
+      XCTAssertEqual(description, "Required claim 'aud' is missing")
+    }
+  }
+
+  func testFailsWhenAudIsRequired_ButExpectedAudIsMissing() {
+    let claimsVerifier = ClaimsVerifier(audClaim: "AUD1", expectedAud: nil, requireAud: true)
+
+    XCTAssertThrowsError(try claimsVerifier.verify()) { error in
+      guard case SDJWTVerifierError.invalidJwt(let description) = error else {
+        return XCTFail("wrong type of error \(error.localizedDescription)")
+      }
+      XCTAssertEqual(description, "Required claim 'aud' is missing")
+    }
+  }
+
+  func testPassesWhenAudIsRequired_AndPresent() {
+    let expectedAud = "AUD1"
+    let claimsVerifier = ClaimsVerifier(audClaim: expectedAud, expectedAud: expectedAud, requireAud: true)
+
+    XCTAssertTrue(try claimsVerifier.verify())
+  }
+
+  func testPassesWhenAudIsNotRequired_AndMissing() {
+    let claimsVerifier = ClaimsVerifier(audClaim: nil, expectedAud: nil, requireAud: false)
+
+    XCTAssertTrue(try claimsVerifier.verify())
+  }
+
+  // MARK: - Required Claims / Multiple
+
+  func testFailsWhenMultipleClaimsAreRequired_ButOneMissing() {
+    let nbf = Int(Date().timeIntervalSince1970) - 5
+    let claimsVerifier = ClaimsVerifier(
+      nbf: nbf,
+      exp: nil, // Missing exp
+      requireNbf: true,
+      requireExp: true
+    )
+
+    XCTAssertThrowsError(try claimsVerifier.verify()) { error in
+      guard case SDJWTVerifierError.invalidJwt(let description) = error else {
+        return XCTFail("wrong type of error \(error.localizedDescription)")
+      }
+      XCTAssertEqual(description, "Required claim 'exp' is missing")
+    }
+  }
+
+  func testPassesWhenMultipleClaimsAreRequired_AndAllPresent() {
+    let nbf = Int(Date().timeIntervalSince1970) - 5
+    let exp = Int(Date().timeIntervalSince1970) + 5
+    let expectedAud = "AUD1"
+    let claimsVerifier = ClaimsVerifier(
+      nbf: nbf,
+      exp: exp,
+      audClaim: expectedAud,
+      expectedAud: expectedAud,
+      requireNbf: true,
+      requireExp: true,
+      requireAud: true
+    )
+
+    XCTAssertTrue(try claimsVerifier.verify())
+  }
 }

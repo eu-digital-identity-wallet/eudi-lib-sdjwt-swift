@@ -133,7 +133,7 @@ public struct SignedSDJWT {
     issuersPrivateKey: KeyType
   ) throws -> SignedSDJWT {
     try .init(sdJwt: sdJwt, issuersPrivateKey: issuersPrivateKey) ?? {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Failed to create non-key-bonded SD-JWT")
     }()
   }
   
@@ -166,7 +166,7 @@ public struct SignedSDJWT {
         signedSDJWT: signedSDJWT,
         signedKBJwt: signedKBJwt
       ) ?? {
-        throw SDJWTVerifierError.invalidJwt
+        throw SDJWTVerifierError.invalidJwt(description: "Failed to create key-bonded SD-JWT with async signer")
       }()
       
     } else {
@@ -176,7 +176,7 @@ public struct SignedSDJWT {
         kbJWT: kbJWT,
         holdersPrivateKey: holdersPrivateKey
       ) ?? {
-        throw SDJWTVerifierError.invalidJwt
+        throw SDJWTVerifierError.invalidJwt(description: "Failed to create key-bonded SD-JWT")
       }()
     }
   }

@@ -165,7 +165,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         json: unverifiedSdJwt
       )
     else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Failed to parse SD-JWT from JSON")
     }
     
     try await verifyTypeMetadata(sdJwt: sdJwt)
@@ -241,7 +241,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         json: unverifiedSdJwt
       )
     else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Failed to parse SD-JWT from JSON")
     }
     
     let jws = sdJwt.jwt
@@ -324,7 +324,7 @@ private extension SDJWTVCVerifier {
     guard let source = try keySource(
       jws: jws,
       verificationMethod: verificationMethod) else {
-      return .failure(SDJWTVerifierError.invalidJwt)
+      return .failure(SDJWTVerifierError.invalidJwt(description: "Unable to determine key source for issuer verification"))
     }
     
     switch source {
@@ -346,13 +346,13 @@ private extension SDJWTVCVerifier {
           .pemToSecKey()?
           .jwk else {
           return .failure(
-            SDJWTVerifierError.invalidJwt
+            SDJWTVerifierError.invalidJwt(description: "Failed to extract public key from x509 certificate")
           )
         }
         return .success(jwk)
       }
       return .failure(
-        SDJWTVerifierError.invalidJwt
+        SDJWTVerifierError.invalidJwt(description: "x509 certificate chain is not trusted")
       )
     }
   }

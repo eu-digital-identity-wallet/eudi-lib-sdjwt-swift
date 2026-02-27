@@ -1197,8 +1197,7 @@ final class VcVerifierTest: XCTestCase {
   // MARK: - Claims Validation Tests (Presentation)
 
   func testVerifyPresentation_WithClaimsVerifier_ShouldVerifyClaims() async throws {
-    // Given
-    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
 
     // Create a claims verifier that will validate whatever claims are in the JWT
     let claimsVerifier = ClaimsVerifier(
@@ -1207,12 +1206,12 @@ final class VcVerifierTest: XCTestCase {
       currentDate: Date()
     )
 
-    // When
+    // When - Must provide KB verifier since presentation has KB-JWT
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: claimsVerifier,
-      keyBindingVerifier: nil,
-      expectedNonce: nil
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789"
     )
 
     // Then - should succeed because claims are validated
@@ -1220,8 +1219,7 @@ final class VcVerifierTest: XCTestCase {
   }
 
   func testVerifyPresentation_JSON_WithClaimsVerifier_ShouldVerifyClaims() async throws {
-    // Given
-    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
     let parser = CompactParser()
     let sdJwt = try parser.getSignedSdJwt(serialisedString: sdJwtString)
     let json = try sdJwt.asJwsJsonObject(
@@ -1237,12 +1235,11 @@ final class VcVerifierTest: XCTestCase {
       currentDate: Date()
     )
 
-    // When
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: json,
       claimsVerifier: claimsVerifier,
-      keyBindingVerifier: nil,
-      expectedNonce: nil
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789"
     )
 
     // Then - should succeed because claims are validated

@@ -64,13 +64,17 @@ protocol SdJwtVcVerifierType {
    *   - claimsVerifier: The claims verifier to validate the claims.
    *   - keyBindingVerifier: An optional key binding verifier.
    *   - expectedNonce: The expected nonce value to prevent replay attacks.
+   *   - expectedAudience: The expected audience value
+   *   - iatOffset: The acceptable time range for iat claim
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
   func verifyPresentation(
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?,
-    expectedNonce: String?
+    expectedNonce: String?,
+    expectedAudience: String?,
+    iatOffset: TimeRange?
   ) async throws -> Result<SignedSDJWT, any Error>
   
   
@@ -81,13 +85,17 @@ protocol SdJwtVcVerifierType {
    *   - claimsVerifier: The claims verifier to validate the claims.
    *   - keyBindingVerifier: An optional key binding verifier.
    *   - expectedNonce: The expected nonce value to prevent replay attacks.
+   *   - expectedAudience: The expected audience value
+   *   - iatOffset: The acceptable time range for iat claim
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
   func verifyPresentation(
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?,
-    expectedNonce: String?
+    expectedNonce: String?,
+    expectedAudience: String?,
+    iatOffset: TimeRange?
   ) async throws -> Result<SignedSDJWT, any Error>
 }
 
@@ -232,7 +240,9 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier? = nil,
-    expectedNonce: String? = nil
+    expectedNonce: String? = nil,
+    expectedAudience: String? = nil,
+    iatOffset: TimeRange? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     let sdjwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
     let jws = sdjwt.jwt
@@ -270,11 +280,24 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         guard let expectedNonce = expectedNonce else {
           throw SDJWTVerifierError.keyBindingFailed(description: "Expected nonce is required when key binding verification is performed")
         }
-        try keyBindingVerifier.verify(
-          expectedNonce: expectedNonce,
-          challenge: jws,
-          extractedKey: jwk
-        )
+
+        // If expectedAudience and iatOffset are provided, use full validation.
+        if let expectedAudience = expectedAudience, let iatOffset = iatOffset {
+          try keyBindingVerifier.verify(
+            iatOffset: iatOffset,
+            expectedAudience: expectedAudience,
+            expectedNonce: expectedNonce,
+            challenge: jws,
+            extractedKey: jwk
+          )
+        } else {
+          // Fallback to nonce-only validation for backward compatibility
+          try keyBindingVerifier.verify(
+            expectedNonce: expectedNonce,
+            challenge: jws,
+            extractedKey: jwk
+          )
+        }
         return keyBindingVerifier
       }
     case .failure(let error):
@@ -286,7 +309,9 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?,
-    expectedNonce: String? = nil
+    expectedNonce: String? = nil,
+    expectedAudience: String? = nil,
+    iatOffset: TimeRange? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     guard
       let sdJwt = try SignedSDJWT(
@@ -330,11 +355,24 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         guard let expectedNonce = expectedNonce else {
           throw SDJWTVerifierError.keyBindingFailed(description: "Expected nonce is required when key binding verification is performed.")
         }
-        try keyBindingVerifier.verify(
-          expectedNonce: expectedNonce,
-          challenge: jws,
-          extractedKey: jwk
-        )
+
+        // If expectedAudience and iatOffset are provided, use full validation.
+        if let expectedAudience = expectedAudience, let iatOffset = iatOffset {
+          try keyBindingVerifier.verify(
+            iatOffset: iatOffset,
+            expectedAudience: expectedAudience,
+            expectedNonce: expectedNonce,
+            challenge: jws,
+            extractedKey: jwk
+          )
+        } else {
+          // Fallback to nonce-only validation for backward compatibility
+          try keyBindingVerifier.verify(
+            expectedNonce: expectedNonce,
+            challenge: jws,
+            extractedKey: jwk
+          )
+        }
         return keyBindingVerifier
       }
     case .failure(let error):

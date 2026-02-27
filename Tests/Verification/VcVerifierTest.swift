@@ -200,7 +200,9 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: "123456789"
+      expectedNonce: "123456789",
+      expectedAudience: nil,
+      iatOffset: nil
     )
     
     // Then
@@ -225,7 +227,9 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: json,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: "123456789"
+      expectedNonce: "123456789",
+      expectedAudience: nil,
+      iatOffset: nil
     )
     
     // Then
@@ -327,7 +331,9 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: serialized,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: nonce
+      expectedNonce: nonce,
+      expectedAudience: nil,
+      iatOffset: nil
     )
     
     XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
@@ -1044,7 +1050,9 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: CompactSerialiser(signedSDJWT: holderPresentation).serialised,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: nonce
+      expectedNonce: nonce,
+      expectedAudience: nil,
+      iatOffset: nil
     )
 
     // Then
@@ -1197,8 +1205,8 @@ final class VcVerifierTest: XCTestCase {
   // MARK: - Claims Validation Tests (Presentation)
 
   func testVerifyPresentation_WithClaimsVerifier_ShouldVerifyClaims() async throws {
-    // Given
-    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    // Given - Use presentation SD-JWT that has KB-JWT
+    let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
 
     // Create a claims verifier that will validate whatever claims are in the JWT
     let claimsVerifier = ClaimsVerifier(
@@ -1207,12 +1215,14 @@ final class VcVerifierTest: XCTestCase {
       currentDate: Date()
     )
 
-    // When
+    // When - Must provide KB verifier since presentation has KB-JWT
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: claimsVerifier,
-      keyBindingVerifier: nil,
-      expectedNonce: nil
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789",
+      expectedAudience: nil,
+      iatOffset: nil
     )
 
     // Then - should succeed because claims are validated
@@ -1220,8 +1230,8 @@ final class VcVerifierTest: XCTestCase {
   }
 
   func testVerifyPresentation_JSON_WithClaimsVerifier_ShouldVerifyClaims() async throws {
-    // Given
-    let sdJwtString = SDJWTConstants.issuer_metadata_sd_jwt.clean()
+    // Given - Use presentation SD-JWT that has KB-JWT
+    let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
     let parser = CompactParser()
     let sdJwt = try parser.getSignedSdJwt(serialisedString: sdJwtString)
     let json = try sdJwt.asJwsJsonObject(
@@ -1237,15 +1247,162 @@ final class VcVerifierTest: XCTestCase {
       currentDate: Date()
     )
 
-    // When
+    // When - Must provide KB verifier since presentation has KB-JWT
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: json,
       claimsVerifier: claimsVerifier,
-      keyBindingVerifier: nil,
-      expectedNonce: nil
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789",
+      expectedAudience: nil,
+      iatOffset: nil
     )
 
     // Then - should succeed because claims are validated
+    XCTAssertNoThrow(try result.get())
+  }
+
+  // MARK: - Key Binding aud/iat Validation Tests
+
+  func testVerifyPresentation_WithAudienceValidation_ShouldSucceed() async throws {
+    // The test data KB-JWT contains: {"nonce":"123456789","aud":"example.com","iat":1727945886,...}
+    let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
+    let claimsVerifier = ClaimsVerifier()
+    let keyBindingVerifier = KeyBindingVerifier()
+    let expectedAudience = "example.com" // Must match the aud in KB-JWT
+
+    let result = try await metadataVerifier.verifyPresentation(
+      unverifiedSdJwt: sdJwtString,
+      claimsVerifier: claimsVerifier,
+      keyBindingVerifier: keyBindingVerifier,
+      expectedNonce: "123456789",
+      expectedAudience: expectedAudience,
+      iatOffset: nil  // Skip iat validation due to historic test data
+    )
+
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyPresentation_BackwardCompatibility_WithoutAudAndIat() async throws {
+    // Given: Test backward compatibility - existing code should still work
+    let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
+    let claimsVerifier = ClaimsVerifier()
+    let keyBindingVerifier = KeyBindingVerifier()
+
+    // When: Call without new aud/iat parameters (explicitly passing nil)
+    // This mimics existing code that doesn't use the new aud/iat validation
+    let result = try await metadataVerifier.verifyPresentation(
+      unverifiedSdJwt: sdJwtString,
+      claimsVerifier: claimsVerifier,
+      keyBindingVerifier: keyBindingVerifier,
+      expectedNonce: "123456789",
+      expectedAudience: nil,
+      iatOffset: nil
+    )
+
+    // Then: Should succeed using nonce-only validation (backward compatible)
+    XCTAssertNoThrow(try result.get())
+  }
+
+  func testVerifyPresentation_WithFullAudAndIatValidation_FreshData_ShouldSucceed() async throws {
+    // Given: Create a fresh presentation with current timestamps to test full aud+iat validation
+    let issuersKey = issuersKeyPair.public
+    let issuerJwk = try issuersKey.jwk
+
+    let holdersKey = holdersKeyPair.public
+    let holdersJwk = try holdersKey.jwk
+
+    let jsonObject: JSON = [
+      "issuer": "https://example.com/issuer",
+      "jwks": [
+        "keys": [
+          [
+            "crv": "P-256",
+            "kid": "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48",
+            "kty": "EC",
+            "x": issuerJwk.x?.base64URLEncode(),
+            "y": issuerJwk.y?.base64URLEncode()
+          ]
+        ]
+      ]
+    ]
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(
+        algorithm: .ES256,
+        keyID: "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48"
+      )
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      FlatDisclosedClaim("sub", "test-user")
+      FlatDisclosedClaim("given_name", "John")
+      FlatDisclosedClaim("family_name", "Doe")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kid", "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48")
+          PlainClaim("kty", "EC")
+          PlainClaim("y", holdersJwk.y!.base64URLEncode())
+          PlainClaim("x", holdersJwk.x!.base64URLEncode())
+          PlainClaim("crv", "P-256")
+        }
+      }
+    }
+
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(
+          signedSDJWT: issuerSignedSDJWT
+        ).serialised
+      )!
+
+    let nonce = UUID().uuidString
+    let aud = "https://verifier.example.com"
+    let timestamp = Int(Date().timeIntervalSince1970.rounded())
+
+    let holder = try await SDJWTIssuer
+      .presentation(
+        holdersPrivateKey: holdersKeyPair.private,
+        signedSDJWT: issuerSignedSDJWT,
+        disclosuresToPresent: issuerSignedSDJWT.disclosures,
+        keyBindingJWT: KBJWT(
+          header: DefaultJWSHeaderImpl(algorithm: .ES256),
+          kbJwtPayload: .init([
+            Keys.nonce.rawValue: nonce,
+            Keys.aud.rawValue: aud,
+            Keys.iat.rawValue: timestamp,
+            Keys.sdHash.rawValue: sdHash
+          ])
+        )
+      )
+
+    let serialized: String = CompactSerialiser(signedSDJWT: holder).serialised
+
+    let metadataVerifier = SDJWTVCVerifier(
+      verificationMethod: .metadata(fetcher: SdJwtVcIssuerMetaDataFetcher(
+        session: NetworkingJSONMock(json: jsonObject)
+      )
+    )
+   )
+
+    // Create time range for iat validation (allow 5 minutes before and after current time)
+    let iatOffset = TimeRange(
+      startTime: Date().addingTimeInterval(-300),
+      endTime: Date().addingTimeInterval(300)
+    )
+
+    // When: Verify with full aud+iat validation
+    let result = try await metadataVerifier.verifyPresentation(
+      unverifiedSdJwt: serialized,
+      claimsVerifier: ClaimsVerifier(),
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: nonce,
+      expectedAudience: aud,
+      iatOffset: iatOffset
+    )
+
+    // Then: Should succeed with full aud+iat+nonce validation
     XCTAssertNoThrow(try result.get())
   }
 

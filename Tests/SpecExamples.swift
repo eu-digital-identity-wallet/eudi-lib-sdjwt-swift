@@ -61,7 +61,7 @@ final class SpecExamples: XCTestCase {
 
     validateObjectResults(factoryResult: output,
                           expectedDigests: disclosureVerifierOut.digestsFoundOnPayload.count,
-                          numberOfDecoys: factory.decoyCounter,
+                          numberOfDecoys: factory.globalDecoyCounter,
                           decoysLimit: 6)
 
   }

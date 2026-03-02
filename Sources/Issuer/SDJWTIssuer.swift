@@ -34,7 +34,29 @@ public class SDJWTIssuer {
 
   // MARK: - Methods
 
-  /// Issue a signed SDJWT.
+  /// Issue a signed SDJWT with decoy configuration.
+  ///
+  /// - Parameters:
+  ///   - issuersPrivateKey: The private key used for signing the JWT.
+  ///   - header: The JWSHeader for the JWT.
+  ///   - decoyConfiguration: Configuration for decoy digest generation (default: no decoys).
+  ///   - buildSDJWT: A closure that builds the SDJWTObject.
+  /// - Returns: The signed SDJWT.
+  /// - Throws: An error if there's an issue with JWT creation or signing.
+  ///
+  public static func issue<KeyType>(
+    issuersPrivateKey: KeyType,
+    header: JWSRegisteredFieldsHeader,
+    decoyConfiguration: DecoyConfiguration = .none,
+    @SDJWTBuilder buildSDJWT: () throws -> SdElement
+  ) async throws -> SignedSDJWT {
+    let factory = SDJWTFactory(decoyConfiguration: decoyConfiguration)
+    let claimSet = try factory.createSDJWTPayload(sdJwtObject: SDJWTBuilder.build(builder: buildSDJWT)).get()
+    let signedSDJWT = try await self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
+    return signedSDJWT
+  }
+
+  /// Issue a signed SDJWT with global decoy limit (deprecated).
   ///
   /// - Parameters:
   ///   - issuersPrivateKey: The private key used for signing the JWT.
@@ -44,16 +66,22 @@ public class SDJWTIssuer {
   /// - Returns: The signed SDJWT.
   /// - Throws: An error if there's an issue with JWT creation or signing.
   ///
+  /// - Warning: This method is deprecated. Use `issue(decoyConfiguration:)` with
+  ///            `.perObject(minimum:maximum:)` for better privacy guarantees.
+  @available(*, deprecated, message: "Use issue(decoyConfiguration:) with .perObject for better privacy")
   public static func issue<KeyType>(
     issuersPrivateKey: KeyType,
     header: JWSRegisteredFieldsHeader,
-    decoys: Int = 0,
+    decoys: Int,
     @SDJWTBuilder buildSDJWT: () throws -> SdElement
   ) async throws -> SignedSDJWT {
-    let factory = SDJWTFactory(decoysLimit: decoys)
-    let claimSet = try factory.createSDJWTPayload(sdJwtObject: SDJWTBuilder.build(builder: buildSDJWT)).get()
-    let signedSDJWT = try await self.createSDJWT(purpose: .issuance(header, claimSet), signingKey: issuersPrivateKey)
-    return signedSDJWT
+    let config: DecoyConfiguration = decoys > 0 ? .globalLimit(decoys) : .none
+    return try await issue(
+      issuersPrivateKey: issuersPrivateKey,
+      header: header,
+      decoyConfiguration: config,
+      buildSDJWT: buildSDJWT
+    )
   }
 
   /// Present a signed SDJWT.

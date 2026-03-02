@@ -31,22 +31,28 @@ protocol SdJwtVcVerifierType {
   /**
    * Verifies the issuance of an SD-JWT from a serialized string.
    *
-   * - Parameter unverifiedSdJwt: The unverified SD-JWT in string format.
+   * - Parameters:
+   *   - unverifiedSdJwt: The unverified SD-JWT in string format.
+   *   - claimsVerifier: Optional claims verifier to validate nbf, exp, and aud claims.
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
   func verifyIssuance(
-    unverifiedSdJwt: String
+    unverifiedSdJwt: String,
+    claimsVerifier: ClaimsVerifier?
   ) async throws -> Result<SignedSDJWT, any Error>
   
   
   /**
    * Verifies the issuance of an SD-JWT from a `JSON` object.
    *
-   * - Parameter unverifiedSdJwt: The unverified SD-JWT in `JSON` format.
+   * - Parameters:
+   *   - unverifiedSdJwt: The unverified SD-JWT in `JSON` format.
+   *   - claimsVerifier: Optional claims verifier to validate nbf, exp, and aud claims.
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
   func verifyIssuance(
-    unverifiedSdJwt: JSON
+    unverifiedSdJwt: JSON,
+    claimsVerifier: ClaimsVerifier?
   ) async throws -> Result<SignedSDJWT, any Error>
   
   
@@ -58,13 +64,17 @@ protocol SdJwtVcVerifierType {
    *   - claimsVerifier: The claims verifier to validate the claims.
    *   - keyBindingVerifier: An optional key binding verifier.
    *   - expectedNonce: The expected nonce value to prevent replay attacks.
+   *   - expectedAudience: The expected audience value
+   *   - iatOffset: The acceptable time range for iat claim
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
   func verifyPresentation(
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?,
-    expectedNonce: String?
+    expectedNonce: String?,
+    expectedAudience: String?,
+    iatOffset: TimeRange?
   ) async throws -> Result<SignedSDJWT, any Error>
   
   
@@ -75,13 +85,17 @@ protocol SdJwtVcVerifierType {
    *   - claimsVerifier: The claims verifier to validate the claims.
    *   - keyBindingVerifier: An optional key binding verifier.
    *   - expectedNonce: The expected nonce value to prevent replay attacks.
+   *   - expectedAudience: The expected audience value
+   *   - iatOffset: The acceptable time range for iat claim
    * - Returns: A `Result` containing either the verified `SignedSDJWT` or an error.
    */
   func verifyPresentation(
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?,
-    expectedNonce: String?
+    expectedNonce: String?,
+    expectedAudience: String?,
+    iatOffset: TimeRange?
   ) async throws -> Result<SignedSDJWT, any Error>
 }
 
@@ -132,7 +146,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   
   
   func verifyIssuance(
-    unverifiedSdJwt: String
+    unverifiedSdJwt: String,
+    claimsVerifier: ClaimsVerifier? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     let sdjwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
     let jws = sdjwt.jwt
@@ -145,19 +160,36 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       return try SDJWTVerifier(
         parser: parser,
         serialisedString: unverifiedSdJwt
-      ).verifyIssuance { jws in
+      ).verifyIssuance(issuersSignatureVerifier: { jws in
         try SignatureVerifier(
           signedJWT: jws,
           publicKey: jwk
         )
-      }
+      }, claimVerifier: claimsVerifier.map { verifier in
+        { nbf, exp in
+          // Create a new verifier with the extracted claims from the JWT
+          ClaimsVerifier(
+            iat: verifier.iat.map { Int($0.timeIntervalSince1970) },
+            iatValidWindow: verifier.iatValidWindow,
+            nbf: nbf,
+            exp: exp,
+            audClaim: verifier.auds?.joined(separator: ","),
+            expectedAud: verifier.expectedAud,
+            requireNbf: verifier.requireNbf,
+            requireExp: verifier.requireExp,
+            requireAud: verifier.requireAud,
+            currentDate: verifier.currentDate
+          )
+        }
+      })
     case .failure(let error):
       throw error
     }
   }
   
   func verifyIssuance(
-    unverifiedSdJwt: JSON
+    unverifiedSdJwt: JSON,
+    claimsVerifier: ClaimsVerifier? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     
     guard
@@ -165,7 +197,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         json: unverifiedSdJwt
       )
     else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Failed to parse SD-JWT from JSON")
     }
     
     try await verifyTypeMetadata(sdJwt: sdJwt)
@@ -177,12 +209,28 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     case .success(let jwk):
       return try SDJWTVerifier(
         sdJwt: sdJwt
-      ).verifyIssuance { jws in
+      ).verifyIssuance(issuersSignatureVerifier: { jws in
         try SignatureVerifier(
           signedJWT: jws,
           publicKey: jwk
         )
-      }
+      }, claimVerifier: claimsVerifier.map { verifier in
+        { nbf, exp in
+          // Create a new verifier with the extracted claims from the JWT
+          ClaimsVerifier(
+            iat: verifier.iat.map { Int($0.timeIntervalSince1970) },
+            iatValidWindow: verifier.iatValidWindow,
+            nbf: nbf,
+            exp: exp,
+            audClaim: verifier.auds?.joined(separator: ","),
+            expectedAud: verifier.expectedAud,
+            requireNbf: verifier.requireNbf,
+            requireExp: verifier.requireExp,
+            requireAud: verifier.requireAud,
+            currentDate: verifier.currentDate
+          )
+        }
+      })
     case .failure(let error):
       throw error
     }
@@ -192,7 +240,9 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier? = nil,
-    expectedNonce: String? = nil
+    expectedNonce: String? = nil,
+    expectedAudience: String? = nil,
+    iatOffset: TimeRange? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     let sdjwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
     let jws = sdjwt.jwt
@@ -209,8 +259,20 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           signedJWT: jws,
           publicKey: jwk
         )
-      } claimVerifier: { _, _ in
-        claimsVerifier
+      } claimVerifier: { nbf, exp in
+        // Create a new verifier with the extracted claims from the JWT
+        ClaimsVerifier(
+          iat: claimsVerifier.iat.map { Int($0.timeIntervalSince1970) },
+          iatValidWindow: claimsVerifier.iatValidWindow,
+          nbf: nbf,
+          exp: exp,
+          audClaim: claimsVerifier.auds?.joined(separator: ","),
+          expectedAud: claimsVerifier.expectedAud,
+          requireNbf: claimsVerifier.requireNbf,
+          requireExp: claimsVerifier.requireExp,
+          requireAud: claimsVerifier.requireAud,
+          currentDate: claimsVerifier.currentDate
+        )
       } keyBindingVerifier: { jws, jwk in
         guard let keyBindingVerifier = keyBindingVerifier else {
           return nil
@@ -218,11 +280,24 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         guard let expectedNonce = expectedNonce else {
           throw SDJWTVerifierError.keyBindingFailed(description: "Expected nonce is required when key binding verification is performed")
         }
-        try keyBindingVerifier.verify(
-          expectedNonce: expectedNonce,
-          challenge: jws,
-          extractedKey: jwk
-        )
+
+        // If expectedAudience and iatOffset are provided, use full validation.
+        if let expectedAudience = expectedAudience, let iatOffset = iatOffset {
+          try keyBindingVerifier.verify(
+            iatOffset: iatOffset,
+            expectedAudience: expectedAudience,
+            expectedNonce: expectedNonce,
+            challenge: jws,
+            extractedKey: jwk
+          )
+        } else {
+          // Fallback to nonce-only validation for backward compatibility
+          try keyBindingVerifier.verify(
+            expectedNonce: expectedNonce,
+            challenge: jws,
+            extractedKey: jwk
+          )
+        }
         return keyBindingVerifier
       }
     case .failure(let error):
@@ -234,14 +309,16 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
     keyBindingVerifier: KeyBindingVerifier?,
-    expectedNonce: String? = nil
+    expectedNonce: String? = nil,
+    expectedAudience: String? = nil,
+    iatOffset: TimeRange? = nil
   ) async throws -> Result<SignedSDJWT, any Error> {
     guard
       let sdJwt = try SignedSDJWT(
         json: unverifiedSdJwt
       )
     else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Failed to parse SD-JWT from JSON")
     }
     
     let jws = sdJwt.jwt
@@ -257,8 +334,20 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           signedJWT: jws,
           publicKey: jwk
         )
-      } claimVerifier: { _, _ in
-        claimsVerifier
+      } claimVerifier: { nbf, exp in
+        // Create a new verifier with the extracted claims from the JWT
+        ClaimsVerifier(
+          iat: claimsVerifier.iat.map { Int($0.timeIntervalSince1970) },
+          iatValidWindow: claimsVerifier.iatValidWindow,
+          nbf: nbf,
+          exp: exp,
+          audClaim: claimsVerifier.auds?.joined(separator: ","),
+          expectedAud: claimsVerifier.expectedAud,
+          requireNbf: claimsVerifier.requireNbf,
+          requireExp: claimsVerifier.requireExp,
+          requireAud: claimsVerifier.requireAud,
+          currentDate: claimsVerifier.currentDate
+        )
       } keyBindingVerifier: { jws, jwk in
         guard let keyBindingVerifier = keyBindingVerifier else {
           return nil
@@ -266,11 +355,24 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         guard let expectedNonce = expectedNonce else {
           throw SDJWTVerifierError.keyBindingFailed(description: "Expected nonce is required when key binding verification is performed.")
         }
-        try keyBindingVerifier.verify(
-          expectedNonce: expectedNonce,
-          challenge: jws,
-          extractedKey: jwk
-        )
+
+        // If expectedAudience and iatOffset are provided, use full validation.
+        if let expectedAudience = expectedAudience, let iatOffset = iatOffset {
+          try keyBindingVerifier.verify(
+            iatOffset: iatOffset,
+            expectedAudience: expectedAudience,
+            expectedNonce: expectedNonce,
+            challenge: jws,
+            extractedKey: jwk
+          )
+        } else {
+          // Fallback to nonce-only validation for backward compatibility
+          try keyBindingVerifier.verify(
+            expectedNonce: expectedNonce,
+            challenge: jws,
+            extractedKey: jwk
+          )
+        }
         return keyBindingVerifier
       }
     case .failure(let error):
@@ -324,7 +426,7 @@ private extension SDJWTVCVerifier {
     guard let source = try keySource(
       jws: jws,
       verificationMethod: verificationMethod) else {
-      return .failure(SDJWTVerifierError.invalidJwt)
+      return .failure(SDJWTVerifierError.invalidJwt(description: "Unable to determine key source for issuer verification"))
     }
     
     switch source {
@@ -346,13 +448,13 @@ private extension SDJWTVCVerifier {
           .pemToSecKey()?
           .jwk else {
           return .failure(
-            SDJWTVerifierError.invalidJwt
+            SDJWTVerifierError.invalidJwt(description: "Failed to extract public key from x509 certificate")
           )
         }
         return .success(jwk)
       }
       return .failure(
-        SDJWTVerifierError.invalidJwt
+        SDJWTVerifierError.invalidJwt(description: "x509 certificate chain is not trusted")
       )
     }
   }

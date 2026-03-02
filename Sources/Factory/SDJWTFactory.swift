@@ -80,7 +80,12 @@ class SDJWTFactory {
   func createSDJWTPayload(sdJwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
     do {
       self.globalDecoyCounter = 0
-      return .success(try self.encodeObject(sdJwtObject: addSdAlgClaim(object: sdJwtObject)))
+      let claimSet = try self.encodeObject(sdJwtObject: addSdAlgClaim(object: sdJwtObject))
+
+      // This prevents accidental duplicate digests from decoys or implementation errors
+      try DigestCollector.validateUniqueness(in: claimSet.value)
+
+      return .success(claimSet)
     } catch {
       return .failure(error)
     }
@@ -93,7 +98,12 @@ class SDJWTFactory {
       sdJwtObject = try addSdAlgClaim(object: sdJwtObject)
       sdJwtObject = try addCnfClaim(object: sdJwtObject, jwk: holdersPublicKey)
 
-      return .success(try self.encodeObject(sdJwtObject: sdJwtObject))
+      let claimSet = try self.encodeObject(sdJwtObject: sdJwtObject)
+
+      // This prevents accidental duplicate digests from decoys or implementation errors
+      try DigestCollector.validateUniqueness(in: claimSet.value)
+
+      return .success(claimSet)
     } catch {
       return .failure(error)
     }

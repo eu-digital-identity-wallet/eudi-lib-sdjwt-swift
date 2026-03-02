@@ -200,9 +200,7 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: "123456789",
-      expectedAudience: nil,
-      iatOffset: nil
+      expectedNonce: "123456789"
     )
     
     // Then
@@ -227,9 +225,7 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: json,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: "123456789",
-      expectedAudience: nil,
-      iatOffset: nil
+      expectedNonce: "123456789"
     )
     
     // Then
@@ -331,9 +327,7 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: serialized,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: nonce,
-      expectedAudience: nil,
-      iatOffset: nil
+      expectedNonce: nonce
     )
     
     XCTAssertEqual(sdHash, holder.delineatedCompactSerialisation)
@@ -1050,9 +1044,7 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: CompactSerialiser(signedSDJWT: holderPresentation).serialised,
       claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: nonce,
-      expectedAudience: nil,
-      iatOffset: nil
+      expectedNonce: nonce
     )
 
     // Then
@@ -1220,9 +1212,7 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: claimsVerifier,
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: "123456789",
-      expectedAudience: nil,
-      iatOffset: nil
+      expectedNonce: "123456789"
     )
 
     // Then - should succeed because claims are validated
@@ -1252,9 +1242,7 @@ final class VcVerifierTest: XCTestCase {
       unverifiedSdJwt: json,
       claimsVerifier: claimsVerifier,
       keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: "123456789",
-      expectedAudience: nil,
-      iatOffset: nil
+      expectedNonce: "123456789"
     )
 
     // Then - should succeed because claims are validated
@@ -1270,13 +1258,13 @@ final class VcVerifierTest: XCTestCase {
     let keyBindingVerifier = KeyBindingVerifier()
     let expectedAudience = "example.com" // Must match the aud in KB-JWT
 
+    // Note: iatOffset defaults to nil, skipping iat validation due to historic test data
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: claimsVerifier,
       keyBindingVerifier: keyBindingVerifier,
       expectedNonce: "123456789",
-      expectedAudience: expectedAudience,
-      iatOffset: nil  // Skip iat validation due to historic test data
+      expectedAudience: expectedAudience
     )
 
     XCTAssertNoThrow(try result.get())
@@ -1288,15 +1276,13 @@ final class VcVerifierTest: XCTestCase {
     let claimsVerifier = ClaimsVerifier()
     let keyBindingVerifier = KeyBindingVerifier()
 
-    // When: Call without new aud/iat parameters (explicitly passing nil)
+    // When: Call without new aud/iat parameters
     // This mimics existing code that doesn't use the new aud/iat validation
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: claimsVerifier,
       keyBindingVerifier: keyBindingVerifier,
-      expectedNonce: "123456789",
-      expectedAudience: nil,
-      iatOffset: nil
+      expectedNonce: "123456789"
     )
 
     // Then: Should succeed using nonce-only validation (backward compatible)

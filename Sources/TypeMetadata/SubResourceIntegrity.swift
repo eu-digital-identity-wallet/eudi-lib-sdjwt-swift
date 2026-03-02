@@ -27,7 +27,7 @@ import CryptoKit
 /// for validation (SHA-512 > SHA-384 > SHA-256).
 ///
 public struct DocumentIntegrity: Decodable {
-  let value: String
+  public let value: String
   
   public init(_ value: String) throws {
     guard value.range(of: Self.sriPattern, options: .regularExpression) != nil else {

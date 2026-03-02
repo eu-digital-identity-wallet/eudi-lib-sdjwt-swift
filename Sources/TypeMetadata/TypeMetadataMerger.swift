@@ -40,6 +40,8 @@ public protocol TypeMetadataMergerType {
 }
 
 public struct TypeMetadataMerger: TypeMetadataMergerType {
+
+  public init() {}
   
   public func mergeMetadata(
     from metadataArray: [ResolvedTypeMetadata]

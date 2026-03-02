@@ -16,11 +16,11 @@
 
 
 public struct ResolvedTypeMetadata {
-  let vct: String
-  let name: String?
-  let description: String?
-  let displays: [SdJwtVcTypeMetadata.DisplayMetadata]
-  let claims: [SdJwtVcTypeMetadata.ClaimMetadata]
+  public let vct: String
+  public let name: String?
+  public let description: String?
+  public let displays: [SdJwtVcTypeMetadata.DisplayMetadata]
+  public let claims: [SdJwtVcTypeMetadata.ClaimMetadata]
   
   init(vct: String,
        name: String? = nil,

@@ -121,27 +121,6 @@ public class SDJWTVerifier {
     }
   }
 
-  public func verifyEnvelope(
-    envelope: JWS,
-    issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-    holdersSignatureVerifier: () throws -> SignatureVerifier,
-    claimVerifier: (_ audClaim: String, _ iat: Int) -> ClaimsVerifier
-  ) -> Result<JWS, Error> {
-    Result {
-      try issuersSignatureVerifier(sdJwt.jwt).verify()
-      try holdersSignatureVerifier().verify()
-      try DisclosuresVerifier(signedSDJWT: sdJwt).verify()
-
-      guard
-        let aud = try envelope.aud(),
-        let iat = try envelope.iat() else {
-        throw SDJWTVerifierError.keyBindingFailed(description: "Envelope miss-formatted")
-      }
-      try claimVerifier(aud, iat).verify()
-      return try holdersSignatureVerifier().verify()
-    }
-  }
-
   /// Verifies the common fields of the SDJWT for both cases (issuance and presentation).
   ///
   /// - Parameters:
@@ -185,10 +164,4 @@ public class SDJWTVerifier {
     }
   }
 
-}
-
-extension SDJWTVerifier {
-  static func verifyEnvelop() {
-
-  }
 }

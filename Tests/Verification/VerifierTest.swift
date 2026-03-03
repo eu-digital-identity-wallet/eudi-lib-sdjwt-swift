@@ -354,59 +354,6 @@ final class VerifierTest: XCTestCase {
     XCTAssertNoThrow(try verifier.get())
   }
 
-  func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() async throws {
-    let serializerTest = SerialiserTest()
-
-    let compactParser = CompactParser()
-
-    let envelopeSerializer = try await EnvelopedSerialiser(
-        SDJWT: compactParser.getSignedSdJwt(
-          serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
-        ),
-        jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234
-    ).toJSONData())
-
-    _ = try SignatureVerifier(
-        signedJWT: JWS(
-            payload: envelopeSerializer.data,
-            protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
-            key: holdersKeyPair.private
-        ),
-        publicKey: holdersKeyPair.public)
-
-    let jwt = try JWS(
-      payload: envelopeSerializer.data,
-      protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
-      key: holdersKeyPair.private
-    )
-
-    let envelopedJws = try JWS(jwsString: jwt.compactSerialization)
-
-    let verifyEnvelope =
-    try SDJWTVerifier(
-      parser: EnvelopedParser(),
-      serialisedString: envelopeSerializer.serialised
-    )
-      .verifyEnvelope(envelope: envelopedJws) { jws in
-
-        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-      } holdersSignatureVerifier: {
-
-        try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
-      } claimVerifier: { audClaim, iat in
-        ClaimsVerifier(
-          iat: iat,
-          iatValidWindow: .init(
-            startTime: Date(timeIntervalSince1970: 1234-10),
-            endTime: Date(timeIntervalSince1970: 1234+10)
-          ),
-          audClaim: audClaim,
-          expectedAud: "sub"
-        )
-      }
-    XCTAssertNoThrow(try verifyEnvelope.get())
-  }
-
   // MARK: - Nonce Validation Tests
 
   func testKeyBindingVerifier_WithValidNonce_ShouldSucceed() async throws {

@@ -39,25 +39,4 @@ final class SerialiserTest: XCTestCase {
     TestLogger.log(jwt.disclosures.joined(separator: ", "))
   }
 
-  func testSerialiseWhenChosingEnvelopeFormat_AppylingNoKeyBinding_ThenExpectACorrectJWT() async throws {
-    let compactParser = CompactParser()
-    let envelopeSerializer = try await EnvelopedSerialiser(
-        SDJWT: compactParser.getSignedSdJwt(
-          serialisedString: testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
-        ),
-        jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234).toJSONData())
-
-    let parser = EnvelopedParser()
-    let verifier = try SDJWTVerifier(
-      parser: parser,
-      serialisedString: envelopeSerializer.serialised
-    ).verifyIssuance { jws in
-      try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-    } claimVerifier: { _, _ in
-      ClaimsVerifier()
-    }.get()
-
-    XCTAssertNotNil(verifier)
-  }
-
 }

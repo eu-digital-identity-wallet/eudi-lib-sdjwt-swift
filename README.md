@@ -26,7 +26,7 @@ is implemented in Swift.
 - [Holder Verification](#holder-verification): As Holder verifies a SD-JWT (in Combined Issuance Format) issued by an
   Issuer
 - [Holder Presentation](#holder-presentation): As Holder creates a presentation
-- [Presentation Verification](#presentation-verification): As a Verifier verify SD-JWT in Combined Presentation Format or in Envelope Format 
+- [Presentation Verification](#presentation-verification): As a Verifier verify SD-JWT in Combined Presentation Format 
 - [Recreate initial claims](#recreate-original-claims): Given a SD-JWT recreate the original claims
 * [SD-JWT VC support](#sd-jwt-vc-support)
 
@@ -95,8 +95,6 @@ You can find comprehensive examples [here](Tests/EndToEnd/EndToEndTest.swift)
 
 ## Presentation Verification
 
-**In simple (not enveloped) format**
-
 In this case, the SD-JWT is expected to be in Combined Presentation format. Verifier should know the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT. Also, if verification includes Key Binding, the Verifier must also know a how the public key of the Holder was included in the SD-JWT and which algorithm the Holder used to sign the Key Binding JWT
 ```swift
 // Issue a SDJWT to passed to a holder from an issuer
@@ -133,33 +131,9 @@ SDJWTVerifier(sdJwt: holderSDJWTRepresentation)
     try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
   } keyBindingVerifier: { jws, holdersPublicKey in
     try KeyBindingVerifier(challenge: jws, extractedKey: holdersPublicKey)
-}                                                           
+}
 ```
-**In enveloped format**
 
-In this case, the SD-JWT is expected to be in envelope format. 
-Verifier should know:
-* the public key of the Issuer and the algorithm used by the Issuer to sign the SD-JWT.
-* the public key and the signing algorithm used by the Holder to sign the envelope JWT, since the envelope acts like a proof of possession (replacing the key binding JWT)
-
-```swift
-let sdjwtOnPayload = "...."
-
-try SDJWTVerifier(parser: CompactParser(serialisedString: sdjwtOnPayload))
-  .verifyEnvelope(envelope: envelopedJws) { jws in
-    // to verify the enveloped sdjwt
-    try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-  } holdersSignatureVerifier: {
-    // to verify the container jwt
-    try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
-  } claimVerifier: { audClaim, iat in
-    ClaimsVerifier(iat: iat,
-                   iatValidWindow: .init(startTime: Date(),
-                                         endTime: Date()),
-                   audClaim: audClaim,
-                   expectedAud: "clientId")
-  }
-```
 ## Recreate original claims
 Given a complex structure as per [Example 3: Complex Structured SD-JWT](docs/examples/example3-complex-structured.md)
 and a subset of claims we can recreate the initial JSON of the SD-JWT.

@@ -83,7 +83,6 @@ public enum Keys: String {
   case sd = "_sd"
   case dots = "..."
   case sdAlg = "_sd_alg"
-  case sdJwt = "_sd_jwt"
   case sdHash = "sd_hash"
   case iss
   case iat

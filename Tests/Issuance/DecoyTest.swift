@@ -50,7 +50,7 @@ final class DecoyTest: XCTestCase {
     let jwtFactory = SDJWTFactory(decoysLimit: decoysLimit)
     let unsignedJwt = jwtFactory.createSDJWTPayload(sdJwtObject: sdObject.asObject)
 
-    validateObjectResults(factoryResult: unsignedJwt, expectedDigests: sdObject.expectedDigests, numberOfDecoys: jwtFactory.decoyCounter, decoysLimit: decoysLimit)
+    validateObjectResults(factoryResult: unsignedJwt, expectedDigests: sdObject.expectedDigests, numberOfDecoys: jwtFactory.globalDecoyCounter, decoysLimit: decoysLimit)
   }
 
   func testA() {

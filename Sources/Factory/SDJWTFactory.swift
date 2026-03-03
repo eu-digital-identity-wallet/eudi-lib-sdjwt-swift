@@ -26,9 +26,10 @@ class SDJWTFactory {
 
   let digestCreator: DigestCreator
   let saltProvider: SaltProvider
-  let decoysLimit: Int
+  let decoyConfiguration: DecoyConfiguration
 
-  var decoyCounter = 0
+  // For backward compatibility with globalLimit strategy
+  var globalDecoyCounter = 0
 
   // MARK: - LifeCycle
 
@@ -37,24 +38,54 @@ class SDJWTFactory {
   /// - Parameters:
   ///   - saltProvider: An instance of `SaltProvider` for obtaining salt strings.
   ///   - digestCreator: An instance of `DigestCreator` for creating digests and hashes.
-  ///   - decoysLimit: If decoys are requesed, defaults to 0
+  ///   - decoyConfiguration: Configuration for decoy digest generation, defaults to no decoys
   ///
   init(
     digestCreator: DigestCreator = DigestCreator(),
     saltProvider: SaltProvider = DefaultSaltProvider(),
-    decoysLimit: Int = 0
+    decoyConfiguration: DecoyConfiguration = .none
   ) {
     self.digestCreator = digestCreator
     self.saltProvider = saltProvider
-    self.decoysLimit = decoysLimit
+    self.decoyConfiguration = decoyConfiguration
+  }
+
+  /// Initialises an instance of `SDJWTFactory` with a global decoy limit (deprecated).
+  ///
+  /// - Parameters:
+  ///   - saltProvider: An instance of `SaltProvider` for obtaining salt strings.
+  ///   - digestCreator: An instance of `DigestCreator` for creating digests and hashes.
+  ///   - decoysLimit: Maximum number of decoys across entire credential
+  ///
+  /// - Warning: This initializer is deprecated. Use `init(decoyConfiguration:)` with
+  ///            `.perObject(minimum:maximum:)` for better privacy guarantees.
+  @available(*, deprecated, message: "Use init(decoyConfiguration:) with .perObject for better privacy")
+  convenience init(
+    digestCreator: DigestCreator = DigestCreator(),
+    saltProvider: SaltProvider = DefaultSaltProvider(),
+    decoysLimit: Int
+  ) {
+    let config: DecoyConfiguration = decoysLimit > 0
+      ? .globalLimit(decoysLimit)
+      : .none
+    self.init(
+      digestCreator: digestCreator,
+      saltProvider: saltProvider,
+      decoyConfiguration: config
+    )
   }
 
   // MARK: - Methods - Public
 
   func createSDJWTPayload(sdJwtObject: [String: SdElement]?) -> Result<ClaimSet, Error> {
     do {
-      self.decoyCounter = 0
-      return .success(try self.encodeObject(sdJwtObject: addSdAlgClaim(object: sdJwtObject)))
+      self.globalDecoyCounter = 0
+      let claimSet = try self.encodeObject(sdJwtObject: addSdAlgClaim(object: sdJwtObject))
+
+      // This prevents accidental duplicate digests from decoys or implementation errors
+      try DigestCollector.validateUniqueness(in: claimSet.value)
+
+      return .success(claimSet)
     } catch {
       return .failure(error)
     }
@@ -62,12 +93,17 @@ class SDJWTFactory {
 
   func createSDJWTPayload(sdjwtObject: [String: SdElement]?, holdersPublicKey: JSON) -> Result<ClaimSet, Error> {
     do {
-      self.decoyCounter = 0
+      self.globalDecoyCounter = 0
       var sdJwtObject = sdjwtObject
       sdJwtObject = try addSdAlgClaim(object: sdJwtObject)
       sdJwtObject = try addCnfClaim(object: sdJwtObject, jwk: holdersPublicKey)
 
-      return .success(try self.encodeObject(sdJwtObject: sdJwtObject))
+      let claimSet = try self.encodeObject(sdJwtObject: sdJwtObject)
+
+      // This prevents accidental duplicate digests from decoys or implementation errors
+      try DigestCollector.validateUniqueness(in: claimSet.value)
+
+      return .success(claimSet)
     } catch {
       return .failure(error)
     }
@@ -104,6 +140,16 @@ class SDJWTFactory {
         outputJson[Keys.sd] = JSON(outputJson[Keys.sd].arrayValue + json[Keys.sd].arrayValue)
       default:
         outputJson[claimKey] = json
+      }
+    }
+
+    // Add decoys to the _sd array if needed to meet minimum requirements
+    if !outputJson[Keys.sd].arrayValue.isEmpty {
+      let currentDigestCount = outputJson[Keys.sd].arrayValue.count
+      let decoys = self.addDecoy(currentDigestCount: currentDigestCount)
+      if !decoys.isEmpty {
+        let decoyJsonArray = decoys.map { JSON($0) }
+        outputJson[Keys.sd] = JSON(outputJson[Keys.sd].arrayValue + decoyJsonArray)
       }
     }
 
@@ -157,9 +203,8 @@ class SDJWTFactory {
     case .flat(let json):
       // Encode a primitive JSON claim value and disclose it.
       let (disclosure, digest) = try self.flatDisclose(key: key, value: json)
-      // Add Decoys if needed
-      let decoys = self.addDecoy()
-      let output: JSON = [Keys.sd.rawValue: ([digest] + decoys).sorted()]
+      // Note: Decoys are added at the object level, not per individual claim
+      let output: JSON = [Keys.sd.rawValue: [digest]]
       return(output, [disclosure])
       // ...........
     case .object(let object):
@@ -236,15 +281,51 @@ class SDJWTFactory {
 
   // MARK: - Methods - Helpers
 
-  private func addDecoy() -> [DisclosureDigest] {
-    if decoyCounter < decoysLimit {
-      let rand = Array(repeating: "", count: .random(in: 0...decoysLimit-decoyCounter))
-        .compactMap {_ in digestCreator.decoy()}
+  /// Generates decoy digests based on the configured strategy
+  ///
+  /// - Parameter currentDigestCount: Number of real disclosure digests already present
+  /// - Returns: Array of decoy digest strings
+  ///
+  /// ## Strategy Behavior:
+  /// - `.none`: Returns empty array
+  /// - `.globalLimit(n)`: Generates 0 to remaining decoys (deprecated, less secure)
+  /// - `.perObject(min, max)`: Ensures minimum total digests, optionally adds random extras
+  ///
+  private func addDecoy(currentDigestCount: Int = 0) -> [DisclosureDigest] {
+    switch decoyConfiguration.strategy {
+    case .none:
+      return []
 
-      decoyCounter += rand.count
-      return rand
+    case .globalLimit(let limit):
+      // Legacy global limit strategy (deprecated)
+      // Uses non-secure random and can exhaust decoys early
+      if globalDecoyCounter < limit {
+        let remaining = limit - globalDecoyCounter
+        let count = SecureRandom.number(in: 0...remaining)
+        let decoys = (0..<count).compactMap { _ in digestCreator.decoy() }
+        globalDecoyCounter += decoys.count
+        return decoys
+      }
+      return []
+
+    case .perObject(let minimum, let maximum):
+      // Per-object strategy: ensures minimum digests per _sd array
+      var decoyCount = 0
+
+      // Calculate decoys needed to reach minimum
+      if currentDigestCount < minimum {
+        decoyCount = minimum - currentDigestCount
+      }
+
+      // Add random extra decoys if maximum is specified
+      if let maximum = maximum, maximum > 0 {
+        let extraDecoys = SecureRandom.number(in: 0...maximum)
+        decoyCount += extraDecoys
+      }
+
+      // Generate the decoy digests
+      return (0..<decoyCount).compactMap { _ in digestCreator.decoy() }
     }
-    return []
   }
 
   private func addSdAlgClaim(object: [String: SdElement]?) throws -> [String: SdElement]? {

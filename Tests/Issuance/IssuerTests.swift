@@ -47,19 +47,4 @@ final class IssuerTest: XCTestCase {
     let jws = try JWS(jwsString: jwtString)
     XCTAssertTrue(try jws.verify(key: issuersKeyPair.public))
   }
-
-  func testEnvelopedFormatSerializeation_WhenProvidedWithABuiltSDJWT() async throws {
-    let sdjwt = try await self.testIssuer_ForIssuance_WhenProvidedWithAsetOfClaimsAndIssuersPrivateKey()
-
-    let payload = try JSON([
-        "aud": "https://verifier.example.com",
-        "iat": 1580000000,
-        "nonce": "iRnRdKuu1AtLM4ltc16by2XF0accSeutUescRw6BWC14"]).rawData()
-
-    let envelopedFormat = try EnvelopedSerialiser(SDJWT: sdjwt,
-                                              jwTpayload: payload)
-
-    let jwt = try JWT(header: DefaultJWSHeaderImpl(algorithm: .ES256), payload: JSON(envelopedFormat.data))
-    TestLogger.log((try? jwt.payload.toJSONString()) ?? "")
-  }
 }

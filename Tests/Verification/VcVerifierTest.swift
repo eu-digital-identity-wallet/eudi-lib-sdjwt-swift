@@ -1135,11 +1135,15 @@ final class VcVerifierTest: XCTestCase {
     // Given
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
 
+    // The secondary_issuer_sd_jwt expires on September 1, 2025 (exp: 1772582400)
+    // Use a date during the validity period to avoid expiration failure
+    let validDate = Date(timeIntervalSince1970: 1767398400) // July 1, 2025
+
     // Create a claims verifier that will validate whatever claims are in the JWT
     let claimsVerifier = ClaimsVerifier(
       requireNbf: false,
       requireExp: false,
-      currentDate: Date()
+      currentDate: validDate
     )
 
     // When
@@ -1166,6 +1170,57 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
 
+  func testVerifyIssuance_WithExpiredJWT_ShouldFailWithExpiredError() async throws {
+    // Given
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+
+    // The secondary_issuer_sd_jwt expired on September 1, 2025 (exp: 1772582400)
+    // Use current date (March 2026) which is after expiration
+    let claimsVerifier = ClaimsVerifier(
+      requireNbf: false,
+      requireExp: false, // Not required to be present, but will be validated if present
+      currentDate: Date() // Current date is after expiration
+    )
+
+    // When
+    let result = try await x509Verifier.verifyIssuance(
+      unverifiedSdJwt: sdJwtString,
+      claimsVerifier: claimsVerifier
+    )
+
+    // Then - should fail with expiredJwt error
+    XCTAssertThrowsError(try result.get()) { error in
+      guard case SDJWTVerifierError.expiredJwt = error else {
+        return XCTFail("Expected expiredJwt error but got: \(error)")
+      }
+    }
+  }
+
+  func testVerifyIssuance_WithValidDateBeforeExpiration_ShouldSucceed() async throws {
+    // Given
+    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+
+    // The secondary_issuer_sd_jwt:
+    // - Issued: June 2, 2025 (iat: 1764806400)
+    // - Expires: September 1, 2025 (exp: 1772582400)
+    // Use a date during the validity period (July 2025)
+    let validDate = Date(timeIntervalSince1970: 1767398400) // July 1, 2025
+    let claimsVerifier = ClaimsVerifier(
+      requireNbf: false,
+      requireExp: false,
+      currentDate: validDate // Date is before expiration
+    )
+
+    // When
+    let result = try await x509Verifier.verifyIssuance(
+      unverifiedSdJwt: sdJwtString,
+      claimsVerifier: claimsVerifier
+    )
+
+    // Then - should succeed because JWT is not expired yet
+    XCTAssertNoThrow(try result.get())
+  }
+
   func testVerifyIssuance_JSON_WithClaimsVerifier_ShouldVerifyClaims() async throws {
     // Given
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
@@ -1177,11 +1232,15 @@ final class VcVerifierTest: XCTestCase {
       getParts: parser.extractJWTParts
     )
 
+    // The secondary_issuer_sd_jwt expires on September 1, 2025 (exp: 1772582400)
+    // Use a date during the validity period to avoid expiration failure
+    let validDate = Date(timeIntervalSince1970: 1767398400) // July 1, 2025
+
     // Create a claims verifier that will validate whatever claims are in the JWT
     let claimsVerifier = ClaimsVerifier(
       requireNbf: false,
       requireExp: false,
-      currentDate: Date()
+      currentDate: validDate
     )
 
     // When

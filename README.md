@@ -35,7 +35,7 @@ is implemented in Swift.
 To issue a SD-JWT, an `Issuer` should have:
 
 - Decided on how the issued claims will be selectively disclosed (check [DSL examples](#dsl-examples))
-- Whether to use decoy digests or not
+- Whether to use decoy digests or not (and if so, which configuration strategy)
 - An appropriate signing key pair
 - optionally, decided if and how will include holder's public key to the SD-JWT
 
@@ -65,6 +65,28 @@ let signedSDJWT = try SDJWTIssuer.issue(issuersPrivateKey: issuersKeyPair.privat
 }
 
 ```
+
+### Enhanced Decoy Configuration
+
+For improved privacy, use `DecoyConfiguration` with per-object decoy generation:
+
+```Swift
+// Recommended: Ensure at least 3 decoys per object for better privacy
+let decoyConfig = DecoyConfiguration.perObject(minimum: 3)
+
+// With randomization: 3-7 decoys per object using secure random
+let decoyConfig = DecoyConfiguration.perObject(minimum: 3, maximum: 7)
+
+let signedSDJWT = try SDJWTIssuer.issue(
+  issuersPrivateKey: issuersKeyPair.private,
+  decoyConfiguration: decoyConfig,
+  header: .init(algorithm: .ES256)
+) {
+  // Claims...
+}
+```
+
+**Note**: The global decoy limit (e.g., `decoys: 10`) is deprecated but still supported for backward compatibility. Use `DecoyConfiguration.perObject` for better privacy guarantees.
 
 ## Holder Verification
 

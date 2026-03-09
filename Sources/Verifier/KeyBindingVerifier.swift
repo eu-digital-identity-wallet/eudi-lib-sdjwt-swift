@@ -32,8 +32,12 @@ public final class KeyBindingVerifier: VerifierProtocol {
     expectedAudience: String,
     expectedNonce: String,
     challenge: JWS,
-    extractedKey: JWK
+    extractedKey: JWK?
   ) throws {
+    
+    guard let extractedKey else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "no extractedKey provided ")
+    }
     guard challenge.protectedHeader.type == Self.kbJwt else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }
@@ -63,8 +67,13 @@ public final class KeyBindingVerifier: VerifierProtocol {
   public func verify(
     expectedNonce: String,
     challenge: JWS,
-    extractedKey: JWK
+    extractedKey: JWK?
   ) throws {
+    
+    guard let extractedKey else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "no extractedKey Provided")
+    }
+    
     guard challenge.protectedHeader.type == Self.kbJwt else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }

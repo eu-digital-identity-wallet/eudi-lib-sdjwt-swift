@@ -1,15 +1,6 @@
 {
-  "originHash" : "3d6b7128fd507143e3e0fdb12e1a948890bb7196582362cfb3d1bedb56b5da95",
+  "originHash" : "afec35bf3a989faab9b05598bbaa7085b4102e9bfed9375a3463b1d519b023a2",
   "pins" : [
-    {
-      "identity" : "blueecc",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/niscy-eudiw/BlueECC.git",
-      "state" : {
-        "revision" : "15e525cfff2da9b7429285346248e2c67ba0bd12",
-        "version" : "1.2.4"
-      }
-    },
     {
       "identity" : "cryptoswift",
       "kind" : "remoteSourceControl",

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 import Foundation
-import CryptorECC
 import JSONWebKey
 
 extension String {
@@ -97,7 +96,7 @@ extension String {
     }
     
     // If EC fails, try alternative EC
-    if let secKey = try? ECPublicKey(key: self).nativeKey {
+    if let secKey = try? ECPublicKeyConverter.secKey(fromPEM: self) {
       return secKey
     }
     

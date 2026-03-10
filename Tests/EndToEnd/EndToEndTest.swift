@@ -55,7 +55,8 @@ final class EndToEndTest: XCTestCase {
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
         trust: x509CertificateChainVerifier
-      )
+      ),
+      holderPublicKey: try holdersKeyPair.public.jwk
     )
     
     let result = try await x509Verifier.verifyIssuance(
@@ -103,17 +104,19 @@ final class EndToEndTest: XCTestCase {
     
     // Then
     XCTAssertNoThrow(try result.get())
-    XCTAssertNoThrow(
-      try verifier.verify(
-        iatOffset: .init(
-          startTime: Date(timeIntervalSinceNow: -100000),
-          endTime: Date(timeIntervalSinceNow: 100000)
-        )!,
-        expectedAudience: "example.com",
-        challenge: kbJwt!,
-        extractedKey: try holdersKeyPair.public.jwk
-      )
+    let validDate = Date(timeIntervalSince1970: 1767398400)
+    let presentationResult = try await x509Verifier.verifyPresentation(
+      unverifiedSdJwt: holderPresentation!.serialisation,
+      claimsVerifier: ClaimsVerifier(currentDate: validDate),  
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789",
+      expectedAudience: "example.com",
+      iatOffset: .init(
+        startTime: Date(timeIntervalSinceNow: -100000),
+        endTime: Date(timeIntervalSinceNow: 100000)
+      )!
     )
+    XCTAssertNoThrow(try presentationResult.get())
     
     XCTAssertNotNil(kbJwt)
     XCTAssertEqual(presentedSdJwt!.disclosures.count, 3)
@@ -127,7 +130,6 @@ final class EndToEndTest: XCTestCase {
     
     // Given
     let visitor = ClaimVisitor()
-    let verifier: KeyBindingVerifier = KeyBindingVerifier()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let query: Set<ClaimPath> = Set(
       [
@@ -136,11 +138,14 @@ final class EndToEndTest: XCTestCase {
     )
     
     // When
-    let result = try await SDJWTVCVerifier(
+    let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
         trust: x509CertificateChainVerifier
-      )
-    ).verifyIssuance(
+      ),
+      holderPublicKey: try holdersKeyPair.public.jwk
+    )
+    
+    let result = try await x509Verifier.verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
     
@@ -185,17 +190,20 @@ final class EndToEndTest: XCTestCase {
     
     // Then
     XCTAssertNoThrow(try result.get())
-    XCTAssertNoThrow(
-      try verifier.verify(
-        iatOffset: .init(
-          startTime: Date(timeIntervalSinceNow: -100000),
-          endTime: Date(timeIntervalSinceNow: 100000)
-        )!,
-        expectedAudience: "example.com",
-        challenge: kbJwt!,
-        extractedKey: try holdersKeyPair.public.jwk
-      )
+    
+    let validDate = Date(timeIntervalSince1970: 1767398400)
+    let presentationResult = try await x509Verifier.verifyPresentation(
+      unverifiedSdJwt: holderPresentation!.serialisation,
+      claimsVerifier: ClaimsVerifier(currentDate: validDate),
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789",
+      expectedAudience: "example.com",
+      iatOffset: .init(
+        startTime: Date(timeIntervalSinceNow: -100000),
+        endTime: Date(timeIntervalSinceNow: 100000)
+      )!
     )
+    XCTAssertNoThrow(try presentationResult.get())
     
     XCTAssertNotNil(kbJwt)
     XCTAssertEqual(presentedSdJwt!.disclosures.count, 2)
@@ -209,7 +217,6 @@ final class EndToEndTest: XCTestCase {
     
     // Given
     let visitor = ClaimVisitor()
-    let verifier: KeyBindingVerifier = KeyBindingVerifier()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let query: Set<ClaimPath> = Set([
       .claim("credential_holder").claim("family_name"),
@@ -220,7 +227,8 @@ final class EndToEndTest: XCTestCase {
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
         trust: x509CertificateChainVerifier
-      )
+      ),
+      holderPublicKey: try holdersKeyPair.public.jwk
     )
     
     let result = try await x509Verifier.verifyIssuance(
@@ -264,17 +272,20 @@ final class EndToEndTest: XCTestCase {
     
     // Then
     XCTAssertNoThrow(try result.get())
-    XCTAssertNoThrow(
-      try verifier.verify(
-        iatOffset: .init(
-          startTime: Date(timeIntervalSinceNow: -100000),
-          endTime: Date(timeIntervalSinceNow: 100000)
-        )!,
-        expectedAudience: "example.com",
-        challenge: kbJwt!,
-        extractedKey: try holdersKeyPair.public.jwk
-      )
+    
+    let validDate = Date(timeIntervalSince1970: 1767398400)
+    let presentationResult = try await x509Verifier.verifyPresentation(
+      unverifiedSdJwt: holderPresentation!.serialisation,
+      claimsVerifier: ClaimsVerifier(currentDate: validDate),
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789",
+      expectedAudience: "example.com",
+      iatOffset: .init(
+        startTime: Date(timeIntervalSinceNow: -100000),
+        endTime: Date(timeIntervalSinceNow: 100000)
+      )!
     )
+    XCTAssertNoThrow(try presentationResult.get())
     
     XCTAssertNotNil(kbJwt)
     XCTAssertEqual(presentedSdJwt!.disclosures.count, 3)
@@ -288,7 +299,6 @@ final class EndToEndTest: XCTestCase {
     
     // Given
     let visitor = ClaimVisitor()
-    let verifier: KeyBindingVerifier = KeyBindingVerifier()
     let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
     let query: Set<ClaimPath> = [
       .claim("credential_holder").claim("family_name"),
@@ -297,11 +307,14 @@ final class EndToEndTest: XCTestCase {
     ]
     
     // When
-    let result = try await SDJWTVCVerifier(
+    let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
         trust: x509CertificateChainVerifier
-      )
-    ).verifyIssuance(
+      ),
+      holderPublicKey: try holdersKeyPair.public.jwk
+    )
+    
+    let result = try await x509Verifier.verifyIssuance(
       unverifiedSdJwt: sdJwtString
     )
     
@@ -342,17 +355,20 @@ final class EndToEndTest: XCTestCase {
     
     // Then
     XCTAssertNoThrow(try result.get())
-    XCTAssertNoThrow(
-      try verifier.verify(
-        iatOffset: .init(
-          startTime: Date(timeIntervalSinceNow: -100000),
-          endTime: Date(timeIntervalSinceNow: 100000)
-        )!,
-        expectedAudience: "example.com",
-        challenge: kbJwt!,
-        extractedKey: try holdersKeyPair.public.jwk
-      )
+    
+    let validDate = Date(timeIntervalSince1970: 1767398400)
+    let presentationResult = try await x509Verifier.verifyPresentation(
+      unverifiedSdJwt: holderPresentation!.serialisation,
+      claimsVerifier: ClaimsVerifier(currentDate: validDate),
+      keyBindingVerifier: KeyBindingVerifier(),
+      expectedNonce: "123456789",
+      expectedAudience: "example.com",
+      iatOffset: .init(
+        startTime: Date(timeIntervalSinceNow: -100000),
+        endTime: Date(timeIntervalSinceNow: 100000)
+      )!
     )
+    XCTAssertNoThrow(try presentationResult.get())
     
     XCTAssertNotNil(kbJwt)
     XCTAssertEqual(presentedSdJwt!.disclosures.count, 3)
@@ -478,6 +494,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "www.example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -639,6 +656,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "www.example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -766,6 +784,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "www.example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )
@@ -918,6 +937,7 @@ final class EndToEndTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "www.example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: try holdersKeyPair.public.jwk
       )

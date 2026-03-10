@@ -97,15 +97,15 @@ internal class JwsJsonSupport {
   
   static private func createUnverifiedJwt(signatureContainer: JSON, unverifiedSdJwt: JSON) throws -> String {
     guard let protected = signatureContainer[JWS_JSON_PROTECTED].string else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Missing 'protected' field in JWS JSON")
     }
     
     guard let signature = signatureContainer[JWS_JSON_SIGNATURE].string else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Missing 'signature' field in JWS JSON")
     }
     
     guard let payload = unverifiedSdJwt[JWS_JSON_PAYLOAD].string else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Missing 'payload' field in JWS JSON")
     }
     
     return "\(protected).\(payload).\(signature)"

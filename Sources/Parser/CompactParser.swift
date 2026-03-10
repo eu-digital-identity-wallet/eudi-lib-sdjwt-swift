@@ -16,18 +16,11 @@
 import Foundation
 import SwiftyJSON
 
-public enum SerialisationFormat {
-  case serialised
-  case envelope
-}
-
 public class CompactParser: ParserProtocol {
   
   // MARK: - Properties
   
   private static let TILDE = "~"
-  
-  var serialisationFormat: SerialisationFormat = .serialised
   
   // MARK: - Lifecycle
   

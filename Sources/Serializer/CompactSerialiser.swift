@@ -24,21 +24,20 @@ public class CompactSerialiser: SerialiserProtocol {
   }
 
   public var serialised: String {
-    self.serialisationFormat.serialise(signedSDJWT: signedSDJWT)
+    serialise(signedSDJWT: signedSDJWT)
   }
 
   private var signedSDJWT: SignedSDJWT
-  private var serialisationFormat: SerialisationFormat = .serialised
 
   // MARK: - Lifecycle
 
   public init(signedSDJWT: SignedSDJWT) {
     self.signedSDJWT = signedSDJWT
   }
-}
 
-public extension SerialisationFormat {
-  func serialise(signedSDJWT: SignedSDJWT) -> String {
+  // MARK: - Private Methods
+
+  private func serialise(signedSDJWT: SignedSDJWT) -> String {
     var output = ""
     output += signedSDJWT.jwt.compactSerialization
     output += signedSDJWT.disclosures.reduce(into: "~", { partialResult, disclosure in

@@ -72,7 +72,13 @@ public final class DisclosuresVerifier: VerifierProtocol {
   // MARK: - Methods
   @discardableResult
   public func verify() throws -> DisclosuresVerifierOutput {
-    // Create the digest for the enveloped disclosures
+    // Ensure digest uniqueness
+    // Check recreated claims which includes:
+    // - All digests from original JWT payload
+    // - Digests from nested structures revealed by disclosures
+    try DigestCollector.validateUniqueness(in: recreatedClaims)
+
+    // Create the digest for the provided disclosures
     // Convert the base64 string to the hash, Digests we got passed
     // Base64 [salt, key, value]
 
@@ -97,7 +103,7 @@ public final class DisclosuresVerifier: VerifierProtocol {
     guard setOfCollectedDigests.count == disclosuresDigestsInPayload.count else {
       throw SDJWTVerifierError.nonUniqueDisclosureDigests
     }
-    // Create a set of the digests of the enveloped disclosures
+    // Create a set of the digests of the provided disclosures
     // Digests we got passed
     let setOfDisclosuresDigests = Set(digestsOfDisclosures)
 

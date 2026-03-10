@@ -48,7 +48,17 @@ public struct SignedSDJWT {
     ([jwt.compactSerialization] + disclosures).reduce("") {
       $0.isEmpty ? $1 : $0 + separator + $1
     } + separator
-    return DigestCreator()
+
+    // Extract the hash algorithm from the SD-JWT to ensure KB-JWT uses the same algorithm
+    let digestCreator: DigestCreator
+    do {
+      digestCreator = try extractDigestCreator()
+    } catch {
+      // Fallback to SHA-256 if extraction fails
+      digestCreator = DigestCreator()
+    }
+
+    return digestCreator
       .hashAndBase64Encode(
         input: input
       ) ?? ""
@@ -133,7 +143,7 @@ public struct SignedSDJWT {
     issuersPrivateKey: KeyType
   ) throws -> SignedSDJWT {
     try .init(sdJwt: sdJwt, issuersPrivateKey: issuersPrivateKey) ?? {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Failed to create non-key-bonded SD-JWT")
     }()
   }
   
@@ -166,7 +176,7 @@ public struct SignedSDJWT {
         signedSDJWT: signedSDJWT,
         signedKBJwt: signedKBJwt
       ) ?? {
-        throw SDJWTVerifierError.invalidJwt
+        throw SDJWTVerifierError.invalidJwt(description: "Failed to create key-bonded SD-JWT with async signer")
       }()
       
     } else {
@@ -176,7 +186,7 @@ public struct SignedSDJWT {
         kbJWT: kbJWT,
         holdersPrivateKey: holdersPrivateKey
       ) ?? {
-        throw SDJWTVerifierError.invalidJwt
+        throw SDJWTVerifierError.invalidJwt(description: "Failed to create key-bonded SD-JWT")
       }()
     }
   }
@@ -245,6 +255,16 @@ public struct SignedSDJWT {
     }
     
     return jwkObject
+  }
+
+  func extractDigestCreator() throws -> DigestCreator {
+    let payloadJson = try self.jwt.payloadJSON()
+    let sdAlg = payloadJson[Keys.sdAlg.rawValue].string ?? "sha-256"
+    let algorithIdentifier = HashingAlgorithmIdentifier.allCases.first(where: {$0.rawValue == sdAlg})
+    guard let algorithIdentifier else {
+      throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm
+    }
+    return DigestCreator(hashingAlgorithm: algorithIdentifier.hashingAlgorithm())
   }
 }
 

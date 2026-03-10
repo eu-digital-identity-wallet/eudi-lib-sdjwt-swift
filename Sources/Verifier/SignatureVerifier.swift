@@ -45,7 +45,7 @@ public class SignatureVerifier: VerifierProtocol {
   @discardableResult
   public func verify() throws -> JWS {
     guard try jws.verify(key: key) else {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "JWT signature verification failed")
     }
     return jws
   }

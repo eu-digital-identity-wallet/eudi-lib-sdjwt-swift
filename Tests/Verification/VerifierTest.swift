@@ -343,6 +343,7 @@ final class VerifierTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
+        expectedNonce: "123456789",
         challenge: jws,
         extractedKey: holdersPublicKey
       )
@@ -353,56 +354,249 @@ final class VerifierTest: XCTestCase {
     XCTAssertNoThrow(try verifier.get())
   }
 
-  func testSerialiseWhenChosingEnvelopeFormat_AppylingEnvelopeBinding_ThenExpectACorrectJWT() async throws {
-    let serializerTest = SerialiserTest()
+  // MARK: - Nonce Validation Tests
 
-    let compactParser = CompactParser()
+  func testKeyBindingVerifier_WithValidNonce_ShouldSucceed() async throws {
+    // Given
+    let expectedNonce = "test-nonce-12345"
+    let holdersJwk = try holdersKeyPair.public.jwk
 
-    let envelopeSerializer = try await EnvelopedSerialiser(
-        SDJWT: compactParser.getSignedSdJwt(
-          serialisedString: serializerTest.testSerializerWhenSerializedFormatIsSelected_ThenExpectSerialisedFormattedSignedSDJWT()
-        ),
-        jwTpayload: JWTBody(nonce: "", aud: "sub", iat: 1234
-    ).toJSONData())
-
-    _ = try SignatureVerifier(
-        signedJWT: JWS(
-            payload: envelopeSerializer.data,
-            protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
-            key: holdersKeyPair.private
-        ),
-        publicKey: holdersKeyPair.public)
-
-    let jwt = try JWS(
-      payload: envelopeSerializer.data,
-      protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
-      key: holdersKeyPair.private
-    )
-
-    let envelopedJws = try JWS(jwsString: jwt.compactSerialization)
-
-    let verifyEnvelope =
-    try SDJWTVerifier(
-      parser: EnvelopedParser(),
-      serialisedString: envelopeSerializer.serialised
-    )
-      .verifyEnvelope(envelope: envelopedJws) { jws in
-
-        try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-      } holdersSignatureVerifier: {
-
-        try SignatureVerifier(signedJWT: envelopedJws, publicKey: holdersKeyPair.public)
-      } claimVerifier: { audClaim, iat in
-        ClaimsVerifier(
-          iat: iat,
-          iatValidWindow: .init(
-            startTime: Date(timeIntervalSince1970: 1234-10),
-            endTime: Date(timeIntervalSince1970: 1234+10)
-          ),
-          audClaim: audClaim,
-          expectedAud: "sub"
-        )
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", holdersJwk.y?.base64URLEncode())
+          PlainClaim("x", holdersJwk.x?.base64URLEncode())
+          PlainClaim("crv", holdersJwk.curve)
+        }
       }
-    XCTAssertNoThrow(try verifyEnvelope.get())
+    }
+
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+      ) ?? ""
+
+    let holder = try await SDJWTIssuer.presentation(
+      holdersPrivateKey: holdersKeyPair.private,
+      signedSDJWT: issuerSignedSDJWT,
+      disclosuresToPresent: issuerSignedSDJWT.disclosures,
+      keyBindingJWT: KBJWT(
+        header: DefaultJWSHeaderImpl(algorithm: .ES256),
+        kbJwtPayload: .init([
+          Keys.nonce.rawValue: expectedNonce,
+          Keys.aud.rawValue: "example.com",
+          Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
+          Keys.sdHash.rawValue: sdHash
+        ])
+      )
+    )
+
+    // When
+    let verifier = KeyBindingVerifier()
+
+    // Then - Should succeed with correct nonce
+    XCTAssertNoThrow(
+      try verifier.verify(
+        iatOffset: .init(
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
+        )!,
+        expectedAudience: "example.com",
+        expectedNonce: expectedNonce,
+        challenge: holder.kbJwt!,
+        extractedKey: holdersJwk
+      )
+    )
+  }
+
+  func testKeyBindingVerifier_WithMismatchedNonce_ShouldFail() async throws {
+    // Given
+    let actualNonce = "actual-nonce-12345"
+    let wrongNonce = "wrong-nonce-67890"
+    let holdersJwk = try holdersKeyPair.public.jwk
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", holdersJwk.y?.base64URLEncode())
+          PlainClaim("x", holdersJwk.x?.base64URLEncode())
+          PlainClaim("crv", holdersJwk.curve)
+        }
+      }
+    }
+
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+      ) ?? ""
+
+    let holder = try await SDJWTIssuer.presentation(
+      holdersPrivateKey: holdersKeyPair.private,
+      signedSDJWT: issuerSignedSDJWT,
+      disclosuresToPresent: issuerSignedSDJWT.disclosures,
+      keyBindingJWT: KBJWT(
+        header: DefaultJWSHeaderImpl(algorithm: .ES256),
+        kbJwtPayload: .init([
+          Keys.nonce.rawValue: actualNonce,
+          Keys.aud.rawValue: "example.com",
+          Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
+          Keys.sdHash.rawValue: sdHash
+        ])
+      )
+    )
+
+    // When
+    let verifier = KeyBindingVerifier()
+
+    // Then - Should fail with mismatched nonce (replay attack prevention)
+    XCTAssertThrowsError(
+      try verifier.verify(
+        iatOffset: .init(
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
+        )!,
+        expectedAudience: "example.com",
+        expectedNonce: wrongNonce,
+        challenge: holder.kbJwt!,
+        extractedKey: holdersJwk
+      )
+    ) { error in
+      guard case SDJWTVerifierError.keyBindingFailed(let description) = error else {
+        XCTFail("Expected keyBindingFailed error but got \(error)")
+        return
+      }
+      XCTAssertTrue(description.contains("Nonce mismatch"), "Error should indicate nonce mismatch")
+    }
+  }
+
+  func testKeyBindingVerifier_SimplifiedVerify_WithValidNonce_ShouldSucceed() async throws {
+    // Given
+    let expectedNonce = "simple-test-nonce"
+    let holdersJwk = try holdersKeyPair.public.jwk
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", holdersJwk.y?.base64URLEncode())
+          PlainClaim("x", holdersJwk.x?.base64URLEncode())
+          PlainClaim("crv", holdersJwk.curve)
+        }
+      }
+    }
+
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+      ) ?? ""
+
+    let holder = try await SDJWTIssuer.presentation(
+      holdersPrivateKey: holdersKeyPair.private,
+      signedSDJWT: issuerSignedSDJWT,
+      disclosuresToPresent: issuerSignedSDJWT.disclosures,
+      keyBindingJWT: KBJWT(
+        header: DefaultJWSHeaderImpl(algorithm: .ES256),
+        kbJwtPayload: .init([
+          Keys.nonce.rawValue: expectedNonce,
+          Keys.aud.rawValue: "example.com",
+          Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
+          Keys.sdHash.rawValue: sdHash
+        ])
+      )
+    )
+
+    // When - Using simplified verify method
+    let verifier = KeyBindingVerifier()
+
+    // Then - Should succeed with correct nonce
+    XCTAssertNoThrow(
+      try verifier.verify(
+        expectedNonce: expectedNonce,
+        challenge: holder.kbJwt!,
+        extractedKey: holdersJwk
+      )
+    )
+  }
+
+  func testKeyBindingVerifier_SimplifiedVerify_WithMismatchedNonce_ShouldFail() async throws {
+    // Given
+    let actualNonce = "actual-simple-nonce"
+    let wrongNonce = "wrong-simple-nonce"
+    let holdersJwk = try holdersKeyPair.public.jwk
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", holdersJwk.y?.base64URLEncode())
+          PlainClaim("x", holdersJwk.x?.base64URLEncode())
+          PlainClaim("crv", holdersJwk.curve)
+        }
+      }
+    }
+
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+      ) ?? ""
+
+    let holder = try await SDJWTIssuer.presentation(
+      holdersPrivateKey: holdersKeyPair.private,
+      signedSDJWT: issuerSignedSDJWT,
+      disclosuresToPresent: issuerSignedSDJWT.disclosures,
+      keyBindingJWT: KBJWT(
+        header: DefaultJWSHeaderImpl(algorithm: .ES256),
+        kbJwtPayload: .init([
+          Keys.nonce.rawValue: actualNonce,
+          Keys.aud.rawValue: "example.com",
+          Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
+          Keys.sdHash.rawValue: sdHash
+        ])
+      )
+    )
+
+    // When - Using simplified verify method
+    let verifier = KeyBindingVerifier()
+
+    // Then - Should fail with mismatched nonce
+    XCTAssertThrowsError(
+      try verifier.verify(
+        expectedNonce: wrongNonce,
+        challenge: holder.kbJwt!,
+        extractedKey: holdersJwk
+      )
+    ) { error in
+      guard case SDJWTVerifierError.keyBindingFailed(let description) = error else {
+        XCTFail("Expected keyBindingFailed error but got \(error)")
+        return
+      }
+      XCTAssertTrue(description.contains("Nonce mismatch"), "Error should indicate nonce mismatch")
+    }
   }
 }

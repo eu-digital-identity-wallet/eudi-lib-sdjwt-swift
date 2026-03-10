@@ -155,6 +155,7 @@ final class PresentationTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: holdersJwk
       )
@@ -299,6 +300,7 @@ final class PresentationTest: XCTestCase {
           endTime: Date(timeIntervalSinceNow: 100000)
         )!,
         expectedAudience: "example.com",
+        expectedNonce: "123456789",
         challenge: kbJwt!,
         extractedKey: holdersJwk
       )

@@ -30,9 +30,14 @@ public final class KeyBindingVerifier: VerifierProtocol {
   public func verify(
     iatOffset: TimeRange,
     expectedAudience: String,
+    expectedNonce: String,
     challenge: JWS,
-    extractedKey: JWK
+    extractedKey: JWK?
   ) throws {
+    
+    guard let extractedKey else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "no extractedKey provided ")
+    }
     guard challenge.protectedHeader.type == Self.kbJwt else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }
@@ -45,9 +50,11 @@ public final class KeyBindingVerifier: VerifierProtocol {
     
     let aud = challengePayloadJson[Keys.aud]
     
-    guard challengePayloadJson[Keys.nonce].exists() else {
+    guard let nonce = challengePayloadJson[Keys.nonce].string else {
       throw SDJWTVerifierError.keyBindingFailed(description: "No Nonce Provided")
     }
+    
+    try verifyNonce(nonce: nonce, expectedNonce: expectedNonce)
     
     self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
     
@@ -58,18 +65,26 @@ public final class KeyBindingVerifier: VerifierProtocol {
   }
   
   public func verify(
+    expectedNonce: String,
     challenge: JWS,
-    extractedKey: JWK
+    extractedKey: JWK?
   ) throws {
+    
+    guard let extractedKey else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "no extractedKey Provided")
+    }
+    
     guard challenge.protectedHeader.type == Self.kbJwt else {
       throw SDJWTVerifierError.keyBindingFailed(description: "no kb+jwt as typ claim")
     }
     
     let challengePayloadJson = try challenge.payloadJSON()
     
-    guard challengePayloadJson[Keys.nonce].exists() else {
+    guard let nonce = challengePayloadJson[Keys.nonce].string else {
       throw SDJWTVerifierError.keyBindingFailed(description: "No Nonce Provided")
     }
+    
+    try verifyNonce(nonce: nonce, expectedNonce: expectedNonce)
     
     self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
     
@@ -105,6 +120,12 @@ private extension KeyBindingVerifier {
       guard string == expectedAudience else {
         throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
       }
+    }
+  }
+  
+  func verifyNonce(nonce: String, expectedNonce: String) throws {
+    guard nonce == expectedNonce else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "Nonce mismatch: expected '\(expectedNonce)' but got '\(nonce)'")
     }
   }
 }

@@ -30,6 +30,11 @@ public final class ClaimsVerifier: VerifierProtocol {
   
   let currentDate: Date
   
+  // Flags to enforce presence of critical security fields
+  let requireNbf: Bool
+  let requireExp: Bool
+  let requireAud: Bool
+  
   // MARK: - Lifecycle
   
   public init(
@@ -39,6 +44,9 @@ public final class ClaimsVerifier: VerifierProtocol {
     exp: Int? = nil,
     audClaim: String? = nil,
     expectedAud: String? = nil,
+    requireNbf: Bool = false,
+    requireExp: Bool = false,
+    requireAud: Bool = false,
     currentDate: Date = Date()) {
       self.iat = Date(timestamp: iat)
       self.iatValidWindow = iatValidWindow
@@ -53,16 +61,32 @@ public final class ClaimsVerifier: VerifierProtocol {
         return audArray == JSON.null ? [audClaim] : audArray.array?.compactMap { $0.stringValue }
       }()
       self.expectedAud = expectedAud
+      self.requireNbf = requireNbf
+      self.requireExp = requireExp
+      self.requireAud = requireAud
       self.currentDate = currentDate
     }
   
   // MARK: - Methods
   @discardableResult
   public func verify() throws -> Bool {
+    // Enforce presence of required fields
+    if requireNbf && nbf == nil {
+      throw SDJWTVerifierError.invalidJwt(description: "Required claim 'nbf' is missing")
+    }
+
+    if requireExp && exp == nil {
+      throw SDJWTVerifierError.invalidJwt(description: "Required claim 'exp' is missing")
+    }
+
+    if requireAud && (auds == nil || expectedAud == nil) {
+      throw SDJWTVerifierError.invalidJwt(description: "Required claim 'aud' is missing")
+    }
+
     if let iat,
        let iatValidWindow,
        !iatValidWindow.contains(date: iat) {
-      throw SDJWTVerifierError.invalidJwt
+      throw SDJWTVerifierError.invalidJwt(description: "Claim 'iat' is outside the valid time window")
     }
     
     if let nbf {

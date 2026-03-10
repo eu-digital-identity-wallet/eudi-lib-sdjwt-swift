@@ -35,7 +35,7 @@ public enum SDJWTError: Error, Equatable {
 
 public enum SDJWTVerifierError: Error {
   case parsingError
-  case invalidJwt
+  case invalidJwt(description: String?)
   case invalidJwk
   case invalidIssuer
   case keyBindingFailed(description: String)
@@ -83,7 +83,6 @@ public enum Keys: String {
   case sd = "_sd"
   case dots = "..."
   case sdAlg = "_sd_alg"
-  case sdJwt = "_sd_jwt"
   case sdHash = "sd_hash"
   case iss
   case iat

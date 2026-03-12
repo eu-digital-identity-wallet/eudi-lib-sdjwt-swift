@@ -31,10 +31,6 @@ let package = Package(
       from: "1.0.0"
     ),
     .package(
-      url: "https://github.com/niscy-eudiw/BlueECC.git",
-      .upToNextMajor(from: "1.2.4")
-    ),
-    .package(
       url: "https://github.com/krzyzanowskim/CryptoSwift.git",
       from: "1.9.0"
     )
@@ -47,10 +43,6 @@ let package = Package(
         "CryptoSwift",
         .product(name: "SwiftyJSON", package: "swiftyjson"),
         .product(name: "X509", package: "swift-certificates"),
-        .product(
-          name: "CryptorECC",
-          package: "BlueECC"
-        ),
       ],
       path: "Sources",
       plugins: [

@@ -17,6 +17,7 @@
 @testable import eudi_lib_sdjwt_swift
 import X509
 import SwiftyJSON
+import JSONWebKey
 
 let key =
   """
@@ -29,8 +30,7 @@ let key =
   """
   .clean()
 
-// Key Pairs Used in the examples
-let holdersKeyPair = generateES256KeyPair()
+nonisolated(unsafe) let holdersKeyPair = generateES256KeyPair()
 
 nonisolated(unsafe) let issuersKeyPair = generateES256KeyPair()
 

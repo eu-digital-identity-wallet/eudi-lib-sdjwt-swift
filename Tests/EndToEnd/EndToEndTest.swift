@@ -55,8 +55,7 @@ final class EndToEndTest: XCTestCase {
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
         trust: x509CertificateChainVerifier
-      ),
-      holderPublicKey: try holdersKeyPair.public.jwk
+      )
     )
     
     let result = try await x509Verifier.verifyIssuance(
@@ -141,8 +140,7 @@ final class EndToEndTest: XCTestCase {
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
         trust: x509CertificateChainVerifier
-      ),
-      holderPublicKey: try holdersKeyPair.public.jwk
+      )
     )
     
     let result = try await x509Verifier.verifyIssuance(
@@ -227,8 +225,7 @@ final class EndToEndTest: XCTestCase {
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
         trust: x509CertificateChainVerifier
-      ),
-      holderPublicKey: try holdersKeyPair.public.jwk
+      )
     )
     
     let result = try await x509Verifier.verifyIssuance(
@@ -310,8 +307,7 @@ final class EndToEndTest: XCTestCase {
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
         trust: x509CertificateChainVerifier
-      ),
-      holderPublicKey: try holdersKeyPair.public.jwk
+      )
     )
     
     let result = try await x509Verifier.verifyIssuance(

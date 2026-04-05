@@ -48,16 +48,84 @@ enum DigestCollector {
     return digests
   }
 
-  /// Recursively collects digests from JSON structure
+  /// Collects all digests from a JSON payload AND from nested structures within disclosures
+  ///
+  /// This method opens each disclosure to check if it contains nested JSON structures
+  /// with additional `_sd` arrays, ensuring all digests (including nested ones) are found.
+  ///
+  /// - Parameters:
+  ///   - json: The JWT payload to search
+  ///   - disclosures: Map of digests to their corresponding disclosures
+  /// - Returns: Array of all digest strings found (including nested within disclosures)
+  ///
+  static func collectAll(from json: JSON, disclosures: [DisclosureDigest: Disclosure]) -> [DisclosureDigest] {
+    var digests: [DisclosureDigest] = []
+    var processedDigests: Set<DisclosureDigest> = [] // Track to avoid infinite loops
+    collectDigestsRecursively(from: json, disclosures: disclosures, into: &digests, processed: &processedDigests)
+    return digests
+  }
+
+  /// Recursively collects digests from JSON structure (without using disclosures)
   ///
   /// - Parameters:
   ///   - json: The JSON to search
   ///   - digests: Mutable array to collect digests into
   private static func collectDigestsRecursively(from json: JSON, into digests: inout [DisclosureDigest]) {
+    var emptyProcessed = Set<DisclosureDigest>()
+    collectDigestsRecursively(from: json, disclosures: [:], into: &digests, processed: &emptyProcessed)
+  }
+
+  /// Recursively collects digests from JSON structure, opening disclosures to find nested digests
+  ///
+  /// This method ensures RFC 9901 compliance by finding ALL digests, including those
+  /// hidden within disclosed values. When a digest is found, it looks up the corresponding
+  /// disclosure and recursively searches it for additional `_sd` arrays.
+  ///
+  /// - Parameters:
+  ///   - json: The JSON to search
+  ///   - disclosures: Map of digests to disclosures for opening nested structures
+  ///   - digests: Mutable array to collect digests into
+  ///   - processed: Set of already-processed digests to avoid infinite loops
+  ///
+  private static func collectDigestsRecursively(
+    from json: JSON,
+    disclosures: [DisclosureDigest: Disclosure],
+    into digests: inout [DisclosureDigest],
+    processed: inout Set<DisclosureDigest>
+  ) {
     // Collect from _sd array at this level
     if let sdArray = json[Keys.sd.rawValue].array {
       let digestStrings = sdArray.compactMap { $0.string }
       digests.append(contentsOf: digestStrings)
+
+      // For each digest, check if we can open the disclosure to find nested _sd arrays
+      for digest in digestStrings {
+        // Avoid infinite loops by tracking processed digests
+        guard !processed.contains(digest) else { continue }
+        processed.insert(digest)
+
+        // Try to decode the disclosure for this digest
+        if let disclosure = disclosures[digest],
+           let decodedString = disclosure.base64URLDecode(),
+           let disclosureArray = try? JSON(parseJSON: decodedString).arrayValue,
+           disclosureArray.count >= 2 {
+
+          // The disclosure format is [salt, claim_name, claim_value] for objects
+          // or [salt, claim_value] for array elements
+          let valueIndex = disclosureArray.count - 1
+          let claimValue = disclosureArray[valueIndex]
+
+          // If the disclosed value is a JSON object or array, recursively search it
+          if claimValue.type == .dictionary || claimValue.type == .array {
+            collectDigestsRecursively(
+              from: claimValue,
+              disclosures: disclosures,
+              into: &digests,
+              processed: &processed
+            )
+          }
+        }
+      }
     }
 
     // Recursively search in nested objects
@@ -72,7 +140,12 @@ enum DigestCollector {
 
         // Recurse into nested objects
         if subJson.type == .dictionary {
-          collectDigestsRecursively(from: subJson, into: &digests)
+          collectDigestsRecursively(
+            from: subJson,
+            disclosures: disclosures,
+            into: &digests,
+            processed: &processed
+          )
         }
 
         // Recurse into arrays
@@ -81,11 +154,38 @@ enum DigestCollector {
             // Check for array element digest (... syntax)
             if let dotDigest = arrayElement[Keys.dots.rawValue].string {
               digests.append(dotDigest)
+
+              // Open this array element disclosure to check for nested _sd arrays
+              guard !processed.contains(dotDigest) else { continue }
+              processed.insert(dotDigest)
+
+              if let disclosure = disclosures[dotDigest],
+                 let decodedString = disclosure.base64URLDecode(),
+                 let disclosureArray = try? JSON(parseJSON: decodedString).arrayValue,
+                 disclosureArray.count >= 2 {
+
+                let valueIndex = disclosureArray.count - 1
+                let claimValue = disclosureArray[valueIndex]
+
+                if claimValue.type == .dictionary || claimValue.type == .array {
+                  collectDigestsRecursively(
+                    from: claimValue,
+                    disclosures: disclosures,
+                    into: &digests,
+                    processed: &processed
+                  )
+                }
+              }
             }
 
             // Recurse into nested objects/arrays within array
             if arrayElement.type == .dictionary || arrayElement.type == .array {
-              collectDigestsRecursively(from: arrayElement, into: &digests)
+              collectDigestsRecursively(
+                from: arrayElement,
+                disclosures: disclosures,
+                into: &digests,
+                processed: &processed
+              )
             }
           }
         }
@@ -116,6 +216,21 @@ enum DigestCollector {
   /// ```
   static func validateUniqueness(in json: JSON) throws {
     let allDigests = collectAll(from: json)
+    try ensureUnique(allDigests)
+  }
+
+  /// Collects and validates uniqueness of all digests, including those hidden in disclosures
+  ///
+  /// This method is opening disclosures
+  /// to find nested `_sd` arrays that may contain duplicate digests.
+  ///
+  /// - Parameters:
+  ///   - json: The JWT payload to validate
+  ///   - disclosures: Map of digests to disclosures for opening nested structures
+  /// - Throws: `SDJWTVerifierError.nonUniqueDisclosureDigests` if duplicates found
+  ///
+  static func validateUniqueness(in json: JSON, disclosures: [DisclosureDigest: Disclosure]) throws {
+    let allDigests = collectAll(from: json, disclosures: disclosures)
     try ensureUnique(allDigests)
   }
 }

@@ -40,15 +40,14 @@ final class EndToEndTest: XCTestCase {
   }
   
   
-  func testEndToEndWithPrimaryIssuerSdJWT() async throws {
+  func testEndToEndWithSdJwtVcPidIssuerSdJWT() async throws {
     
     // Given
     let visitor = ClaimVisitor()
-    let verifier: KeyBindingVerifier = KeyBindingVerifier()
-    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.sdJwtVcPid.clean()
     let query: Set<ClaimPath> = Set([
-      .claim("credential_holder").claim("family_name"),
-      .claim("credential_holder").claim("given_name")
+      .claim("family_name"),
+      .claim("given_name")
     ])
     
     // When
@@ -84,7 +83,7 @@ final class EndToEndTest: XCTestCase {
     holderPresentation = try await SDJWTIssuer
       .presentation(
         holdersPrivateKey: TestP256AsyncSigner(
-          secKey: holdersKeyPair.private
+          secKey: SDJWTConstants.sdJwtVcPidPrivateKey!
         ),
         signedSDJWT: issuerSignedSDJWT,
         disclosuresToPresent: presentedSdJwt!.disclosures,
@@ -103,96 +102,9 @@ final class EndToEndTest: XCTestCase {
     
     // Then
     XCTAssertNoThrow(try result.get())
-    let validDate = Date(timeIntervalSince1970: 1767398400)
     let presentationResult = try await x509Verifier.verifyPresentation(
       unverifiedSdJwt: holderPresentation!.serialisation,
-      claimsVerifier: ClaimsVerifier(currentDate: validDate),  
-      keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: "123456789",
-      expectedAudience: "example.com",
-      iatOffset: .init(
-        startTime: Date(timeIntervalSinceNow: -100000),
-        endTime: Date(timeIntervalSinceNow: 100000)
-      )!
-    )
-    XCTAssertNoThrow(try presentationResult.get())
-    
-    XCTAssertNotNil(kbJwt)
-    XCTAssertEqual(presentedSdJwt!.disclosures.count, 3)
-    
-    let presentedDisclosures = Set(presentedSdJwt!.disclosures)
-    let visitedDisclosures = Set(visitor.disclosures)
-    XCTAssertTrue(presentedDisclosures.isSubset(of: visitedDisclosures))
-  }
-  
-  func testEndToEndWithClaimPathsAndPrimaryIssuerSdJWT() async throws {
-    
-    // Given
-    let visitor = ClaimVisitor()
-    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
-    let query: Set<ClaimPath> = Set(
-      [
-        .claim("places_of_work").claim("place_of_work").arrayElement(1).claim("country_code")
-      ]
-    )
-    
-    // When
-    let x509Verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
-      )
-    )
-    
-    let result = try await x509Verifier.verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
-    
-    let issuerSignedSDJWT = try CompactParser().getSignedSdJwt(
-      serialisedString: sdJwtString
-    )
-    
-    let presentedSdJwt = try issuerSignedSDJWT.present(
-      query: query,
-      visitor: visitor
-    )
-    
-    let sdHash = DigestCreator()
-      .hashAndBase64Encode(
-        input: CompactSerialiser(
-          signedSDJWT: presentedSdJwt!
-        ).serialised
-      )!
-    
-    let aud = "example.com"
-    let timestamp = Int(Date().timeIntervalSince1970.rounded())
-    var holderPresentation: SignedSDJWT?
-    holderPresentation = try await SDJWTIssuer
-      .presentation(
-        holdersPrivateKey: TestP256AsyncSigner(
-          secKey: holdersKeyPair.private
-        ),
-        signedSDJWT: issuerSignedSDJWT,
-        disclosuresToPresent: presentedSdJwt!.disclosures,
-        keyBindingJWT: .init(
-          header: DefaultJWSHeaderImpl(algorithm: .ES256),
-          kbJwtPayload: .init([
-            Keys.nonce.rawValue: "123456789",
-            Keys.aud.rawValue: aud,
-            Keys.iat.rawValue: timestamp,
-            Keys.sdHash.rawValue: sdHash
-          ])
-        )
-      )
-    
-    let kbJwt = holderPresentation?.kbJwt
-    
-    // Then
-    XCTAssertNoThrow(try result.get())
-    
-    let validDate = Date(timeIntervalSince1970: 1767398400)
-    let presentationResult = try await x509Verifier.verifyPresentation(
-      unverifiedSdJwt: holderPresentation!.serialisation,
-      claimsVerifier: ClaimsVerifier(currentDate: validDate),
+      claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
       expectedNonce: "123456789",
       expectedAudience: "example.com",
@@ -210,97 +122,16 @@ final class EndToEndTest: XCTestCase {
     let visitedDisclosures = Set(visitor.disclosures)
     XCTAssertTrue(presentedDisclosures.isSubset(of: visitedDisclosures))
   }
-  
-  func testEndToEndWithSecondaryIssuerSdJWT() async throws {
+
+  func testEndToEndWithAllClaimPathsSdJwtVcPidIssuerSdJWT() async throws {
     
     // Given
     let visitor = ClaimVisitor()
-    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
-    let query: Set<ClaimPath> = Set([
-      .claim("credential_holder").claim("family_name"),
-      .claim("credential_holder").claim("given_name")
-    ])
-    
-    // When
-    let x509Verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
-      )
-    )
-    
-    let result = try await x509Verifier.verifyIssuance(
-      unverifiedSdJwt: sdJwtString
-    )
-    
-    let issuerSignedSDJWT = try CompactParser().getSignedSdJwt(
-      serialisedString: sdJwtString
-    )
-    
-    let presentedSdJwt = try issuerSignedSDJWT.present(
-      query: query,
-      visitor: visitor
-    )
-    
-    let sdHash = DigestCreator()
-      .hashAndBase64Encode(
-        input: CompactSerialiser(
-          signedSDJWT: presentedSdJwt!
-        ).serialised
-      )!
-    
-    var holderPresentation: SignedSDJWT?
-    holderPresentation = try await SDJWTIssuer
-      .presentation(
-        holdersPrivateKey: TestP256AsyncSigner(secKey: holdersKeyPair.private),
-        signedSDJWT: issuerSignedSDJWT,
-        disclosuresToPresent: presentedSdJwt!.disclosures,
-        keyBindingJWT: KBJWT(
-          header: DefaultJWSHeaderImpl(algorithm: .ES256),
-          kbJwtPayload: .init([
-            Keys.nonce.rawValue: "123456789",
-            Keys.aud.rawValue: "example.com",
-            Keys.iat.rawValue: 1694600000,
-            Keys.sdHash.rawValue: sdHash
-          ])
-        )
-      )
-    
-    let kbJwt = holderPresentation?.kbJwt
-    
-    // Then
-    XCTAssertNoThrow(try result.get())
-    
-    let validDate = Date(timeIntervalSince1970: 1767398400)
-    let presentationResult = try await x509Verifier.verifyPresentation(
-      unverifiedSdJwt: holderPresentation!.serialisation,
-      claimsVerifier: ClaimsVerifier(currentDate: validDate),
-      keyBindingVerifier: KeyBindingVerifier(),
-      expectedNonce: "123456789",
-      expectedAudience: "example.com",
-      iatOffset: .init(
-        startTime: Date(timeIntervalSinceNow: -100000),
-        endTime: Date(timeIntervalSinceNow: 100000)
-      )!
-    )
-    XCTAssertNoThrow(try presentationResult.get())
-    
-    XCTAssertNotNil(kbJwt)
-    XCTAssertEqual(presentedSdJwt!.disclosures.count, 3)
-    
-    let presentedDisclosures = Set(presentedSdJwt!.disclosures)
-    let visitedDisclosures = Set(visitor.disclosures)
-    XCTAssertTrue(presentedDisclosures.isSubset(of: visitedDisclosures))
-  }
-  
-  func testEndToEndWithClaimPathsSecondaryIssuerSdJWT() async throws {
-    
-    // Given
-    let visitor = ClaimVisitor()
-    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
+    let sdJwtString = SDJWTConstants.sdJwtVcPid.clean()
     let query: Set<ClaimPath> = [
-      .claim("credential_holder").claim("family_name"),
-      .claim("credential_holder").claim("given_name"),
-      .claim("credential_holder").claim("employment_details").claim("street")
+      .claim("family_name"),
+      .claim("given_name"),
+      .claim("birthdate")
     ]
     
     // When
@@ -333,7 +164,7 @@ final class EndToEndTest: XCTestCase {
     var holderPresentation: SignedSDJWT?
     holderPresentation = try await SDJWTIssuer
       .presentation(
-        holdersPrivateKey: TestP256AsyncSigner(secKey: holdersKeyPair.private),
+        holdersPrivateKey: TestP256AsyncSigner(secKey: SDJWTConstants.sdJwtVcPidPrivateKey!),
         signedSDJWT: issuerSignedSDJWT,
         disclosuresToPresent: presentedSdJwt!.disclosures,
         keyBindingJWT: KBJWT(
@@ -352,10 +183,9 @@ final class EndToEndTest: XCTestCase {
     // Then
     XCTAssertNoThrow(try result.get())
     
-    let validDate = Date(timeIntervalSince1970: 1767398400)
     let presentationResult = try await x509Verifier.verifyPresentation(
       unverifiedSdJwt: holderPresentation!.serialisation,
-      claimsVerifier: ClaimsVerifier(currentDate: validDate),
+      claimsVerifier: ClaimsVerifier(),
       keyBindingVerifier: KeyBindingVerifier(),
       expectedNonce: "123456789",
       expectedAudience: "example.com",

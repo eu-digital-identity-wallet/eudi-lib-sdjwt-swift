@@ -56,6 +56,8 @@ public final class DisclosuresVerifier: VerifierProtocol {
     }
     digestsOfDisclosuresDict = dict
     
+    try DigestCollector.validateUniqueness(in: sdJwt.jwt.payload, disclosures: digestsOfDisclosuresDict)
+
     let claimExtractor =
     try ClaimExtractor(
       digestsOfDisclosuresDict: digestsOfDisclosuresDict
@@ -72,12 +74,6 @@ public final class DisclosuresVerifier: VerifierProtocol {
   // MARK: - Methods
   @discardableResult
   public func verify() throws -> DisclosuresVerifierOutput {
-    // Ensure digest uniqueness
-    // Check recreated claims which includes:
-    // - All digests from original JWT payload
-    // - Digests from nested structures revealed by disclosures
-    try DigestCollector.validateUniqueness(in: recreatedClaims)
-
     // Create the digest for the provided disclosures
     // Convert the base64 string to the hash, Digests we got passed
     // Base64 [salt, key, value]

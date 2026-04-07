@@ -119,33 +119,29 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   
   /// Single property handling the source of issuer keys.
   private let verificationMethod: VerificationMethod
-  
+
   /// A parser conforming to `ParserProtocol`, responsible for parsing SD-JWTs.
   private let parser: ParserProtocol
-  
+
   private let typeMetadataPolicy: TypeMetadataPolicy
-  
-  private let holderPublicKey: JWK?
-  
+
   /**
    * Initializes the `SDJWTVCVerifier` with dependencies for metadata fetching, certificate trust, and public key lookup.
    *
    * - Parameters:
    *   - parser: A parser responsible for parsing SD-JWTs.
    *   - verificationMethod: Enum to handle issuer key sources.
+   *   - typeMetadataPolicy: Policy for type metadata verification.
    *
    */
   public init(
     parser: ParserProtocol = CompactParser(),
     verificationMethod: VerificationMethod,
-    typeMetadataPolicy: TypeMetadataPolicy = .notUsed,
-    holderPublicKey: JWK? = nil
-    
+    typeMetadataPolicy: TypeMetadataPolicy = .notUsed
   ) {
     self.parser = parser
     self.verificationMethod = verificationMethod
     self.typeMetadataPolicy = typeMetadataPolicy
-    self.holderPublicKey = holderPublicKey
   }
   
   
@@ -277,10 +273,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           requireAud: claimsVerifier.requireAud,
           currentDate: claimsVerifier.currentDate
         )
-      } keyBindingVerifier: { [weak self] jws, jwk in
-        guard let self = self else {
-          return nil
-        }
+      } keyBindingVerifier: { jws, jwk in
         guard let keyBindingVerifier = keyBindingVerifier else {
           return nil
         }
@@ -295,14 +288,14 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
             expectedAudience: expectedAudience,
             expectedNonce: expectedNonce,
             challenge: jws,
-            extractedKey: self.holderPublicKey ?? jwk
+            extractedKey: jwk
           )
         } else {
           // Fallback to nonce-only validation for backward compatibility
           try keyBindingVerifier.verify(
             expectedNonce: expectedNonce,
             challenge: jws,
-            extractedKey: self.holderPublicKey ?? jwk
+            extractedKey: jwk
           )
         }
         return keyBindingVerifier
@@ -355,12 +348,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           requireAud: claimsVerifier.requireAud,
           currentDate: claimsVerifier.currentDate
         )
-      } keyBindingVerifier: { [weak self] jws, jwk in
-        
-        guard let self = self else {
-          return nil
-        }
-        
+      } keyBindingVerifier: { jws, jwk in
         guard let keyBindingVerifier = keyBindingVerifier else {
           return nil
         }
@@ -375,14 +363,14 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
             expectedAudience: expectedAudience,
             expectedNonce: expectedNonce,
             challenge: jws,
-            extractedKey: self.holderPublicKey ?? jwk
+            extractedKey: jwk
           )
         } else {
           // Fallback to nonce-only validation for backward compatibility
           try keyBindingVerifier.verify(
             expectedNonce: expectedNonce,
             challenge: jws,
-            extractedKey: self.holderPublicKey ?? jwk
+            extractedKey: jwk
           )
         }
         return keyBindingVerifier

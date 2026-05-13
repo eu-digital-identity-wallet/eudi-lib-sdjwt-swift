@@ -48,9 +48,12 @@ public class SdJwtVcIssuerMetaDataFetcher: SdJwtVcIssuerMetaDataFetching {
         issuer: issuer,
         jwks: jwks.keys
       )
-    } else if metadata.jwksUri != nil {
+    } else if let jwksUri = metadata.jwksUri {
+      guard let jwksURL = URL(string: jwksUri) else {
+        throw SDJWTVerifierError.invalidJwt(description: "Invalid jwks_uri in metadata")
+      }
       let jwks: JWKSet = try await session.fetch(
-        from: issuerMetadataUrl
+        from: jwksURL
       )
       return .init(
         issuer: issuer,

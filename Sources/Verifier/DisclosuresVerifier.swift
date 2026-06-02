@@ -108,11 +108,6 @@ public final class DisclosuresVerifier: VerifierProtocol {
     }
     // Find the common elements
     let commonElements = setOfCollectedDigests.intersection(setOfDisclosuresDigests)
-
-    guard commonElements.count == setOfDisclosuresDigests.count else {
-      throw SDJWTVerifierError.missingDigests(disclosures: Array(setOfDisclosuresDigests.subtracting(commonElements)))
-    }
-
     return try dictionaryOfCommonElements(commonElements)
   }
 

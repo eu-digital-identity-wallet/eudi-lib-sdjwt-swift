@@ -18,6 +18,60 @@
 import X509
 import SwiftyJSON
 import JSONWebKey
+import Crypto
+import JSONWebKey
+import JSONWebSignature
+import JSONWebToken
+
+func createSignedJWTAndPublicJWK() -> (String, JWK) {
+
+  let did = "did:web:example.com"
+  let keyName = "key-1"
+  let kid = "\(did)#\(keyName)"
+
+  var header = DefaultJWSHeaderImpl(algorithm: .ES256)
+  header.keyID = kid
+
+  let key = P256.Signing.PrivateKey()
+  
+  struct JWTClaims: Codable {
+    let iss: String
+    let sub: String
+    let iat: Int
+    let exp: Int
+  }
+  
+  let jwt = try! JWT.signed(
+    payload: JWTClaims(
+      iss: did,
+      sub: "Alice",
+      iat: Int(Date().timeIntervalSince1970.rounded()),
+      exp: Int(Date().timeIntervalSince1970.rounded())
+    ),
+    protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
+    key: key
+  )
+
+  let jwtString = jwt.jwtString
+
+  var publicJWK = key.jwkRepresentation.publicKey
+  publicJWK.keyID = kid
+  publicJWK.algorithm = "ES256"
+
+  return ("\(jwtString)~", publicJWK)
+}
+
+final class DIDPublicKeyLookupAgent: DIDPublicKeyLookupAgentType {
+
+  let jwk: JWK
+  
+  init(jwk: JWK) {
+    self.jwk = jwk
+  }
+  func resolveKey(from didUrl: eudi_lib_sdjwt_swift.DID) async -> JSONWebKey.JWK? {
+    jwk
+  }
+}
 
 let key =
   """

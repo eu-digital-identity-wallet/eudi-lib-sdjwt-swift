@@ -15,10 +15,8 @@
  */
 import Foundation
 import X509
+import JSONWebKey
 
-public enum SdJwtVcIssuerPublicKeySource {
-  case metadata(iss: URL, kid: String?, fetcher: SdJwtVcIssuerMetaDataFetching)
-  case x509CertChain(iss: URL, chain: [Certificate], trust: X509SDJWTVCCertificateTrust)
-  case did(did: DID, lookupAgentType: DIDPublicKeyLookupAgentType)
+public protocol DIDPublicKeyLookupAgentType: Sendable {
+  func resolveKey(from didUrl: DID) async -> JWK?
 }
-

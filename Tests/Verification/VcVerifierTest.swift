@@ -43,6 +43,21 @@ final class VcVerifierTest: XCTestCase {
   override func tearDown() async throws {
   }
   
+  func testVerifyIssuance_WithValidSDJWT_WithDID_ShouldSucceed() async throws {
+    
+    // Given
+    let (jwt, key) = createSignedJWTAndPublicJWK()
+    let didVerifier = SDJWTVCVerifier(verificationMethod: .did(
+      lookup: DIDPublicKeyLookupAgent(jwk: key))
+    )
+    
+    // When
+    let result = try await didVerifier.verifyIssuance(unverifiedSdJwt: jwt)
+    
+    // Then
+    XCTAssertNoThrow(try result.get())
+  }
+  
   func testVerifyIssuance_WithValidSDJWT_Withx509Header_ShouldSucceed() async throws {
     
     // Given

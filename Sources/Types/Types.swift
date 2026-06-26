@@ -96,3 +96,37 @@ public enum Keys: String {
   case nonce
   case none
 }
+
+public struct DID: Sendable {
+
+  public static let DID_SYNTAX = try? NSRegularExpression(pattern: "^did:[a-z0-9]+:(([A-Z.a-z0-9]|-|_|%[0-9A-Fa-f][0-9A-Fa-f])*:)*([A-Z.a-z0-9]|-|_|%[0-9A-Fa-f][0-9A-Fa-f])+$", options: [])
+
+  public let uri: URL
+
+  public init(uri: URL) {
+    self.uri = uri
+  }
+
+  public var string: String {
+    return uri.absoluteString
+  }
+
+  public static func parse(_ string: String, regex: NSRegularExpression? = Self.DID_SYNTAX) -> DID? {
+    guard
+      let regex = regex,
+      regex.matches(
+        in: string,
+        options: [],
+        range: NSRange(
+          location: 0,
+          length: string.utf16.count
+        )
+      ).isEmpty == false,
+      let url = URL(string: string)
+    else {
+      return nil
+    }
+
+    return DID(uri: url)
+  }
+}

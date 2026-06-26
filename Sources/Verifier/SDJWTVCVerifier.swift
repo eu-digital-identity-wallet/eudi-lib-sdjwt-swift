@@ -108,6 +108,7 @@ protocol SdJwtVcVerifierType {
 public enum VerificationMethod {
   case metadata(fetcher: SdJwtVcIssuerMetaDataFetching)
   case x509(trust: X509SDJWTVCCertificateTrust)
+  case did(lookup: DIDPublicKeyLookupAgentType)
 }
 
 /**
@@ -456,6 +457,11 @@ private extension SDJWTVCVerifier {
       return .failure(
         SDJWTVerifierError.invalidJwt(description: "x509 certificate chain is not trusted")
       )
+    case .did(let did, let lookupAgentType):
+      guard let jwk = await lookupAgentType.resolveKey(from: did) else {
+        return .failure(SDJWTVerifierError.invalidJwk)
+      }
+      return .success(jwk)
     }
   }
   
@@ -494,6 +500,11 @@ private extension SDJWTVCVerifier {
         iss: issUrl,
         chain: certChain,
         trust: trust
+      )
+    case .did(let lookup):
+      return .did(
+        did: .init(uri: issUrl),
+        lookupAgentType: lookup
       )
     }
   }

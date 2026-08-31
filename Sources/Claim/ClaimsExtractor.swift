@@ -54,8 +54,16 @@ public class ClaimExtractor {
       while true {
         let (updatedSdArray, foundDigest) = sdArray.findAndRemoveFirst(from: digestsOfDisclosures.compactMap({$0.key}))
         if let foundDigest,
-           let foundDisclosure = digestsOfDisclosures[foundDigest]?.base64URLDecode()?.objectProperty {
+           let disclosure = digestsOfDisclosures[foundDigest],
+           let foundDisclosure = disclosure.base64URLDecode()?.objectProperty {
           json[Keys.sd.rawValue].arrayObject = updatedSdArray
+          
+          // https://www.rfc-editor.org/rfc/rfc9901#section-7.1 step 3.c.ii
+          // Issuance already refuses these names in ClaimRepresentable.checkKeyValidity()
+          guard foundDisclosure.key != Keys.sd.rawValue,
+                foundDisclosure.key != Keys.dots.rawValue else {
+            throw SDJWTVerifierError.invalidDisclosure(disclosures: [disclosure])
+          }
           
           guard !json[foundDisclosure.key].exists() else {
             throw SDJWTVerifierError.nonUniqueDisclosures

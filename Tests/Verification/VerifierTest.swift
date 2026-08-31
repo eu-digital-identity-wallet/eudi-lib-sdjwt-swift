@@ -599,4 +599,45 @@ final class VerifierTest: XCTestCase {
       XCTAssertTrue(description.contains("Nonce mismatch"), "Error should indicate nonce mismatch")
     }
   }
+
+  // ["_26bc4LT-ac6q2KI6cBW5es", "_sd", "Möbius"]
+  private static let disclosureWithSdAsClaimName = "WyJfMjZiYzRMVC1hYzZxMktJNmNCVzVlcyIsIl9zZCIsIk3DtmJpdXMiXQ"
+
+  // ["_26bc4LT-ac6q2KI6cBW5es", "...", "Möbius"]
+  private static let disclosureWithDotsAsClaimName = "WyJfMjZiYzRMVC1hYzZxMktJNmNCVzVlcyIsIi4uLiIsIk3DtmJpdXMiXQ"
+
+  private func sdJwt(withDisclosure disclosure: Disclosure) async throws -> String {
+    let digest = try XCTUnwrap(DigestCreator().hashAndBase64Encode(input: disclosure))
+    let payload: JSON = [
+      Keys.iss.rawValue: "https://example.com/issuer",
+      Keys.iat.rawValue: 1749031301,
+      Keys.sdAlg.rawValue: "sha-256",
+      Keys.sd.rawValue: [digest]
+    ]
+    let keyData = try XCTUnwrap(Data(base64Encoded: SDJWTConstants.anIssuerPrivateKey))
+    let signed = try await SDJWTIssuer.createSDJWT(
+      purpose: .issuance(
+        DefaultJWSHeaderImpl(algorithm: .ES256),
+        (value: payload, disclosures: [disclosure])
+      ),
+      signingKey: extractECKey(from: keyData)
+    )
+    return CompactSerialiser(signedSDJWT: signed).serialised
+  }
+
+  func testVerification_WhenDisclosureUsesReservedClaimName_ThenFails() async throws {
+    for disclosure in [Self.disclosureWithSdAsClaimName, Self.disclosureWithDotsAsClaimName] {
+      let serialised = try await sdJwt(withDisclosure: disclosure)
+
+      XCTAssertThrowsError(
+        try DisclosuresVerifier(parser: CompactParser(), serialisedString: serialised).verify()
+      ) { error in
+        guard case SDJWTVerifierError.invalidDisclosure(let disclosures) = error else {
+          XCTFail("Expected invalidDisclosure error, got \(error)")
+          return
+        }
+        XCTAssertEqual(disclosures, [disclosure])
+      }
+    }
+  }
 }

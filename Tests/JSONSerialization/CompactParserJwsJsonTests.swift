@@ -272,7 +272,7 @@ class CompactParserJwsJsonTests: XCTestCase {
     let json: JSON = SDJWTConstants.issuerSignedJWSJSON
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
+        trust: X509CertificateTrustFactory.trust
       )
     )
     
@@ -281,7 +281,7 @@ class CompactParserJwsJsonTests: XCTestCase {
     
     // Then
     let sdJwt = try parser.getSignedSdJwt(serialisedString: resultJson)
-    let result = try await x509Verifier.verifyIssuance(
+    let _ = try await x509Verifier.verifyIssuance(
       unverifiedSdJwt: sdJwt.serialisation
     )
     

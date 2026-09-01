@@ -27,7 +27,7 @@ import CryptoKit
 final class VcVerifierTest: XCTestCase {
   
   private let x509Verifier = SDJWTVCVerifier(verificationMethod: .x509(
-    trust: X509SDJWTVCCertificateChainVerifier(rootCertificates: try! SDJWTConstants.loadRootCertificates())
+    trust: X509CertificateTrustFactory.trust
   ))
   
   private let metadataVerifier = SDJWTVCVerifier(
@@ -357,9 +357,7 @@ final class VcVerifierTest: XCTestCase {
     
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: X509SDJWTVCCertificateChainVerifier(
-          rootCertificates: try! SDJWTConstants.loadRootCertificates()
-        )),
+        trust: X509CertificateTrustFactory.trust),
       typeMetadataPolicy: .notUsed
     )
     
@@ -461,11 +459,9 @@ final class VcVerifierTest: XCTestCase {
     
     let verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-      trust: X509SDJWTVCCertificateChainVerifier(
-        rootCertificates: try! SDJWTConstants.loadRootCertificates()
-      )),
+      trust: X509CertificateTrustFactory.trust),
       typeMetadataPolicy: .optional(verifier: typeMetadataVerifier)
-      )
+    )
     
     // When
     let result = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)

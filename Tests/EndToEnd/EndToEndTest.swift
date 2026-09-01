@@ -53,7 +53,7 @@ final class EndToEndTest: XCTestCase {
     // When
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
+        trust: X509CertificateTrustFactory.trust
       )
     )
     
@@ -137,7 +137,7 @@ final class EndToEndTest: XCTestCase {
     // When
     let x509Verifier = SDJWTVCVerifier(
       verificationMethod: .x509(
-        trust: x509CertificateChainVerifier
+        trust: X509CertificateTrustFactory.trust
       )
     )
     

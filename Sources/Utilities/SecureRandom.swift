@@ -31,7 +31,7 @@ enum SecureRandom {
   /// ```swift
   /// let randomCount = SecureRandom.number(in: 0...10)
   /// ```
-  static func number(in range: ClosedRange<Int>) -> Int {
+  static func number(in range: ClosedRange<Int>) throws -> Int {
     let lowerBound = range.lowerBound
     let upperBound = range.upperBound
 
@@ -57,9 +57,8 @@ enum SecureRandom {
       )
     }
 
-    // If random generation fails, fall back to deterministic value (should never happen)
     guard result == errSecSuccess else {
-      return lowerBound
+      throw SDJWTError.randomGenerationFailed
     }
 
     // Use modulo with rejection sampling to ensure uniform distribution
@@ -69,7 +68,7 @@ enum SecureRandom {
     // Rejection sampling: retry if value is in the biased range
     if randomValue >= maxAcceptableValue {
       // Recursively retry (very rare, typically happens < 0.01% of the time)
-      return number(in: range)
+      return try number(in: range)
     }
 
     return lowerBound + Int(randomValue % rangeSize)

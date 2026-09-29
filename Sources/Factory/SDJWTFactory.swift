@@ -146,7 +146,7 @@ class SDJWTFactory {
     // Add decoys to the _sd array if needed to meet minimum requirements
     if !outputJson[Keys.sd].arrayValue.isEmpty {
       let currentDigestCount = outputJson[Keys.sd].arrayValue.count
-      let decoys = self.addDecoy(currentDigestCount: currentDigestCount)
+      let decoys = try self.addDecoy(currentDigestCount: currentDigestCount)
       if !decoys.isEmpty {
         let decoyJsonArray = decoys.map { JSON($0) }
         outputJson[Keys.sd] = JSON(outputJson[Keys.sd].arrayValue + decoyJsonArray)
@@ -243,7 +243,7 @@ class SDJWTFactory {
   ///   ["6qMQvRL5haj", "family_name", "Möbius"]
   ///   
   private func flatDisclose(key: String, value: JSON) throws -> (Disclosure, DisclosureDigest) {
-    let saltString = saltProvider.saltString
+    let saltString = try saltProvider.saltString()
     let jsonArray = JSON(arrayLiteral: saltString, key, value)
     let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
 
@@ -265,7 +265,7 @@ class SDJWTFactory {
   ///   ["6qMQvRL5haj",  "Möbius"]
   ///
   private func discloseArrayElement(value: JSON) throws -> (Disclosure, DisclosureDigest) {
-    let saltString = saltProvider.saltString
+    let saltString = try saltProvider.saltString()
     let jsonArray = JSON(arrayLiteral: saltString, value)
     let stringToEncode = jsonArray.rawString(options: .withoutEscapingSlashes)
 
@@ -291,7 +291,7 @@ class SDJWTFactory {
   /// - `.globalLimit(n)`: Generates 0 to remaining decoys (deprecated, less secure)
   /// - `.perObject(min, max)`: Ensures minimum total digests, optionally adds random extras
   ///
-  private func addDecoy(currentDigestCount: Int = 0) -> [DisclosureDigest] {
+  private func addDecoy(currentDigestCount: Int = 0) throws -> [DisclosureDigest] {
     switch decoyConfiguration.strategy {
     case .none:
       return []
@@ -301,8 +301,8 @@ class SDJWTFactory {
       // Uses non-secure random and can exhaust decoys early
       if globalDecoyCounter < limit {
         let remaining = limit - globalDecoyCounter
-        let count = SecureRandom.number(in: 0...remaining)
-        let decoys = (0..<count).compactMap { _ in digestCreator.decoy() }
+        let count = try SecureRandom.number(in: 0...remaining)
+        let decoys = try (0..<count).compactMap { _ in try digestCreator.decoy() }
         globalDecoyCounter += decoys.count
         return decoys
       }
@@ -319,12 +319,12 @@ class SDJWTFactory {
 
       // Add random extra decoys if maximum is specified
       if let maximum = maximum, maximum > 0 {
-        let extraDecoys = SecureRandom.number(in: 0...maximum)
+        let extraDecoys = try SecureRandom.number(in: 0...maximum)
         decoyCount += extraDecoys
       }
 
       // Generate the decoy digests
-      return (0..<decoyCount).compactMap { _ in digestCreator.decoy() }
+      return try (0..<decoyCount).compactMap { _ in try digestCreator.decoy() }
     }
   }
 

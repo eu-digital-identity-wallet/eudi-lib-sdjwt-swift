@@ -30,6 +30,7 @@ public enum SDJWTError: Error, Equatable {
   case algorithmMissMatch
   case noneAsAlgorithm
   case macAsAlgorithm
+  case randomGenerationFailed
   case error(String)
 }
 

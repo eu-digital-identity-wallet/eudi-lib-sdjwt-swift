@@ -1321,23 +1321,26 @@ final class VcVerifierTest: XCTestCase {
 
   // MARK: - Key Binding aud/iat Validation Tests
 
-  func testVerifyPresentation_WithAudienceValidation_ShouldSucceed() async throws {
-    // The test data KB-JWT contains: {"nonce":"123456789","aud":"example.com","iat":1727945886,...}
+  func testVerifyPresentation_WithPartialKBParameters_ShouldFail() async throws {
+    // SDJWT_1: supplying expectedAudience without iatOffset (or vice versa) is now
+    // rejected instead of silently falling back to nonce-only validation.
     let sdJwtString = SDJWTConstants.presentation_sd_jwt.clean()
     let claimsVerifier = ClaimsVerifier()
     let keyBindingVerifier = KeyBindingVerifier()
-    let expectedAudience = "example.com" // Must match the aud in KB-JWT
 
-    // Note: iatOffset defaults to nil, skipping iat validation due to historic test data
     let result = try await metadataVerifier.verifyPresentation(
       unverifiedSdJwt: sdJwtString,
       claimsVerifier: claimsVerifier,
       keyBindingVerifier: keyBindingVerifier,
       expectedNonce: "123456789",
-      expectedAudience: expectedAudience
+      expectedAudience: "example.com"
     )
-
-    XCTAssertNoThrow(try result.get())
+    do {
+      _ = try result.get()
+      XCTFail("Expected keyBindingFailed error for partial KB parameters")
+    } catch SDJWTVerifierError.keyBindingFailed {
+      // expected
+    }
   }
 
   func testVerifyPresentation_BackwardCompatibility_WithoutAudAndIat() async throws {

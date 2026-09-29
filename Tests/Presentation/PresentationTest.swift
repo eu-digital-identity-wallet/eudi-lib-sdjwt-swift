@@ -139,7 +139,7 @@ final class PresentationTest: XCTestCase {
             kbJwtPayload: .init([
               Keys.nonce.rawValue: "123456789",
               Keys.aud.rawValue: "example.com",
-              Keys.iat.rawValue: 1694600000,
+              Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
               Keys.sdHash.rawValue: sdHash
             ])
           )
@@ -284,7 +284,7 @@ final class PresentationTest: XCTestCase {
             kbJwtPayload: .init([
               Keys.nonce.rawValue: "123456789",
               Keys.aud.rawValue: "example.com",
-              Keys.iat.rawValue: 1694600000,
+              Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
               Keys.sdHash.rawValue: sdHash
             ])
           )

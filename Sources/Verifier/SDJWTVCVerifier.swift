@@ -145,7 +145,6 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     self.typeMetadataPolicy = typeMetadataPolicy
   }
   
-  
   func verifyIssuance(
     unverifiedSdJwt: String,
     claimsVerifier: ClaimsVerifier? = nil
@@ -153,12 +152,10 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     let sdjwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
     let jws = sdjwt.jwt
     let jwk = try await issuerJwsKeySelector(jws: jws)
-    
-    try await verifyTypeMetadata(sdJwt: sdjwt)
-    
+
     switch jwk {
     case .success(let jwk):
-      return try SDJWTVerifier(
+      let result = try SDJWTVerifier(
         parser: parser,
         serialisedString: unverifiedSdJwt
       ).verifyIssuance(issuersSignatureVerifier: { jws in
@@ -183,6 +180,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           )
         }
       })
+      return try await appendingTypeMetadataCheck(result: result, sdJwt: sdjwt)
     case .failure(let error):
       throw error
     }
@@ -200,15 +198,13 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     else {
       throw SDJWTVerifierError.invalidJwt(description: "Failed to parse SD-JWT from JSON")
     }
-    
-    try await verifyTypeMetadata(sdJwt: sdJwt)
-    
+
     let jws = sdJwt.jwt
     let jwk = try await issuerJwsKeySelector(jws: jws)
-    
+
     switch jwk {
     case .success(let jwk):
-      return try SDJWTVerifier(
+      let result = try SDJWTVerifier(
         sdJwt: sdJwt
       ).verifyIssuance(issuersSignatureVerifier: { jws in
         try SignatureVerifier(
@@ -232,6 +228,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           )
         }
       })
+      
+      return try await appendingTypeMetadataCheck(result: result, sdJwt: sdJwt)
     case .failure(let error):
       throw error
     }
@@ -248,11 +246,10 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     let sdjwt = try parser.getSignedSdJwt(serialisedString: unverifiedSdJwt)
     let jws = sdjwt.jwt
     let jwk = try await issuerJwsKeySelector(jws: jws)
-    try await verifyTypeMetadata(sdJwt: sdjwt)
-    
+
     switch jwk {
     case .success(let jwk):
-      return try SDJWTVerifier(
+      let result = try SDJWTVerifier(
         parser: parser,
         serialisedString: unverifiedSdJwt
       ).verifyPresentation { jws in
@@ -301,11 +298,13 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         }
         return keyBindingVerifier
       }
+      
+      return try await appendingTypeMetadataCheck(result: result, sdJwt: sdjwt)
     case .failure(let error):
       throw error
     }
   }
-  
+
   func verifyPresentation(
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
@@ -324,11 +323,10 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     
     let jws = sdJwt.jwt
     let jwk = try await issuerJwsKeySelector(jws: jws)
-    try await verifyTypeMetadata(sdJwt: sdJwt)
-    
+
     switch jwk {
     case .success(let jwk):
-      return SDJWTVerifier(
+      let result = SDJWTVerifier(
         sdJwt: sdJwt
       ).verifyPresentation { jws in
         try SignatureVerifier(
@@ -376,12 +374,24 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
         }
         return keyBindingVerifier
       }
+      
+      return try await appendingTypeMetadataCheck(result: result, sdJwt: sdJwt)
     case .failure(let error):
       throw error
     }
   }
-  
-  
+
+
+  private func appendingTypeMetadataCheck(
+    result: Result<SignedSDJWT, any Error>,
+    sdJwt: SignedSDJWT
+  ) async throws -> Result<SignedSDJWT, any Error> {
+    // Only fetch type metadata after the issuer signature has been verified
+    guard case .success = result else { return result }
+    try await verifyTypeMetadata(sdJwt: sdJwt)
+    return result
+  }
+
   private func verifyTypeMetadata(
     sdJwt: SignedSDJWT
   ) async throws {

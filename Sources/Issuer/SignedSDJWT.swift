@@ -259,7 +259,7 @@ public struct SignedSDJWT {
 
   func extractDigestCreator() throws -> DigestCreator {
     let payloadJson = try self.jwt.payloadJSON()
-    let sdAlg = payloadJson[Keys.sdAlg.rawValue].string ?? "sha-256"
+    let sdAlg = try SDJWT.extractSdAlgClaim(from: payloadJson)
     let algorithIdentifier = HashingAlgorithmIdentifier.allCases.first(where: {$0.rawValue == sdAlg})
     guard let algorithIdentifier else {
       throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm

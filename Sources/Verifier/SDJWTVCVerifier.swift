@@ -282,21 +282,24 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           throw SDJWTVerifierError.keyBindingFailed(description: "Expected nonce is required when key binding verification is performed")
         }
 
-        // If expectedAudience and iatOffset are provided, use full validation.
-        if let expectedAudience = expectedAudience, let iatOffset = iatOffset {
+        switch (expectedAudience, iatOffset) {
+        case let (audience?, offset?):
           try keyBindingVerifier.verify(
-            iatOffset: iatOffset,
-            expectedAudience: expectedAudience,
+            iatOffset: offset,
+            expectedAudience: audience,
             expectedNonce: expectedNonce,
             challenge: jws,
             extractedKey: jwk
           )
-        } else {
-          // Fallback to nonce-only validation for backward compatibility
+        case (nil, nil):
           try keyBindingVerifier.verify(
             expectedNonce: expectedNonce,
             challenge: jws,
             extractedKey: jwk
+          )
+        default:
+          throw SDJWTVerifierError.keyBindingFailed(
+            description: "expectedAudience and iatOffset must be supplied together or both omitted"
           )
         }
         return keyBindingVerifier
@@ -305,7 +308,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       throw error
     }
   }
-  
+
   func verifyPresentation(
     unverifiedSdJwt: JSON,
     claimsVerifier: ClaimsVerifier,
@@ -357,21 +360,24 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           throw SDJWTVerifierError.keyBindingFailed(description: "Expected nonce is required when key binding verification is performed.")
         }
 
-        // If expectedAudience and iatOffset are provided, use full validation.
-        if let expectedAudience = expectedAudience, let iatOffset = iatOffset {
+        switch (expectedAudience, iatOffset) {
+        case let (audience?, offset?):
           try keyBindingVerifier.verify(
-            iatOffset: iatOffset,
-            expectedAudience: expectedAudience,
+            iatOffset: offset,
+            expectedAudience: audience,
             expectedNonce: expectedNonce,
             challenge: jws,
             extractedKey: jwk
           )
-        } else {
-          // Fallback to nonce-only validation for backward compatibility
+        case (nil, nil):
           try keyBindingVerifier.verify(
             expectedNonce: expectedNonce,
             challenge: jws,
             extractedKey: jwk
+          )
+        default:
+          throw SDJWTVerifierError.keyBindingFailed(
+            description: "expectedAudience and iatOffset must be supplied together or both omitted"
           )
         }
         return keyBindingVerifier
@@ -380,8 +386,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       throw error
     }
   }
-  
-  
+
+
   private func verifyTypeMetadata(
     sdJwt: SignedSDJWT
   ) async throws {

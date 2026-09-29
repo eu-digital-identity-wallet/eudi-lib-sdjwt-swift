@@ -560,22 +560,17 @@ final class VcVerifierTest: XCTestCase {
   }
   
   func testVerifyIssuance_WithPolicyRequiredForVcts_MissingDisclosure_ShouldFail() async throws {
-    
+
     // Given
     let typeMetadataVerifier = typeMetadataVerifierFactory()
-    let keyData = Data(
-      base64Encoded: SDJWTConstants.anIssuerPrivateKey
-    )!
-    
+    var issuerJwk = try issuersKeyPair.public.jwk
+    issuerJwk.keyID = "kid-1"
+
     let issuerSignedSDJWT = try! await SDJWTIssuer.issue(
-      issuersPrivateKey: extractECKey(
-        from: keyData
-      ),
+      issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        x509CertificateChain: [
-          SDJWTConstants.anIssuersPrivateKeySignedcertificate
-        ]
+        keyID: "kid-1"
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -633,14 +628,11 @@ final class VcVerifierTest: XCTestCase {
     }
     
     let verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(
-      trust: X509SDJWTVCCertificateChainVerifier(
-        rootCertificates: try! SDJWTConstants.loadRootCertificates()
-      )),
+      verificationMethod: .did(lookup: DIDPublicKeyLookupAgent(jwk: issuerJwk)),
       typeMetadataPolicy: .requiredFor(vcts: ["https://mock.local/type_meta_data_pid", "other_metadata"], verifier: typeMetadataVerifier))
-    
+
     let sdJwtString =  issuerSignedSDJWT.serialisation
-  
+
     do {
       // When
       _ = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
@@ -1118,22 +1110,30 @@ final class VcVerifierTest: XCTestCase {
   
   
   func testVerifyIssuance_WithPolicyRequiredForVcts_EmptyRequiredSet_ShouldFail() async throws {
-    
+
     // Given
     let typeMetadataVerifier = typeMetadataVerifierFactory()
-    let sdJwtString = SDJWTConstants.secondary_issuer_sd_jwt.clean()
-    
+    var issuerJwk = try issuersKeyPair.public.jwk
+    issuerJwk.keyID = "kid-1"
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1")
+    ) {
+      ConstantClaims.iss(domain: "did:web:example.com")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://mock.local/type_meta_data_pid")
+      FlatDisclosedClaim("given_name", "John")
+    }
+
     let verifier = SDJWTVCVerifier(
-      verificationMethod: .x509(
-      trust: X509SDJWTVCCertificateChainVerifier(
-        rootCertificates: try! SDJWTConstants.loadRootCertificates()
-      )),
+      verificationMethod: .did(lookup: DIDPublicKeyLookupAgent(jwk: issuerJwk)),
       typeMetadataPolicy: .requiredFor(vcts: [], verifier: typeMetadataVerifier)
-      )
-    
+    )
+
     do {
       // When
-      _ = try await verifier.verifyIssuance(unverifiedSdJwt: sdJwtString)
+      _ = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
       XCTFail("Verification should not be succeeded")
     } catch {
       XCTAssertEqual(error as? TypeMetadataError, .emptyRequiredVcts)
@@ -1465,6 +1465,48 @@ final class VcVerifierTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
   }
 
+  // MARK: - SSRF regression (SDJWT_5 / #162)
+
+  func testVerifyIssuance_WithInvalidSignature_DoesNotFetchTypeMetadata() async throws {
+    // Given: an SD-JWT signed by one key, verified with a different key.
+    // Signature verification must fail BEFORE any type-metadata fetch is
+    // attempted, otherwise an attacker-controlled vct URI could trigger SSRF.
+    var issuerJwk = try issuersKeyPair.public.jwk
+    issuerJwk.keyID = "kid-1"
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1")
+    ) {
+      ConstantClaims.iss(domain: "did:web:example.com")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://attacker.example.invalid/vct")
+      FlatDisclosedClaim("given_name", "John")
+    }
+
+    // Wrong verification key: signature check will fail.
+    var wrongIssuerJwk = try holdersKeyPair.public.jwk
+    wrongIssuerJwk.keyID = "kid-1"
+
+    let counter = FetchCallCounter()
+    let metadataFetcher = TypeMetadataFetcher(session: counter)
+    let typeMetadataVerifier = TypeMetadataVerifier(
+      metadataLookup: TypeMetadataLookupDefault(fetcher: metadataFetcher)
+    )
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .did(lookup: DIDPublicKeyLookupAgent(jwk: wrongIssuerJwk)),
+      typeMetadataPolicy: .alwaysRequired(verifier: typeMetadataVerifier)
+    )
+
+    // When
+    let result = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
+
+    // Then: signature failure surfaces, and no HTTP request was attempted.
+    XCTAssertThrowsError(try result.get())
+    XCTAssertEqual(counter.callCount, 0, "Type metadata must not be fetched before signature verification succeeds")
+  }
+
 
   private func typeMetadataVerifierFactory(
     useMock: Bool = true
@@ -1486,6 +1528,23 @@ final class VcVerifierTest: XCTestCase {
       metadataLookup: metadataLookup)
     
     return verifier
+  }
+}
+
+/// Networking mock that counts calls and always throws.
+/// Used to prove that no HTTP request is attempted on the SSRF-protected path.
+/// The test calls into it serially, so an unchecked mutable counter is fine.
+private final class FetchCallCounter: Networking, @unchecked Sendable {
+  nonisolated(unsafe) private(set) var callCount = 0
+
+  func data(from url: URL) async throws -> (Data, URLResponse) {
+    callCount += 1
+    throw URLError(.badURL)
+  }
+
+  func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+    callCount += 1
+    throw URLError(.badURL)
   }
 }
 

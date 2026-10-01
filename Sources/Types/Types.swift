@@ -80,6 +80,81 @@ public enum TypeMetadataError: Error, Equatable {
   case integrityValidationFailed
 }
 
+// MARK: - Redacted error descriptions
+
+extension SDJWTVerifierError: CustomStringConvertible, CustomDebugStringConvertible {
+  public var description: String {
+    switch self {
+    case .parsingError:
+      return "parsingError"
+    case .invalidJwt(let description):
+      return "invalidJwt(\(description ?? "nil"))"
+    case .invalidJwk:
+      return "invalidJwk"
+    case .invalidIssuer:
+      return "invalidIssuer"
+    case .keyBindingFailed(let description):
+      return "keyBindingFailed(\(description))"
+    case .invalidDisclosure(let disclosures):
+      return "invalidDisclosure(count: \(disclosures.count), content: REDACTED)"
+    case .missingOrUnknownHashingAlgorithm:
+      return "missingOrUnknownHashingAlgorithm"
+    case .nonUniqueDisclosures:
+      return "nonUniqueDisclosures"
+    case .nonUniqueDisclosureDigests:
+      return "nonUniqueDisclosureDigests"
+    case .missingDigests(let disclosures):
+      return "missingDigests(count: \(disclosures.count), content: REDACTED)"
+    case .noAlgorithmProvided:
+      return "noAlgorithmProvided"
+    case .failedToCreateVerifier:
+      return "failedToCreateVerifier"
+    case .expiredJwt:
+      return "expiredJwt"
+    case .notValidYetJwt:
+      return "notValidYetJwt"
+    case .invalidTypeMetadataURL:
+      return "invalidTypeMetadataURL"
+    }
+  }
+
+  public var debugDescription: String { description }
+}
+
+extension SDJWTError: CustomStringConvertible, CustomDebugStringConvertible {
+  public var description: String {
+    switch self {
+    case .sdAsKey:
+      return "sdAsKey"
+    case .nullJSONValue:
+      return "nullJSONValue"
+    case .encodingError:
+      return "encodingError"
+    case .discloseError:
+      return "discloseError"
+    case .serializationError:
+      return "serializationError"
+    case .nonObjectFormat:
+      // ofElement is the serialised sdJwtObject, which contains claim values.
+      return "nonObjectFormat(ofElement: REDACTED)"
+    case .keyCreation:
+      return "keyCreation"
+    case .algorithmMissMatch:
+      return "algorithmMissMatch"
+    case .noneAsAlgorithm:
+      return "noneAsAlgorithm"
+    case .macAsAlgorithm:
+      return "macAsAlgorithm"
+    case .randomGenerationFailed:
+      return "randomGenerationFailed"
+    case .error(let message):
+      return "error(\(message))"
+    }
+  }
+
+  public var debugDescription: String { description }
+}
+
 /// Static Keys Used by the JWT
 public enum Keys: String {
   case sd = "_sd"

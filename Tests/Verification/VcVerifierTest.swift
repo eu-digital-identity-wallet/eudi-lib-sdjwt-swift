@@ -1140,6 +1140,37 @@ final class VcVerifierTest: XCTestCase {
     }
   }
 
+  func testVerifyIssuance_WithPolicyRequiredForVcts_UnexpectedVct_ShouldFail() async throws {
+    let typeMetadataVerifier = typeMetadataVerifierFactory()
+    var issuerJwk = try issuersKeyPair.public.jwk
+    issuerJwk.keyID = "kid-1"
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1")
+    ) {
+      ConstantClaims.iss(domain: "did:web:example.com")
+      ConstantClaims.iat(time: Date())
+      PlainClaim("vct", "https://example.com/vct-A")
+      FlatDisclosedClaim("given_name", "John")
+    }
+
+    let verifier = SDJWTVCVerifier(
+      verificationMethod: .did(lookup: DIDPublicKeyLookupAgent(jwk: issuerJwk)),
+      typeMetadataPolicy: .requiredFor(
+        vcts: ["https://example.com/vct-B"],
+        verifier: typeMetadataVerifier
+      )
+    )
+
+    do {
+      _ = try await verifier.verifyIssuance(unverifiedSdJwt: issuerSignedSDJWT.serialisation)
+      XCTFail("Verification should not succeed for unexpected vct")
+    } catch {
+      XCTAssertEqual(error as? TypeMetadataError, .unexpectedVct)
+    }
+  }
+
   // MARK: - Claims Validation Tests (Issuance)
 
   func testVerifyIssuance_WithClaimsVerifier_ShouldVerifyClaims() async throws {

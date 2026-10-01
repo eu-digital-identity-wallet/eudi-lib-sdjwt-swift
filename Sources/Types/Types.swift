@@ -63,6 +63,7 @@ public enum TypeMetadataError: Error, Equatable {
   case vctIntegrityCheckFailed
   case schemaIntegrityCheckFailed
   case emptyRequiredVcts
+  case unexpectedVct
   case circularReference
   case invalidSchemaURL
   case invalidSchema

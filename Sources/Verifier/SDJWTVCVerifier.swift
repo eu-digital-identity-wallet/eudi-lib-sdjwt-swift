@@ -408,16 +408,30 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     case .optional(let verifier):
       do {
         try await verifier.verifyTypeMetadata(sdJwt: sdJwt)
+      } catch let error as TypeMetadataError where Self.isMetadataAvailabilityError(error) {
         return
-      } catch {
+      } catch is URLError {
         return
       }
-      
+
     case .alwaysRequired(let verifier):
         try await verifier.verifyTypeMetadata(sdJwt: sdJwt)
       
     case .requiredFor(let vcts, let verifier):
         try await verifier.verifyTypeMetadata(for: vcts, sdJwt: sdJwt)
+    }
+  }
+
+  // Allow-list of TypeMetadataError cases that are safe to swallow under
+  // the .optional policy.
+  private static func isMetadataAvailabilityError(_ error: TypeMetadataError) -> Bool {
+    switch error {
+    case .invalidTypeMetadataURL,
+         .unsupportedRetreivalMethod,
+         .missingTypeMetadata:
+      return true
+    default:
+      return false
     }
   }
 }

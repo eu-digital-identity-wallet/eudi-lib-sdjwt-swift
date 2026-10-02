@@ -18,27 +18,29 @@ import Foundation
 typealias Salt = String
 
 protocol SaltProvider {
-  var salt: Data { get }
-  var saltString: Salt { get }
+  func salt() throws -> Data
+  func saltString() throws -> Salt
 }
 
 final class DefaultSaltProvider: SaltProvider {
 
-  // MARK: - Properties
-
-  var saltString: Salt {
-    return salt.base64URLEncode()
-  }
-
-  var salt: Data {
-    self.generateRandomSalt()
-  }
-
   // MARK: - Methods
 
-  func generateRandomSalt(length: Int = 16) -> Data {
+  func saltString() throws -> Salt {
+    try salt().base64URLEncode()
+  }
+
+  func salt() throws -> Data {
+    try generateRandomSalt()
+  }
+
+  // Reject a silent all-zero salt when the CSPRNG fails.
+  func generateRandomSalt(length: Int = 16) throws -> Data {
     var randomBytes = [UInt8](repeating: 0, count: length)
-    _ = SecRandomCopyBytes(kSecRandomDefault, length, &randomBytes)
+    let result = SecRandomCopyBytes(kSecRandomDefault, length, &randomBytes)
+    guard result == errSecSuccess else {
+      throw SDJWTError.randomGenerationFailed
+    }
     return Data(randomBytes)
   }
 }

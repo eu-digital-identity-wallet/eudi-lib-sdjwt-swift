@@ -43,8 +43,8 @@ public final class KeyBindingVerifier: VerifierProtocol {
     }
     
     let challengePayloadJson = try challenge.payloadJSON()
-    
-    guard let _ = challengePayloadJson[Keys.iat].int else {
+
+    guard let iat = challengePayloadJson[Keys.iat].int else {
       throw SDJWTVerifierError.keyBindingFailed(description: "No iat claim Provided")
     }
     
@@ -58,7 +58,7 @@ public final class KeyBindingVerifier: VerifierProtocol {
     
     self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
     
-    try verifyIat(iatOffset: iatOffset, iat: Date())
+    try verifyIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(iat)))
     try verifyAud(aud: aud, expectedAudience: expectedAudience)
     
     try verify()
@@ -120,6 +120,8 @@ private extension KeyBindingVerifier {
       guard string == expectedAudience else {
         throw SDJWTVerifierError.keyBindingFailed(description: "Expected Audience Missmatch")
       }
+    } else {
+      throw SDJWTVerifierError.keyBindingFailed(description: "Missing or invalid aud claim in KB-JWT")
     }
   }
   

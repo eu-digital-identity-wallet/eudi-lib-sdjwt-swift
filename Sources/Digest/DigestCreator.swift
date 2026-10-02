@@ -41,8 +41,8 @@ public final class DigestCreator {
     return base64Hash
   }
 
-  public func decoy() -> DisclosureDigest? {
-    return self.hashAndBase64Encode(input: saltProvider.saltString)
+  public func decoy() throws -> DisclosureDigest? {
+    return self.hashAndBase64Encode(input: try saltProvider.saltString())
   }
 
 }

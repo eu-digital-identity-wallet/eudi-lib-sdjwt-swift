@@ -98,16 +98,15 @@ public class TypeMetadataVerifier: TypeMetadataVerifierType {
     guard !vcts.isEmpty else {
       throw TypeMetadataError.emptyRequiredVcts
     }
-  
+
+    guard vcts.contains(vctUri) else {
+      throw TypeMetadataError.unexpectedVct
+    }
+
     let vct = try Vct(uri: vctUri, integrityHash: claims["vct#integrity"].string)
     let metadataArray = try await metadataLookup.getTypeMetadata(vct: vct)
-    
-    // Filter only required metadata based on VCTs
     let requiredMetadata = metadataArray.filter { vcts.contains($0.vct) }
-    
-    // If no required metadata matches, skip validations
-    guard !requiredMetadata.isEmpty else { return }
-    
+
     let finalData = try typeMetadataMerger.mergeMetadata(from: requiredMetadata.map { $0.toResolvedTypeMetadata() })
     try claimsValidator.validate(result.recreatedClaims, finalData)
     try disclosedValidator.validate(finalData, disclosuresPerClaimPath)

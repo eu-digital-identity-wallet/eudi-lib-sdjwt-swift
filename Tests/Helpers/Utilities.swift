@@ -122,22 +122,26 @@ class MockSaltProvider: SaltProvider {
 
   // MARK: - Properties
 
-  var saltString: Salt {
-    return salt.base64EncodedString().base64ToUTF8() ?? ""
+  private var _salt: Data
+
+  func saltString() throws -> Salt {
+    return _salt.base64EncodedString().base64ToUTF8() ?? ""
   }
 
-  var salt: Data
+  func salt() throws -> Data {
+    return _salt
+  }
 
   // MARK: - LifeCycle
 
   init(saltString: String) {
-    self.salt = Data(saltString.utf8)
+    self._salt = Data(saltString.utf8)
   }
 
   // MARK: - Methods
 
   func updateSalt(string: Salt) {
-    self.salt = Data(saltString.utf8)
+    self._salt = Data(string.utf8)
   }
 }
 

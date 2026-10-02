@@ -46,33 +46,46 @@ struct DisclosureValidator: DisclosureValidatorType {
     guard let disclosures = disclosures else {
       throw TypeMetadataError.missingDisclosuresForValidation
     }
-    
-    
+
+    // registered claims (iss, exp, nbf, cnf, vct, vct#integrity,
+    // status) are defined at the JWT top level and must never be selectively
+    // disclosable. The check keys off the ROOT of the claim path (not the
+    // leaf) and treats placeholder (empty-string) entries as "not actually
+    // disclosed".
     for (claimPath, disclosureList) in disclosures {
-      if let claimName = claimPath.leafClaimName,
-         SdJwtSpec.registeredNonDisclosableClaims.contains(claimName) {
-        if !disclosureList.isEmpty {
-          throw TypeMetadataError.unexpectedDisclosurePresent(path: claimPath)
-        }
+      guard let root = claimPath.value.first,
+            case .claim(let rootName) = root,
+            SdJwtSpec.registeredNonDisclosableClaims.contains(rootName) else {
+        continue
+      }
+      if Self.hasRealDisclosure(disclosureList) {
+        throw TypeMetadataError.unexpectedDisclosurePresent(path: claimPath)
       }
     }
-    
+
     for claim in metadata.claims {
-      
+
       let claimPath = claim.path
       switch claim.selectivelyDisclosable {
       case .always:
-        let hasDirectDisclosure = disclosures[claimPath]?.isEmpty == false
-        let hasWildcardDisclosure = disclosures.first { disclosedPath, _ in
-          claimPath.contains(disclosedPath)
-        } != nil
-        
+        // hasRealDisclosure ignores the empty-string placeholders
+        // the visitor records for plain primitives. Both the direct and
+        // the containment ("wildcard") fallback must independently require
+        // at least one real disclosure for the constraint to be satisfied.
+        let hasDirectDisclosure = Self.hasRealDisclosure(disclosures[claimPath])
+        let hasWildcardDisclosure = disclosures.contains { disclosedPath, list in
+          claimPath.contains(disclosedPath) && Self.hasRealDisclosure(list)
+        }
+
         guard hasDirectDisclosure || hasWildcardDisclosure else {
           throw TypeMetadataError.expectedDisclosureMissing(path: claimPath)
         }
-        
+
       case .never:
-        if disclosures[claimPath] != nil {
+        let hasForbiddenDisclosure = disclosures.contains { disclosedPath, list in
+          claimPath.contains(disclosedPath) && Self.hasRealDisclosure(list)
+        }
+        if hasForbiddenDisclosure {
           throw TypeMetadataError.unexpectedDisclosurePresent(path: claimPath)
         }
       case .allowed:
@@ -81,5 +94,11 @@ struct DisclosureValidator: DisclosureValidatorType {
     }
     
     return
+  }
+
+  // Only non-empty entries count as actual disclosures.
+  private static func hasRealDisclosure(_ list: [Disclosure]?) -> Bool {
+    guard let list = list else { return false }
+    return list.contains(where: { !$0.isEmpty })
   }
 }

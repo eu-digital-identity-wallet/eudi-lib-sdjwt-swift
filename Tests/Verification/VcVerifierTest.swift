@@ -35,7 +35,10 @@ final class VcVerifierTest: XCTestCase {
       session: NetworkingBundleMock(
         path: "issuer_meta_data",
         extension: "json"
-      ))))
+      ))),
+    // Pre-baked fixtures issuer_metadata_sd_jwt and presentation_sd_jwt
+    // carry the legacy typ: "JWT"; opt into it alongside the strict default.
+    allowedTypes: ["dc+sd-jwt", "JWT"])
   
   override func setUp() async throws {
   }
@@ -274,7 +277,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        keyID: "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48"
+        keyID: "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48",
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iat(time: Date())
@@ -386,7 +390,8 @@ final class VcVerifierTest: XCTestCase {
         algorithm: .ES256,
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
-        ]
+        ],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -486,7 +491,8 @@ final class VcVerifierTest: XCTestCase {
         algorithm: .ES256,
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
-        ]
+        ],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -570,7 +576,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        keyID: "kid-1"
+        keyID: "kid-1",
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -675,7 +682,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: extractECKey(from: keyData),
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://example.com/issuer")
@@ -719,7 +727,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: extractECKey(from: keyData),
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://example.com/issuer")
@@ -783,7 +792,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: extractECKey(from: keyData),
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://example.com/issuer")
@@ -844,7 +854,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: extractECKey(from: keyData),
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://example.com/issuer")
@@ -913,7 +924,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: extractECKey(from: keyData),
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://example.com/issuer")
@@ -980,7 +992,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: extractECKey(from: keyData),
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://example.com/issuer")
@@ -1074,7 +1087,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: extractECKey(from: keyData),
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate]
+        x509CertificateChain: [SDJWTConstants.anIssuersPrivateKeySignedcertificate],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://example.com/issuer")
@@ -1118,7 +1132,7 @@ final class VcVerifierTest: XCTestCase {
 
     let issuerSignedSDJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
-      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1")
+      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1", type: "dc+sd-jwt")
     ) {
       ConstantClaims.iss(domain: "did:web:example.com")
       ConstantClaims.iat(time: Date())
@@ -1147,7 +1161,7 @@ final class VcVerifierTest: XCTestCase {
 
     let issuerSignedSDJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
-      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1")
+      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1", type: "dc+sd-jwt")
     ) {
       ConstantClaims.iss(domain: "did:web:example.com")
       ConstantClaims.iat(time: Date())
@@ -1420,7 +1434,8 @@ final class VcVerifierTest: XCTestCase {
       issuersPrivateKey: issuersKeyPair.private,
       header: DefaultJWSHeaderImpl(
         algorithm: .ES256,
-        keyID: "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48"
+        keyID: "Ao50Swzv_uWu805LcuaTTysu_6GwoqnvJh9rnc44U48",
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iat(time: Date())
@@ -1507,7 +1522,7 @@ final class VcVerifierTest: XCTestCase {
 
     let issuerSignedSDJWT = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
-      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1")
+      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1", type: "dc+sd-jwt")
     ) {
       ConstantClaims.iss(domain: "did:web:example.com")
       ConstantClaims.iat(time: Date())

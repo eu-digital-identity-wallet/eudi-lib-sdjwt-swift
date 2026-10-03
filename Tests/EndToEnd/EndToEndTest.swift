@@ -231,7 +231,8 @@ final class EndToEndTest: XCTestCase {
         algorithm: .ES256,
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
-        ]
+        ],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -368,7 +369,8 @@ final class EndToEndTest: XCTestCase {
         algorithm: .ES256,
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
-        ]
+        ],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -520,7 +522,8 @@ final class EndToEndTest: XCTestCase {
         algorithm: .ES256,
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
-        ]
+        ],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -653,7 +656,8 @@ final class EndToEndTest: XCTestCase {
         algorithm: .ES256,
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
-        ]
+        ],
+        type: "dc+sd-jwt"
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")

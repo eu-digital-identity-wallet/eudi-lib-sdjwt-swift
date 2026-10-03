@@ -22,7 +22,6 @@ import JSONWebSignature
 import JSONWebToken
 
 private let HTTPS_URI_SCHEME = "https"
-private let SD_JWT_DC_TYPE = "dc+sd-jwt"
 
 /**
  * A protocol defining methods for verifying SD-JWTs
@@ -119,6 +118,8 @@ public enum VerificationMethod {
  */
 public class SDJWTVCVerifier: SdJwtVcVerifierType {
   
+  public static let defaultAllowedTypes: Set<String> = ["dc+sd-jwt"]
+
   /// Single property handling the source of issuer keys.
   private let verificationMethod: VerificationMethod
 
@@ -131,6 +132,10 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
   /// (`SignatureVerifier.defaultAllowedAlgorithms`) is applied.
   private let allowedAlgorithms: Set<SigningAlgorithm>?
 
+  /// Allowed `typ` header values for the issuer-signed JWT. `nil` means
+  /// `SDJWTVCVerifier.defaultAllowedTypes` is applied.
+  private let allowedTypes: Set<String>?
+
   /**
    * Initializes the `SDJWTVCVerifier` with dependencies for metadata fetching, certificate trust, and public key lookup.
    *
@@ -141,18 +146,24 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    *   - allowedAlgorithms: Optional set of signing algorithms accepted for the
    *     issuer-signed JWT. If `nil`, `SignatureVerifier.defaultAllowedAlgorithms`
    *     is used (asymmetric algorithms only; HMAC must be opted in explicitly).
+   *   - allowedTypes: Optional set of `typ` header values accepted on the
+   *     issuer-signed JWT. If `nil`, `SDJWTVCVerifier.defaultAllowedTypes`
+   *     is used (`"dc+sd-jwt"` only, matching the current spec). Callers that
+   *     need to accept the legacy `vc+sd-jwt` or other profiles must opt in.
    *
    */
   public init(
     parser: ParserProtocol = CompactParser(),
     verificationMethod: VerificationMethod,
     typeMetadataPolicy: TypeMetadataPolicy = .notUsed,
-    allowedAlgorithms: Set<SigningAlgorithm>? = nil
+    allowedAlgorithms: Set<SigningAlgorithm>? = nil,
+    allowedTypes: Set<String>? = nil
   ) {
     self.parser = parser
     self.verificationMethod = verificationMethod
     self.typeMetadataPolicy = typeMetadataPolicy
     self.allowedAlgorithms = allowedAlgorithms
+    self.allowedTypes = allowedTypes
   }
   
   func verifyIssuance(
@@ -414,10 +425,18 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     result: Result<SignedSDJWT, any Error>,
     sdJwt: SignedSDJWT
   ) async throws -> Result<SignedSDJWT, any Error> {
-    // Only fetch type metadata after the issuer signature has been verified
     guard case .success = result else { return result }
+    try validateTypHeader(sdJwt: sdJwt)
     try await verifyTypeMetadata(sdJwt: sdJwt)
     return result
+  }
+
+  private func validateTypHeader(sdJwt: SignedSDJWT) throws {
+    let effective = allowedTypes ?? Self.defaultAllowedTypes
+    let typ = sdJwt.jwt.protectedHeader.type
+    guard let typ, effective.contains(typ) else {
+      throw SDJWTVerifierError.invalidTypHeader(expected: effective, found: typ)
+    }
   }
 
   private func verifyTypeMetadata(

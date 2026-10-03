@@ -48,7 +48,7 @@ final class AudIatExtractionTests: XCTestCase {
     publicJWK.keyID = kid
     publicJWK.algorithm = "ES256"
 
-    var header = DefaultJWSHeaderImpl(algorithm: .ES256)
+    var header = DefaultJWSHeaderImpl(algorithm: .ES256, type: "dc+sd-jwt")
     header.keyID = kid
 
     let signed: SignedSDJWT

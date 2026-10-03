@@ -44,7 +44,7 @@ final class OptionalPolicyErrorFilterTest: XCTestCase {
     issuerJwk.keyID = "kid-1"
     let signed = try await SDJWTIssuer.issue(
       issuersPrivateKey: issuersKeyPair.private,
-      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1")
+      header: DefaultJWSHeaderImpl(algorithm: .ES256, keyID: "kid-1", type: "dc+sd-jwt")
     ) {
       ConstantClaims.iss(domain: "did:web:example.com")
       ConstantClaims.iat(time: Date())

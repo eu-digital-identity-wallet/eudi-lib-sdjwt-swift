@@ -48,7 +48,7 @@ func createSignedJWTAndPublicJWK() -> (String, JWK) {
       iat: Int(Date().timeIntervalSince1970.rounded()),
       exp: Int(Date().timeIntervalSince1970.rounded())
     ),
-    protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256),
+    protectedHeader: DefaultJWSHeaderImpl(algorithm: .ES256, type: "dc+sd-jwt"),
     key: key
   )
 

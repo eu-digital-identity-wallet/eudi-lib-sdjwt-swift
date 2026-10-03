@@ -46,6 +46,7 @@ public enum SDJWTVerifierError: Error {
   case nonUniqueDisclosureDigests
   case missingDigests(disclosures: [Disclosure])
   case noAlgorithmProvided
+  case algorithmNotAllowed(algorithm: String)
   case failedToCreateVerifier
   case expiredJwt
   case notValidYetJwt
@@ -107,6 +108,8 @@ extension SDJWTVerifierError: CustomStringConvertible, CustomDebugStringConverti
       return "missingDigests(count: \(disclosures.count), content: REDACTED)"
     case .noAlgorithmProvided:
       return "noAlgorithmProvided"
+    case .algorithmNotAllowed(let algorithm):
+      return "algorithmNotAllowed(\(algorithm))"
     case .failedToCreateVerifier:
       return "failedToCreateVerifier"
     case .expiredJwt:

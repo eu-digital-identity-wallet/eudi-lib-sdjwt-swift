@@ -21,23 +21,23 @@ import XCTest
 final class SecureRandomTest: XCTestCase {
 
   /// Test that generated numbers are within the specified range
-  func testSecureRandom_NumberInRange() {
+  func testSecureRandom_NumberInRange() throws {
     let range = 0...10
     for _ in 0..<100 {
-      let randomNumber = SecureRandom.number(in: range)
+      let randomNumber = try SecureRandom.number(in: range)
       XCTAssertGreaterThanOrEqual(randomNumber, range.lowerBound, "Number should be >= lower bound")
       XCTAssertLessThanOrEqual(randomNumber, range.upperBound, "Number should be <= upper bound")
     }
   }
 
   /// Test that distribution is reasonably uniform (statistical test)
-  func testSecureRandom_ReasonablyUniformDistribution() {
+  func testSecureRandom_ReasonablyUniformDistribution() throws {
     let range = 0...9
     var counts = [Int: Int]()
 
     // Generate 10,000 samples
     for _ in 0..<10000 {
-      let number = SecureRandom.number(in: range)
+      let number = try SecureRandom.number(in: range)
       counts[number, default: 0] += 1
     }
 
@@ -51,21 +51,21 @@ final class SecureRandomTest: XCTestCase {
   }
 
   /// Test single value range
-  func testSecureRandom_SingleValueRange() {
+  func testSecureRandom_SingleValueRange() throws {
     let range = 5...5
     for _ in 0..<10 {
-      let number = SecureRandom.number(in: range)
+      let number = try SecureRandom.number(in: range)
       XCTAssertEqual(number, 5, "Single value range should always return that value")
     }
   }
 
   /// Test that different calls produce different results (non-deterministic)
-  func testSecureRandom_NonDeterministic() {
+  func testSecureRandom_NonDeterministic() throws {
     let range = 0...1000
     var results = Set<Int>()
 
     for _ in 0..<50 {
-      let number = SecureRandom.number(in: range)
+      let number = try SecureRandom.number(in: range)
       results.insert(number)
     }
 
@@ -74,30 +74,30 @@ final class SecureRandomTest: XCTestCase {
   }
 
   /// Test large range
-  func testSecureRandom_LargeRange() {
+  func testSecureRandom_LargeRange() throws {
     let range = 0...1_000_000
     for _ in 0..<100 {
-      let number = SecureRandom.number(in: range)
+      let number = try SecureRandom.number(in: range)
       XCTAssertGreaterThanOrEqual(number, range.lowerBound)
       XCTAssertLessThanOrEqual(number, range.upperBound)
     }
   }
 
   /// Test negative ranges
-  func testSecureRandom_NegativeRange() {
+  func testSecureRandom_NegativeRange() throws {
     let range = -10...10
     for _ in 0..<100 {
-      let number = SecureRandom.number(in: range)
+      let number = try SecureRandom.number(in: range)
       XCTAssertGreaterThanOrEqual(number, -10)
       XCTAssertLessThanOrEqual(number, 10)
     }
   }
 
   /// Test range with only negative numbers
-  func testSecureRandom_OnlyNegativeRange() {
+  func testSecureRandom_OnlyNegativeRange() throws {
     let range = -100...(-50)
     for _ in 0..<100 {
-      let number = SecureRandom.number(in: range)
+      let number = try SecureRandom.number(in: range)
       XCTAssertGreaterThanOrEqual(number, -100)
       XCTAssertLessThanOrEqual(number, -50)
     }

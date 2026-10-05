@@ -17,13 +17,15 @@ import Foundation
 import SwiftyJSON
 
 extension Disclosure {
-  var objectProperty: (key: String, value: JSON) {
-    let json = JSON(parseJSON: self)
-    return (json.arrayValue[1].stringValue, json.arrayValue[2])
+  var objectProperty: (key: String, value: JSON)? {
+    let array = JSON(parseJSON: self).arrayValue
+    guard array.count >= 3 else { return nil }
+    return (array[1].stringValue, array[2])
   }
 
-  var arrayProperty: JSON {
-    let json = JSON(parseJSON: self)
-    return (json.arrayValue[1])
+  var arrayProperty: JSON? {
+    let array = JSON(parseJSON: self).arrayValue
+    guard array.count >= 2 else { return nil }
+    return array[1]
   }
 }

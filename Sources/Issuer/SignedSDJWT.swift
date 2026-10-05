@@ -111,11 +111,10 @@ public struct SignedSDJWT {
     
     self.jwt = signedSDJWT.jwt
     self.disclosures = signedSDJWT.disclosures
-    let signedKBJwt = try? SignedSDJWT.createSignedJWT(
+    self.kbJwt = try SignedSDJWT.createSignedJWT(
       key: holdersPrivateKey,
       jwt: kbJWT
     )
-    self.kbJwt = signedKBJwt
     self.claimSet = try jwt.payloadJSON()
   }
   
@@ -166,7 +165,7 @@ public struct SignedSDJWT {
       )
       
       let signature = try await asyncSigner.signAsync(signingData)
-      let signedKBJwt = try? JWS(
+      let signedKBJwt = try JWS(
         protectedHeaderData: protectedHeaderData,
         data: unsignedJWT.payload,
         signature: signature
@@ -259,7 +258,7 @@ public struct SignedSDJWT {
 
   func extractDigestCreator() throws -> DigestCreator {
     let payloadJson = try self.jwt.payloadJSON()
-    let sdAlg = payloadJson[Keys.sdAlg.rawValue].string ?? "sha-256"
+    let sdAlg = try SDJWT.extractSdAlgClaim(from: payloadJson)
     let algorithIdentifier = HashingAlgorithmIdentifier.allCases.first(where: {$0.rawValue == sdAlg})
     guard let algorithIdentifier else {
       throw SDJWTVerifierError.missingOrUnknownHashingAlgorithm

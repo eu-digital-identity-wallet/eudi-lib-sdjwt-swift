@@ -118,7 +118,7 @@ public enum VerificationMethod {
  */
 public class SDJWTVCVerifier: SdJwtVcVerifierType {
   
-  public static let defaultAllowedTypes: Set<String> = ["dc+sd-jwt"]
+  public static let defaultAllowedTypes: Set<String> = [SdJwtVcSpec.mediaSubtypeDCSdJWT]
 
   /// Single property handling the source of issuer keys.
   private let verificationMethod: VerificationMethod

@@ -70,7 +70,7 @@ final class IssuerTypHeaderTests: XCTestCase {
   // MARK: - Default allow-list
 
   func test_defaults_acceptsDcSdJwt() async throws {
-    let (serialised, jwk) = try await mint(typ: "dc+sd-jwt")
+    let (serialised, jwk) = try await mint(typ: SdJwtVcSpec.mediaSubtypeDCSdJWT)
     let result = try await verifier(for: jwk).verifyIssuance(unverifiedSdJwt: serialised)
     XCTAssertNoThrow(try result.get())
   }
@@ -117,7 +117,7 @@ final class IssuerTypHeaderTests: XCTestCase {
     let (serialised, jwk) = try await mint(typ: "vc+sd-jwt")
     let result = try await verifier(
       for: jwk,
-      allowedTypes: ["dc+sd-jwt", "vc+sd-jwt"]
+      allowedTypes: [SdJwtVcSpec.mediaSubtypeDCSdJWT, "vc+sd-jwt"]
     ).verifyIssuance(unverifiedSdJwt: serialised)
     XCTAssertNoThrow(try result.get())
   }
@@ -126,7 +126,7 @@ final class IssuerTypHeaderTests: XCTestCase {
     let (serialised, jwk) = try await mint(typ: "JWT")
     let result = try await verifier(
       for: jwk,
-      allowedTypes: ["dc+sd-jwt", "JWT"]
+      allowedTypes: [SdJwtVcSpec.mediaSubtypeDCSdJWT, "JWT"]
     ).verifyIssuance(unverifiedSdJwt: serialised)
     XCTAssertNoThrow(try result.get())
   }

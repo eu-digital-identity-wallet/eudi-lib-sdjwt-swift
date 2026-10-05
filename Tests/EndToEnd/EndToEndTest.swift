@@ -232,7 +232,7 @@ final class EndToEndTest: XCTestCase {
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
         ],
-        type: "dc+sd-jwt"
+        type: SdJwtVcSpec.mediaSubtypeDCSdJWT
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -370,7 +370,7 @@ final class EndToEndTest: XCTestCase {
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
         ],
-        type: "dc+sd-jwt"
+        type: SdJwtVcSpec.mediaSubtypeDCSdJWT
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -523,7 +523,7 @@ final class EndToEndTest: XCTestCase {
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
         ],
-        type: "dc+sd-jwt"
+        type: SdJwtVcSpec.mediaSubtypeDCSdJWT
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")
@@ -657,7 +657,7 @@ final class EndToEndTest: XCTestCase {
         x509CertificateChain: [
           SDJWTConstants.anIssuersPrivateKeySignedcertificate
         ],
-        type: "dc+sd-jwt"
+        type: SdJwtVcSpec.mediaSubtypeDCSdJWT
       )
     ) {
       ConstantClaims.iss(domain: "https://www.example.com")

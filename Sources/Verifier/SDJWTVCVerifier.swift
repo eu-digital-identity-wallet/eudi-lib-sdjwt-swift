@@ -164,14 +164,16 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           publicKey: jwk
         )
       }, claimVerifier: claimsVerifier.map { verifier in
-        { nbf, exp in
-          // Create a new verifier with the extracted claims from the JWT
+        { nbf, exp, iat, aud in
+          // nbf/exp/iat/aud are extracted from the token payload;
+          // iatValidWindow, expectedAud, require* and currentDate remain
+          // policy inputs from the caller.
           ClaimsVerifier(
-            iat: verifier.iat.map { Int($0.timeIntervalSince1970) },
+            iat: iat,
             iatValidWindow: verifier.iatValidWindow,
             nbf: nbf,
             exp: exp,
-            audClaim: verifier.auds?.joined(separator: ","),
+            audClaim: aud,
             expectedAud: verifier.expectedAud,
             requireNbf: verifier.requireNbf,
             requireExp: verifier.requireExp,
@@ -212,14 +214,16 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           publicKey: jwk
         )
       }, claimVerifier: claimsVerifier.map { verifier in
-        { nbf, exp in
-          // Create a new verifier with the extracted claims from the JWT
+        { nbf, exp, iat, aud in
+          // nbf/exp/iat/aud are extracted from the token payload;
+          // iatValidWindow, expectedAud, require* and currentDate remain
+          // policy inputs from the caller.
           ClaimsVerifier(
-            iat: verifier.iat.map { Int($0.timeIntervalSince1970) },
+            iat: iat,
             iatValidWindow: verifier.iatValidWindow,
             nbf: nbf,
             exp: exp,
-            audClaim: verifier.auds?.joined(separator: ","),
+            audClaim: aud,
             expectedAud: verifier.expectedAud,
             requireNbf: verifier.requireNbf,
             requireExp: verifier.requireExp,
@@ -228,7 +232,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           )
         }
       })
-      
+
       return try await appendingTypeMetadataCheck(result: result, sdJwt: sdJwt)
     case .failure(let error):
       throw error
@@ -257,14 +261,16 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           signedJWT: jws,
           publicKey: jwk
         )
-      } claimVerifier: { nbf, exp in
-        // Create a new verifier with the extracted claims from the JWT
+      } claimVerifier: { nbf, exp, iat, aud in
+        // nbf/exp/iat/aud are extracted from the token payload;
+        // iatValidWindow, expectedAud, require* and currentDate remain
+        // policy inputs from the caller.
         ClaimsVerifier(
-          iat: claimsVerifier.iat.map { Int($0.timeIntervalSince1970) },
+          iat: iat,
           iatValidWindow: claimsVerifier.iatValidWindow,
           nbf: nbf,
           exp: exp,
-          audClaim: claimsVerifier.auds?.joined(separator: ","),
+          audClaim: aud,
           expectedAud: claimsVerifier.expectedAud,
           requireNbf: claimsVerifier.requireNbf,
           requireExp: claimsVerifier.requireExp,
@@ -336,14 +342,16 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           signedJWT: jws,
           publicKey: jwk
         )
-      } claimVerifier: { nbf, exp in
-        // Create a new verifier with the extracted claims from the JWT
+      } claimVerifier: { nbf, exp, iat, aud in
+        // nbf/exp/iat/aud are extracted from the token payload;
+        // iatValidWindow, expectedAud, require* and currentDate remain
+        // policy inputs from the caller.
         ClaimsVerifier(
-          iat: claimsVerifier.iat.map { Int($0.timeIntervalSince1970) },
+          iat: iat,
           iatValidWindow: claimsVerifier.iatValidWindow,
           nbf: nbf,
           exp: exp,
-          audClaim: claimsVerifier.auds?.joined(separator: ","),
+          audClaim: aud,
           expectedAud: claimsVerifier.expectedAud,
           requireNbf: claimsVerifier.requireNbf,
           requireExp: claimsVerifier.requireExp,

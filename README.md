@@ -9,6 +9,7 @@ the [EUDI Wallet Reference Implementation project description](https://github.co
 
 * [Overview](#overview)
 * [DSL Examples](#dsl-examples)
+* [Privacy: metadata caching](#privacy-metadata-caching)
 * [How to contribute](#how-to-contribute)
 * [License](#license)
 
@@ -253,6 +254,76 @@ When `TypeMetadataVerifier.verifyTypeMetadata(sdJwt:)` is invoked, it performs t
 1. **Retrieves type metadata** using a user-provided `TypeMetadataLookup`.
 2. **Merges multiple metadata documents** into a unified `ResolvedTypeMetadata`, giving precedence to child metadata entries.
 3. **Validates claim disclosures** (e.g. required, allowed, or disallowed).
+
+## Privacy: metadata caching
+
+Verifying an SD-JWT VC pulls two kinds of metadata from the network:
+
+- The issuer's public-key metadata via `SdJwtVcIssuerMetaDataFetching`.
+- The SD-JWT VC type metadata (and its extension chain) via `TypeMetadataFetching` /
+  `TypeMetadataLookup`.
+
+The library does **not** cache either of them by default — a fresh request is made on every
+verification. The [SD-JWT VC specification](https://www.ietf.org/archive/id/draft-ietf-oauth-sd-jwt-vc-13.html)
+recommends local caching so the issuer (and any on-path observer) cannot correlate network
+traffic with holder presentations.
+
+All three retrieval points are protocols. Callers that care about this privacy property should
+wrap the stock fetchers with their own cache and inject it into `SDJWTVCVerifier`. A minimal
+TTL cache around `TypeMetadataFetching`:
+
+```swift
+public final class CachingTypeMetadataFetcher: TypeMetadataFetching {
+    public let session: Networking
+    private let inner: TypeMetadataFetching
+    private let ttl: TimeInterval
+    private var cache: [URL: (metadata: SdJwtVcTypeMetadata, expiry: Date)] = [:]
+
+    public init(wrapping inner: TypeMetadataFetching, ttl: TimeInterval = 15 * 60) {
+        self.session = inner.session
+        self.inner = inner
+        self.ttl = ttl
+    }
+
+    public func fetchTypeMetadata(
+        from url: URL,
+        expectedIntegrityHash: String?
+    ) async throws -> SdJwtVcTypeMetadata {
+        if let entry = cache[url], entry.expiry > Date() {
+            return entry.metadata
+        }
+        let fresh = try await inner.fetchTypeMetadata(
+            from: url,
+            expectedIntegrityHash: expectedIntegrityHash
+        )
+        cache[url] = (fresh, Date().addingTimeInterval(ttl))
+        return fresh
+    }
+}
+```
+
+Wire it in:
+
+```swift
+let fetcher = CachingTypeMetadataFetcher(
+    wrapping: TypeMetadataFetcher(session: URLSession.shared)
+)
+let lookup = TypeMetadataLookupDefault(fetcher: fetcher)
+```
+
+The same pattern applies to `SdJwtVcIssuerMetaDataFetching` and `TypeMetadataLookup`.
+
+Guidance when writing your cache:
+
+- **Keep SRI mandatory.** Cache hits must still honour the issuer-provided integrity hash. A
+  mismatched hash should invalidate the cache entry and re-fetch.
+- **Prefer HTTP `Cache-Control` / `ETag` over fixed TTLs** when available — they let the issuer
+  signal correct freshness. A fixed TTL is a reasonable fallback.
+- **Watch key rotation.** If an issuer rotates signing keys inside the TTL window, cached issuer
+  metadata becomes stale. Make the TTL short enough that stale metadata cannot keep an attacker
+  with a compromised key viable longer than your incident-response window.
+- **Synchronise access.** The example above omits locking for readability; production code should
+  wrap the cache dictionary in an actor, `NSLock`, or similar.
 
 ## How to contribute
 

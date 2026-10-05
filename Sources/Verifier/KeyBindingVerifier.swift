@@ -14,17 +14,27 @@
  * limitations under the License.
  */
 import Foundation
+import JSONWebAlgorithms
 import JSONWebKey
 import JSONWebSignature
 import SwiftyJSON
 
 public final class KeyBindingVerifier: VerifierProtocol {
-  
+
   static let kbJwt = "kb+jwt"
-  
+
   private var signatureVerifier: SignatureVerifier?
-  
+
+  /// KB-JWT signature algorithm allow-list. `nil` means the secure default
+  /// (`SignatureVerifier.defaultAllowedAlgorithms`) is applied.
+  private let allowedAlgorithms: Set<SigningAlgorithm>?
+
   public init() {
+    self.allowedAlgorithms = nil
+  }
+
+  public init(allowedAlgorithms: Set<SigningAlgorithm>?) {
+    self.allowedAlgorithms = allowedAlgorithms
   }
   
   public func verify(
@@ -56,7 +66,11 @@ public final class KeyBindingVerifier: VerifierProtocol {
     
     try verifyNonce(nonce: nonce, expectedNonce: expectedNonce)
     
-    self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
+    self.signatureVerifier = try SignatureVerifier(
+      signedJWT: challenge,
+      publicKey: extractedKey,
+      allowedAlgorithms: self.allowedAlgorithms
+    )
     
     try verifyIat(iatOffset: iatOffset, iat: Date(timeIntervalSince1970: TimeInterval(iat)))
     try verifyAud(aud: aud, expectedAudience: expectedAudience)
@@ -86,7 +100,11 @@ public final class KeyBindingVerifier: VerifierProtocol {
     
     try verifyNonce(nonce: nonce, expectedNonce: expectedNonce)
     
-    self.signatureVerifier = try SignatureVerifier(signedJWT: challenge, publicKey: extractedKey)
+    self.signatureVerifier = try SignatureVerifier(
+      signedJWT: challenge,
+      publicKey: extractedKey,
+      allowedAlgorithms: self.allowedAlgorithms
+    )
     
     try verify()
   }

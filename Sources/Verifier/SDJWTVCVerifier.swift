@@ -15,6 +15,7 @@
  */
 import Foundation
 import X509
+import JSONWebAlgorithms
 import JSONWebKey
 import SwiftyJSON
 import JSONWebSignature
@@ -126,6 +127,10 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
 
   private let typeMetadataPolicy: TypeMetadataPolicy
 
+  /// Issuer signature algorithm allow-list. `nil` means the secure default
+  /// (`SignatureVerifier.defaultAllowedAlgorithms`) is applied.
+  private let allowedAlgorithms: Set<SigningAlgorithm>?
+
   /**
    * Initializes the `SDJWTVCVerifier` with dependencies for metadata fetching, certificate trust, and public key lookup.
    *
@@ -133,16 +138,21 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    *   - parser: A parser responsible for parsing SD-JWTs.
    *   - verificationMethod: Enum to handle issuer key sources.
    *   - typeMetadataPolicy: Policy for type metadata verification.
+   *   - allowedAlgorithms: Optional set of signing algorithms accepted for the
+   *     issuer-signed JWT. If `nil`, `SignatureVerifier.defaultAllowedAlgorithms`
+   *     is used (asymmetric algorithms only; HMAC must be opted in explicitly).
    *
    */
   public init(
     parser: ParserProtocol = CompactParser(),
     verificationMethod: VerificationMethod,
-    typeMetadataPolicy: TypeMetadataPolicy = .notUsed
+    typeMetadataPolicy: TypeMetadataPolicy = .notUsed,
+    allowedAlgorithms: Set<SigningAlgorithm>? = nil
   ) {
     self.parser = parser
     self.verificationMethod = verificationMethod
     self.typeMetadataPolicy = typeMetadataPolicy
+    self.allowedAlgorithms = allowedAlgorithms
   }
   
   func verifyIssuance(
@@ -161,7 +171,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       ).verifyIssuance(issuersSignatureVerifier: { jws in
         try SignatureVerifier(
           signedJWT: jws,
-          publicKey: jwk
+          publicKey: jwk,
+          allowedAlgorithms: self.allowedAlgorithms
         )
       }, claimVerifier: claimsVerifier.map { verifier in
         { nbf, exp, iat, aud in
@@ -211,7 +222,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       ).verifyIssuance(issuersSignatureVerifier: { jws in
         try SignatureVerifier(
           signedJWT: jws,
-          publicKey: jwk
+          publicKey: jwk,
+          allowedAlgorithms: self.allowedAlgorithms
         )
       }, claimVerifier: claimsVerifier.map { verifier in
         { nbf, exp, iat, aud in
@@ -259,7 +271,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       ).verifyPresentation { jws in
         try SignatureVerifier(
           signedJWT: jws,
-          publicKey: jwk
+          publicKey: jwk,
+          allowedAlgorithms: self.allowedAlgorithms
         )
       } claimVerifier: { nbf, exp, iat, aud in
         // nbf/exp/iat/aud are extracted from the token payload;
@@ -340,7 +353,8 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       ).verifyPresentation { jws in
         try SignatureVerifier(
           signedJWT: jws,
-          publicKey: jwk
+          publicKey: jwk,
+          allowedAlgorithms: self.allowedAlgorithms
         )
       } claimVerifier: { nbf, exp, iat, aud in
         // nbf/exp/iat/aud are extracted from the token payload;

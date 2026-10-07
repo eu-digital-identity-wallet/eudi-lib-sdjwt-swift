@@ -78,7 +78,7 @@ final class VerifierTest: XCTestCase {
     )
       .verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: pk)
-      } claimVerifier: { _, _ in
+      } claimVerifier: { _, _, _, _ in
         ClaimsVerifier()
       }
 
@@ -251,7 +251,7 @@ final class VerifierTest: XCTestCase {
     for sdjwt in [iatJwt, expSdJwt, nbfSdJwt, nbfAndExpSdJwt] {
       let result = try SDJWTVerifier(sdJwt: sdjwt).verifyIssuance { jws in
         try SignatureVerifier(signedJWT: jws, publicKey: issuersKeyPair.public)
-      } claimVerifier: { nbf, exp in
+      } claimVerifier: { nbf, exp, _, _ in
         ClaimsVerifier(
           iat: iat,
           iatValidWindow: TimeRange(
@@ -332,7 +332,7 @@ final class VerifierTest: XCTestCase {
         publicKey: issuersKeyPair.public
       )
 
-    } claimVerifier: { _, _ in
+    } claimVerifier: { _, _, _, _ in
       ClaimsVerifier()
 
     } keyBindingVerifier: { jws, holdersPublicKey in

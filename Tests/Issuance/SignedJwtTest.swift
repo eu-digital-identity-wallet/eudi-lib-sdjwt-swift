@@ -52,7 +52,7 @@ final class SignedJwtTest: XCTestCase {
       serialisedString: serialised
     ).verifyIssuance { jws in
       try SignatureVerifier(signedJWT: jws, publicKey: keyPair.public)
-    } claimVerifier: { _, _ in
+    } claimVerifier: { _, _, _, _ in
       ClaimsVerifier()
     }
   }

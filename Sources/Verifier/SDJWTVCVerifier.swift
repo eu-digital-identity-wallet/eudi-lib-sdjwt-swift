@@ -15,13 +15,13 @@
  */
 import Foundation
 import X509
+import JSONWebAlgorithms
 import JSONWebKey
 import SwiftyJSON
 import JSONWebSignature
 import JSONWebToken
 
 private let HTTPS_URI_SCHEME = "https"
-private let SD_JWT_DC_TYPE = "dc+sd-jwt"
 
 /**
  * A protocol defining methods for verifying SD-JWTs
@@ -118,6 +118,8 @@ public enum VerificationMethod {
  */
 public class SDJWTVCVerifier: SdJwtVcVerifierType {
   
+  public static let defaultAllowedTypes: Set<String> = [SdJwtVcSpec.mediaSubtypeDCSdJWT]
+
   /// Single property handling the source of issuer keys.
   private let verificationMethod: VerificationMethod
 
@@ -126,6 +128,14 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
 
   private let typeMetadataPolicy: TypeMetadataPolicy
 
+  /// Issuer signature algorithm allow-list. `nil` means the secure default
+  /// (`SignatureVerifier.defaultAllowedAlgorithms`) is applied.
+  private let allowedAlgorithms: Set<SigningAlgorithm>?
+
+  /// Allowed `typ` header values for the issuer-signed JWT. `nil` means
+  /// `SDJWTVCVerifier.defaultAllowedTypes` is applied.
+  private let allowedTypes: Set<String>?
+
   /**
    * Initializes the `SDJWTVCVerifier` with dependencies for metadata fetching, certificate trust, and public key lookup.
    *
@@ -133,16 +143,27 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
    *   - parser: A parser responsible for parsing SD-JWTs.
    *   - verificationMethod: Enum to handle issuer key sources.
    *   - typeMetadataPolicy: Policy for type metadata verification.
+   *   - allowedAlgorithms: Optional set of signing algorithms accepted for the
+   *     issuer-signed JWT. If `nil`, `SignatureVerifier.defaultAllowedAlgorithms`
+   *     is used (asymmetric algorithms only; HMAC must be opted in explicitly).
+   *   - allowedTypes: Optional set of `typ` header values accepted on the
+   *     issuer-signed JWT. If `nil`, `SDJWTVCVerifier.defaultAllowedTypes`
+   *     is used (`"dc+sd-jwt"` only, matching the current spec). Callers that
+   *     need to accept the legacy `vc+sd-jwt` or other profiles must opt in.
    *
    */
   public init(
     parser: ParserProtocol = CompactParser(),
     verificationMethod: VerificationMethod,
-    typeMetadataPolicy: TypeMetadataPolicy = .notUsed
+    typeMetadataPolicy: TypeMetadataPolicy = .notUsed,
+    allowedAlgorithms: Set<SigningAlgorithm>? = nil,
+    allowedTypes: Set<String>? = nil
   ) {
     self.parser = parser
     self.verificationMethod = verificationMethod
     self.typeMetadataPolicy = typeMetadataPolicy
+    self.allowedAlgorithms = allowedAlgorithms
+    self.allowedTypes = allowedTypes
   }
   
   func verifyIssuance(
@@ -161,17 +182,20 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       ).verifyIssuance(issuersSignatureVerifier: { jws in
         try SignatureVerifier(
           signedJWT: jws,
-          publicKey: jwk
+          publicKey: jwk,
+          allowedAlgorithms: self.allowedAlgorithms
         )
       }, claimVerifier: claimsVerifier.map { verifier in
-        { nbf, exp in
-          // Create a new verifier with the extracted claims from the JWT
+        { nbf, exp, iat, aud in
+          // nbf/exp/iat/aud are extracted from the token payload;
+          // iatValidWindow, expectedAud, require* and currentDate remain
+          // policy inputs from the caller.
           ClaimsVerifier(
-            iat: verifier.iat.map { Int($0.timeIntervalSince1970) },
+            iat: iat,
             iatValidWindow: verifier.iatValidWindow,
             nbf: nbf,
             exp: exp,
-            audClaim: verifier.auds?.joined(separator: ","),
+            audClaim: aud,
             expectedAud: verifier.expectedAud,
             requireNbf: verifier.requireNbf,
             requireExp: verifier.requireExp,
@@ -209,17 +233,20 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       ).verifyIssuance(issuersSignatureVerifier: { jws in
         try SignatureVerifier(
           signedJWT: jws,
-          publicKey: jwk
+          publicKey: jwk,
+          allowedAlgorithms: self.allowedAlgorithms
         )
       }, claimVerifier: claimsVerifier.map { verifier in
-        { nbf, exp in
-          // Create a new verifier with the extracted claims from the JWT
+        { nbf, exp, iat, aud in
+          // nbf/exp/iat/aud are extracted from the token payload;
+          // iatValidWindow, expectedAud, require* and currentDate remain
+          // policy inputs from the caller.
           ClaimsVerifier(
-            iat: verifier.iat.map { Int($0.timeIntervalSince1970) },
+            iat: iat,
             iatValidWindow: verifier.iatValidWindow,
             nbf: nbf,
             exp: exp,
-            audClaim: verifier.auds?.joined(separator: ","),
+            audClaim: aud,
             expectedAud: verifier.expectedAud,
             requireNbf: verifier.requireNbf,
             requireExp: verifier.requireExp,
@@ -228,7 +255,7 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
           )
         }
       })
-      
+
       return try await appendingTypeMetadataCheck(result: result, sdJwt: sdJwt)
     case .failure(let error):
       throw error
@@ -255,16 +282,19 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       ).verifyPresentation { jws in
         try SignatureVerifier(
           signedJWT: jws,
-          publicKey: jwk
+          publicKey: jwk,
+          allowedAlgorithms: self.allowedAlgorithms
         )
-      } claimVerifier: { nbf, exp in
-        // Create a new verifier with the extracted claims from the JWT
+      } claimVerifier: { nbf, exp, iat, aud in
+        // nbf/exp/iat/aud are extracted from the token payload;
+        // iatValidWindow, expectedAud, require* and currentDate remain
+        // policy inputs from the caller.
         ClaimsVerifier(
-          iat: claimsVerifier.iat.map { Int($0.timeIntervalSince1970) },
+          iat: iat,
           iatValidWindow: claimsVerifier.iatValidWindow,
           nbf: nbf,
           exp: exp,
-          audClaim: claimsVerifier.auds?.joined(separator: ","),
+          audClaim: aud,
           expectedAud: claimsVerifier.expectedAud,
           requireNbf: claimsVerifier.requireNbf,
           requireExp: claimsVerifier.requireExp,
@@ -334,16 +364,19 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
       ).verifyPresentation { jws in
         try SignatureVerifier(
           signedJWT: jws,
-          publicKey: jwk
+          publicKey: jwk,
+          allowedAlgorithms: self.allowedAlgorithms
         )
-      } claimVerifier: { nbf, exp in
-        // Create a new verifier with the extracted claims from the JWT
+      } claimVerifier: { nbf, exp, iat, aud in
+        // nbf/exp/iat/aud are extracted from the token payload;
+        // iatValidWindow, expectedAud, require* and currentDate remain
+        // policy inputs from the caller.
         ClaimsVerifier(
-          iat: claimsVerifier.iat.map { Int($0.timeIntervalSince1970) },
+          iat: iat,
           iatValidWindow: claimsVerifier.iatValidWindow,
           nbf: nbf,
           exp: exp,
-          audClaim: claimsVerifier.auds?.joined(separator: ","),
+          audClaim: aud,
           expectedAud: claimsVerifier.expectedAud,
           requireNbf: claimsVerifier.requireNbf,
           requireExp: claimsVerifier.requireExp,
@@ -392,10 +425,18 @@ public class SDJWTVCVerifier: SdJwtVcVerifierType {
     result: Result<SignedSDJWT, any Error>,
     sdJwt: SignedSDJWT
   ) async throws -> Result<SignedSDJWT, any Error> {
-    // Only fetch type metadata after the issuer signature has been verified
     guard case .success = result else { return result }
+    try validateTypHeader(sdJwt: sdJwt)
     try await verifyTypeMetadata(sdJwt: sdJwt)
     return result
+  }
+
+  private func validateTypHeader(sdJwt: SignedSDJWT) throws {
+    let effective = allowedTypes ?? Self.defaultAllowedTypes
+    let typ = sdJwt.jwt.protectedHeader.type
+    guard let typ, effective.contains(typ) else {
+      throw SDJWTVerifierError.invalidTypHeader(expected: effective, found: typ)
+    }
   }
 
   private func verifyTypeMetadata(

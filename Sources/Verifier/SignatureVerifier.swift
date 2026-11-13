@@ -34,8 +34,12 @@ public class SignatureVerifier: VerifierProtocol {
   // MARK: - Lifecycle
 
   public init<Key: KeyExpressible>(signedJWT: JWS, publicKey: Key) throws {
-    guard signedJWT.protectedHeader.algorithm != nil else {
+    guard let algorithm = signedJWT.protectedHeader.algorithm else {
       throw SDJWTVerifierError.noAlgorithmProvided
+    }
+    // Reject "none" algorithm - it bypasses signature verification (PAR_SDJWT_SWIFT_2)
+    guard algorithm.rawValue != Keys.none.rawValue else {
+      throw SDJWTVerifierError.invalidJwt(description: "The 'none' algorithm is not allowed")
     }
     self.jws = signedJWT
     self.key = publicKey

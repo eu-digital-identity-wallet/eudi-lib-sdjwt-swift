@@ -600,6 +600,219 @@ final class VerifierTest: XCTestCase {
     }
   }
 
+  // MARK: - KB-JWT Security Tests (PAR_SDJWT_SWIFT_1)
+
+  func testKeyBindingVerifier_WithStaleIat_ShouldFail() async throws {
+    // Given - KB-JWT with iat outside the valid time window (stale token)
+    let expectedNonce = "test-nonce-stale-iat"
+    let holdersJwk = try holdersKeyPair.public.jwk
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", holdersJwk.y?.base64URLEncode())
+          PlainClaim("x", holdersJwk.x?.base64URLEncode())
+          PlainClaim("crv", holdersJwk.curve)
+        }
+      }
+    }
+
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+      ) ?? ""
+
+    // Create KB-JWT with stale iat (1 hour ago)
+    let staleIat = Int(Date(timeIntervalSinceNow: -3600).timeIntervalSince1970)
+    let holder = try await SDJWTIssuer.presentation(
+      holdersPrivateKey: holdersKeyPair.private,
+      signedSDJWT: issuerSignedSDJWT,
+      disclosuresToPresent: issuerSignedSDJWT.disclosures,
+      keyBindingJWT: KBJWT(
+        header: DefaultJWSHeaderImpl(algorithm: .ES256),
+        kbJwtPayload: .init([
+          Keys.nonce.rawValue: expectedNonce,
+          Keys.aud.rawValue: "example.com",
+          Keys.iat.rawValue: staleIat,  // Stale: 1 hour ago
+          Keys.sdHash.rawValue: sdHash
+        ])
+      )
+    )
+
+    // When - Verify with a narrow time window (last 5 minutes only)
+    let verifier = KeyBindingVerifier()
+
+    // Then - Should fail because iat is outside the valid window
+    XCTAssertThrowsError(
+      try verifier.verify(
+        iatOffset: .init(
+          startTime: Date(timeIntervalSinceNow: -300),  // 5 minutes ago
+          endTime: Date(timeIntervalSinceNow: 60)       // 1 minute in future
+        )!,
+        expectedAudience: "example.com",
+        expectedNonce: expectedNonce,
+        challenge: holder.kbJwt!,
+        extractedKey: holdersJwk
+      )
+    ) { error in
+      guard case SDJWTVerifierError.keyBindingFailed(let description) = error else {
+        XCTFail("Expected keyBindingFailed error but got \(error)")
+        return
+      }
+      XCTAssertTrue(
+        description.contains("iat not in valid time window"),
+        "Error should indicate iat is outside valid window, got: \(description)"
+      )
+    }
+  }
+
+  func testKeyBindingVerifier_WithMissingAud_ShouldFail() async throws {
+    // Given - KB-JWT without aud claim (security fix: must not fail open)
+    let expectedNonce = "test-nonce-missing-aud"
+    let holdersJwk = try holdersKeyPair.public.jwk
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", holdersJwk.y?.base64URLEncode())
+          PlainClaim("x", holdersJwk.x?.base64URLEncode())
+          PlainClaim("crv", holdersJwk.curve)
+        }
+      }
+    }
+
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+      ) ?? ""
+
+    // Create KB-JWT WITHOUT aud claim
+    let holder = try await SDJWTIssuer.presentation(
+      holdersPrivateKey: holdersKeyPair.private,
+      signedSDJWT: issuerSignedSDJWT,
+      disclosuresToPresent: issuerSignedSDJWT.disclosures,
+      keyBindingJWT: KBJWT(
+        header: DefaultJWSHeaderImpl(algorithm: .ES256),
+        kbJwtPayload: .init([
+          Keys.nonce.rawValue: expectedNonce,
+          // Keys.aud intentionally omitted
+          Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
+          Keys.sdHash.rawValue: sdHash
+        ])
+      )
+    )
+
+    // When
+    let verifier = KeyBindingVerifier()
+
+    // Then - Should fail with missing aud error (not silently pass)
+    XCTAssertThrowsError(
+      try verifier.verify(
+        iatOffset: .init(
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
+        )!,
+        expectedAudience: "example.com",
+        expectedNonce: expectedNonce,
+        challenge: holder.kbJwt!,
+        extractedKey: holdersJwk
+      )
+    ) { error in
+      guard case SDJWTVerifierError.keyBindingFailed(let description) = error else {
+        XCTFail("Expected keyBindingFailed error but got \(error)")
+        return
+      }
+      XCTAssertTrue(
+        description.contains("Missing or invalid aud"),
+        "Error should indicate missing or invalid aud claim, got: \(description)"
+      )
+    }
+  }
+
+  func testKeyBindingVerifier_WithInvalidAudType_ShouldFail() async throws {
+    // Given - KB-JWT with aud as a number (invalid type per RFC 9901)
+    let expectedNonce = "test-nonce-invalid-aud"
+    let holdersJwk = try holdersKeyPair.public.jwk
+
+    let issuerSignedSDJWT = try await SDJWTIssuer.issue(
+      issuersPrivateKey: issuersKeyPair.private,
+      header: DefaultJWSHeaderImpl(algorithm: .ES256)
+    ) {
+      ConstantClaims.iat(time: Date())
+      ConstantClaims.exp(time: Date() + 3600)
+      ConstantClaims.iss(domain: "https://example.com/issuer")
+      ObjectClaim("cnf") {
+        ObjectClaim("jwk") {
+          PlainClaim("kty", "EC")
+          PlainClaim("y", holdersJwk.y?.base64URLEncode())
+          PlainClaim("x", holdersJwk.x?.base64URLEncode())
+          PlainClaim("crv", holdersJwk.curve)
+        }
+      }
+    }
+
+    let sdHash = DigestCreator()
+      .hashAndBase64Encode(
+        input: CompactSerialiser(signedSDJWT: issuerSignedSDJWT).serialised
+      ) ?? ""
+
+    // Create KB-JWT with aud as a number (invalid type)
+    let holder = try await SDJWTIssuer.presentation(
+      holdersPrivateKey: holdersKeyPair.private,
+      signedSDJWT: issuerSignedSDJWT,
+      disclosuresToPresent: issuerSignedSDJWT.disclosures,
+      keyBindingJWT: KBJWT(
+        header: DefaultJWSHeaderImpl(algorithm: .ES256),
+        kbJwtPayload: .init([
+          Keys.nonce.rawValue: expectedNonce,
+          Keys.aud.rawValue: 12345,  // Invalid: number instead of string/array
+          Keys.iat.rawValue: Int(Date().timeIntervalSince1970),
+          Keys.sdHash.rawValue: sdHash
+        ])
+      )
+    )
+
+    // When
+    let verifier = KeyBindingVerifier()
+
+    // Then - Should fail with invalid aud error (not silently pass)
+    XCTAssertThrowsError(
+      try verifier.verify(
+        iatOffset: .init(
+          startTime: Date(timeIntervalSinceNow: -100000),
+          endTime: Date(timeIntervalSinceNow: 100000)
+        )!,
+        expectedAudience: "example.com",
+        expectedNonce: expectedNonce,
+        challenge: holder.kbJwt!,
+        extractedKey: holdersJwk
+      )
+    ) { error in
+      guard case SDJWTVerifierError.keyBindingFailed(let description) = error else {
+        XCTFail("Expected keyBindingFailed error but got \(error)")
+        return
+      }
+      XCTAssertTrue(
+        description.contains("Missing or invalid aud"),
+        "Error should indicate missing or invalid aud claim, got: \(description)"
+      )
+    }
+  }
+
   // ["_26bc4LT-ac6q2KI6cBW5es", "_sd", "Möbius"]
   private static let disclosureWithSdAsClaimName = "WyJfMjZiYzRMVC1hYzZxMktJNmNCVzVlcyIsIl9zZCIsIk3DtmJpdXMiXQ"
 

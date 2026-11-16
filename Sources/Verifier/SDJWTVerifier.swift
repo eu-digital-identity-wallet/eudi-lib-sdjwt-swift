@@ -69,7 +69,7 @@ public class SDJWTVerifier {
   ///
   public func verifyIssuance(
     issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-    claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil
+    claimVerifier: ((_ nbf: Int?, _ exp: Int?, _ iat: Int?, _ aud: String?) throws -> ClaimsVerifier)? = nil
   ) rethrows -> Result<SignedSDJWT, Error> {
     Result {
       try self.verify(
@@ -90,7 +90,7 @@ public class SDJWTVerifier {
   ///
   public func verifyPresentation(
     issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-    claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil,
+    claimVerifier: ((_ nbf: Int?, _ exp: Int?, _ iat: Int?, _ aud: String?) throws -> ClaimsVerifier)? = nil,
     keyBindingVerifier: ((JWS, JWK) throws -> KeyBindingVerifier?)? = nil
   ) -> Result<SignedSDJWT, Error> {
     Result {
@@ -130,12 +130,23 @@ public class SDJWTVerifier {
   /// - Returns: A `Result` containing the verified `SignedSDJWT` or an error.
   ///
   private func verify(issuersSignatureVerifier: (JWS) throws -> SignatureVerifier,
-                      claimVerifier: ((_ nbf: Int?, _ exp: Int?) throws -> ClaimsVerifier)? = nil) -> Result<SignedSDJWT, Error> {
+                      claimVerifier: ((_ nbf: Int?, _ exp: Int?, _ iat: Int?, _ aud: String?) throws -> ClaimsVerifier)? = nil) -> Result<SignedSDJWT, Error> {
     Result {
       _ = try issuersSignatureVerifier(sdJwt.jwt).verify()
       // The recreated json, and the disclosures
       let output = try DisclosuresVerifier(signedSDJWT: sdJwt).verify()
-      try claimVerifier?(output.recreatedClaims[Keys.nbf.rawValue].int, output.recreatedClaims[Keys.exp.rawValue].int).verify()
+      let claims = output.recreatedClaims
+      // aud may be either a single string or a JSON array of strings; mirror
+      // the behaviour of JWS.aud() so downstream ClaimsVerifier parses it the
+      // same way it would from a direct JWS read.
+      let tokenAud: String? = try claims[Keys.aud.rawValue].array?.toJSONString()
+                           ?? claims[Keys.aud.rawValue].string
+      try claimVerifier?(
+        claims[Keys.nbf.rawValue].int,
+        claims[Keys.exp.rawValue].int,
+        claims[Keys.iat.rawValue].int,
+        tokenAud
+      ).verify()
       return sdJwt
     }
   }

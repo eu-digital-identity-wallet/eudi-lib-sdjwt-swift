@@ -38,15 +38,6 @@ public final class ClaimVisitor: ClaimVisitorType {
     disclosure: Disclosure = "",
     value: String? = nil
   ) {
-    
-    let registered: [ClaimPathElement] = SdJwtSpec.registeredNonDisclosableClaims.map {
-      .claim(name: $0)
-    }
-
-    if let first = path?.value.first, registered.contains(first) {
-      return
-    }
-    
     guard let path = path else { return }
     
     // Calculate claimDisclosures

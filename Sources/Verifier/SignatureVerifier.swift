@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import Foundation
+import JSONWebAlgorithms
 import JSONWebKey
 import JSONWebSignature
 
@@ -31,15 +32,34 @@ public class SignatureVerifier: VerifierProtocol {
   let jws: JWS
   let key: KeyExpressible
 
+  /// Default allow-list used when the caller does not pass `allowedAlgorithms`.
+  /// HMAC algorithms are intentionally excluded to prevent the public-key /
+  /// shared-secret confusion attack.
+  /// Callers who legitimately need HMAC must opt in via `allowedAlgorithms`.
+  public static let defaultAllowedAlgorithms: Set<SigningAlgorithm> = [
+    .ES256, .ES384, .ES512, .ES256K,
+    .RS256, .RS384, .RS512,
+    .PS256, .PS384, .PS512,
+    .EdDSA,
+  ]
+
   // MARK: - Lifecycle
 
-  public init<Key: KeyExpressible>(signedJWT: JWS, publicKey: Key) throws {
+  public init<Key: KeyExpressible>(
+    signedJWT: JWS,
+    publicKey: Key,
+    allowedAlgorithms: Set<SigningAlgorithm>? = nil
+  ) throws {
     guard let algorithm = signedJWT.protectedHeader.algorithm else {
       throw SDJWTVerifierError.noAlgorithmProvided
     }
-    // Reject "none" algorithm - it bypasses signature verification (PAR_SDJWT_SWIFT_2)
-    guard algorithm.rawValue != Keys.none.rawValue else {
-      throw SDJWTVerifierError.invalidJwt(description: "The 'none' algorithm is not allowed")
+    // Always reject `alg: none`, even if the caller lists it.
+    guard algorithm != .none else {
+      throw SDJWTVerifierError.algorithmNotAllowed(algorithm: algorithm.rawValue)
+    }
+    let effectiveAllowed = allowedAlgorithms ?? Self.defaultAllowedAlgorithms
+    guard effectiveAllowed.contains(algorithm) else {
+      throw SDJWTVerifierError.algorithmNotAllowed(algorithm: algorithm.rawValue)
     }
     self.jws = signedJWT
     self.key = publicKey

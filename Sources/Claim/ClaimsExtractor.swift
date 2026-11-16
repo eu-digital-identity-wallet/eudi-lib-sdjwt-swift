@@ -72,7 +72,9 @@ public class ClaimExtractor {
           json[foundDisclosure.key] = foundDisclosure.value
           
           if let disclosure = digestsOfDisclosures[foundDigest] {
-            let currentPath = "/" + (currentPath + [foundDisclosure.key]).joined(separator: "/")
+            let currentPath = "/" + (currentPath + [foundDisclosure.key])
+              .map { $0.jsonPointerEscaped() }
+              .joined(separator: "/")
             visitor?.call(
               path: .init(
                 path: currentPath
@@ -134,7 +136,7 @@ public class ClaimExtractor {
                 
                 visitor?.call(
                   path: .init(
-                    path: "/" + newPath.joined(separator: "/")
+                    path: "/" + newPath.map { $0.jsonPointerEscaped() }.joined(separator: "/")
                   ),
                   disclosure: dislosure,
                   value: found.string
@@ -145,10 +147,10 @@ public class ClaimExtractor {
             
             visitor?.call(
               path: .init(
-                path: "/" + newPath.joined(separator: "/")
+                path: "/" + newPath.map { $0.jsonPointerEscaped() }.joined(separator: "/")
               )
             )
-            
+
             try self.findDigests(
               payload: object,
               disclosures: disclosures,
@@ -161,7 +163,7 @@ public class ClaimExtractor {
         let newPath = currentPath + [key]
         visitor?.call(
           path: .init(
-            path: "/" + newPath.joined(separator: "/")
+            path: "/" + newPath.map { $0.jsonPointerEscaped() }.joined(separator: "/")
           )
         )
       }
@@ -172,6 +174,17 @@ public class ClaimExtractor {
       json,
       visitor?.disclosuresPerClaimPath
     )
+  }
+}
+
+fileprivate extension String {
+  /// Escapes a claim name for use as a JSON Pointer path component (RFC 6901):
+  /// `~` becomes `~0` and `/` becomes `~1`. Order matters — tilde must be
+  /// escaped first so a literal `/` in the name does not become `~1` and then
+  /// be interpreted as an escaped slash on decode.
+  func jsonPointerEscaped() -> String {
+    self.replacingOccurrences(of: "~", with: "~0")
+      .replacingOccurrences(of: "/", with: "~1")
   }
 }
 

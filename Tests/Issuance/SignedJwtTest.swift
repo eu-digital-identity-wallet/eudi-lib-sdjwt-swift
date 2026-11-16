@@ -22,6 +22,31 @@ import XCTest
 
 final class SignedJwtTest: XCTestCase {
 
+  func testSignatureVerifier_WithAlgNone_ShouldReject() throws {
+    // Given - A JWT with alg: none (security vulnerability if accepted)
+    // Header: {"alg":"none"} -> eyJhbGciOiJub25lIn0
+    // Payload: {"sub":"test"} -> eyJzdWIiOiJ0ZXN0In0
+    // Signature: empty
+    let jwtWithAlgNone = "eyJhbGciOiJub25lIn0.eyJzdWIiOiJ0ZXN0In0."
+
+    let jws = try JWS(jwsString: jwtWithAlgNone)
+    let keyPair = generateES256KeyPair()
+
+    // When/Then - SignatureVerifier should reject alg: none
+    XCTAssertThrowsError(
+      try SignatureVerifier(signedJWT: jws, publicKey: keyPair.public)
+    ) { error in
+      guard case SDJWTVerifierError.algorithmNotAllowed(let description) = error else {
+        XCTFail("Expected invalidJwt error but got \(error)")
+        return
+      }
+      XCTAssertTrue(
+        description.contains("none") == true,
+        "Error should indicate none algorithm is not allowed, got: \(description ?? "nil")"
+      )
+    }
+  }
+
   func testGivenASampleUnsignedJWT_WhenSupplyingWithES256PublicKeyPair_ThenCreateTheSDJW_WithNoKeyBidning() async throws {
 
     let keyPair = generateES256KeyPair()

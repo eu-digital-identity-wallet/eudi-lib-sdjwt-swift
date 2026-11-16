@@ -600,8 +600,6 @@ final class VerifierTest: XCTestCase {
     }
   }
 
-  // MARK: - KB-JWT Security Tests (PAR_SDJWT_SWIFT_1)
-
   func testKeyBindingVerifier_WithStaleIat_ShouldFail() async throws {
     // Given - KB-JWT with iat outside the valid time window (stale token)
     let expectedNonce = "test-nonce-stale-iat"

@@ -22,8 +22,6 @@ import XCTest
 
 final class SignedJwtTest: XCTestCase {
 
-  // MARK: - Security Tests (PAR_SDJWT_SWIFT_2)
-
   func testSignatureVerifier_WithAlgNone_ShouldReject() throws {
     // Given - A JWT with alg: none (security vulnerability if accepted)
     // Header: {"alg":"none"} -> eyJhbGciOiJub25lIn0
@@ -38,12 +36,12 @@ final class SignedJwtTest: XCTestCase {
     XCTAssertThrowsError(
       try SignatureVerifier(signedJWT: jws, publicKey: keyPair.public)
     ) { error in
-      guard case SDJWTVerifierError.invalidJwt(let description) = error else {
+      guard case SDJWTVerifierError.algorithmNotAllowed(let description) = error else {
         XCTFail("Expected invalidJwt error but got \(error)")
         return
       }
       XCTAssertTrue(
-        description?.contains("'none' algorithm is not allowed") == true,
+        description.contains("none") == true,
         "Error should indicate none algorithm is not allowed, got: \(description ?? "nil")"
       )
     }

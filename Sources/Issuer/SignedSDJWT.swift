@@ -311,11 +311,11 @@ extension SignedSDJWT {
     let keys = disclosuresPerClaimPath.keys.filter { claimFound in
       query.contains { requested in
         #if DEBUG
-        if claimFound.matches(requested) {
+        if claimFound.isSelected(by: requested) {
           print("claimFound: \(claimFound) requested: \(requested)")
         }
         #endif
-        return claimFound.matches(requested)
+        return claimFound.isSelected(by: requested)
       }
     }
     
@@ -364,5 +364,13 @@ extension ClaimPath {
   /// - Returns: `true` if both have the same size and `self` is contained in `other`.
   func matches(_ other: ClaimPath) -> Bool {
     return self.value.count == other.value.count && other.contains(self)
+  }
+
+  /// OpenID4VP 1.0 section 7.3: a requested path selects the claim and all its sub-claims.
+  /// - Parameter requested: The requested `ClaimPath`.
+  /// - Returns: `true` if `requested` is equal to `self` or to a parent of `self`.
+  func isSelected(by requested: ClaimPath) -> Bool {
+    return requested.value.count <= value.count
+      && zip(requested.value, value).allSatisfy { $0.contains($1) }
   }
 }

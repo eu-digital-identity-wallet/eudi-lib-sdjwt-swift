@@ -104,7 +104,9 @@ final class EndToEndTest: XCTestCase {
     XCTAssertNoThrow(try result.get())
     let presentationResult = try await x509Verifier.verifyPresentation(
       unverifiedSdJwt: holderPresentation!.serialisation,
-      claimsVerifier: ClaimsVerifier(),
+      claimsVerifier: ClaimsVerifier(
+        currentDate: SDJWTConstants.sdJwtVcPidValidDate
+      ),
       keyBindingVerifier: KeyBindingVerifier(),
       expectedNonce: "123456789",
       expectedAudience: "example.com",
@@ -185,7 +187,9 @@ final class EndToEndTest: XCTestCase {
     
     let presentationResult = try await x509Verifier.verifyPresentation(
       unverifiedSdJwt: holderPresentation!.serialisation,
-      claimsVerifier: ClaimsVerifier(),
+      claimsVerifier: ClaimsVerifier(
+        currentDate: SDJWTConstants.sdJwtVcPidValidDate
+      ),
       keyBindingVerifier: KeyBindingVerifier(),
       expectedNonce: "123456789",
       expectedAudience: "example.com",
